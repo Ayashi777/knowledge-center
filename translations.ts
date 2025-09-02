@@ -65,6 +65,7 @@ export const translations = {
       uploadNewPdf: 'Upload new PDF',
       uploadNewDwg: 'Upload new DWG',
       editContent: 'Edit Content',
+      uploadNewLabel: 'Upload new',
       content: { // This part is mainly for labels and TOC now
         importantNoteLabel: 'Important Note Text',
         toc: {
@@ -99,21 +100,6 @@ export const translations = {
       labelCategory: 'Category',
       labelTags: 'Tags (comma-separated)',
       placeholderTags: 'e.g., safety, update, report',
-    },
-    chat: {
-      title: 'Support Chat',
-      welcome: 'Hello! How can I help you?',
-      quickReplies: {
-        findDoc: 'Where to find a document?',
-        contactSupport: 'How to contact support?',
-      },
-      responses: {
-        findDoc: 'Please use the search or filters by categories and tags on the main page. If you can\'t find it, I will help.',
-        contactSupport: 'You can start a Co-Browsing session, and our specialist will connect with you.',
-      },
-      feedbackThanks: 'Thank you for your feedback!',
-      startCoBrowse: 'Start Co-browsing',
-      agentHandle: 'Support Agent',
     },
     footer: {
       copyright: '© {year} ACME Corporation. For internal use only.',
@@ -206,6 +192,7 @@ export const translations = {
       uploadNewPdf: 'Завантажити новий PDF',
       uploadNewDwg: 'Завантажити новий DWG',
       editContent: 'Редагувати вміст',
+      uploadNewLabel: 'Завантажити новий',
        content: {
         importantNoteLabel: 'Текст важливої примітки',
         toc: {
@@ -240,21 +227,6 @@ export const translations = {
       labelCategory: 'Категорія',
       labelTags: 'Теги (через кому)',
       placeholderTags: 'наприклад, безпека, оновлення, звіт',
-    },
-    chat: {
-      title: 'Чат підтримки',
-      welcome: 'Вітаю! Чим можу допомогти?',
-      quickReplies: {
-        findDoc: 'Де знайти документ?',
-        contactSupport: 'Як зв\'язатися з підтримкою?',
-      },
-      responses: {
-        findDoc: 'Будь ласка, скористайтеся пошуком або фільтрами за категоріями та тегами на головній сторінці. Якщо не знайдете, я допоможу.',
-        contactSupport: 'Ви можете розпочати сеанс Co-Browsing, і наш спеціаліст підключиться до вас.',
-      },
-      feedbackThanks: 'Дякуємо за ваш відгук!',
-      startCoBrowse: 'Почати Co-browsing',
-      agentHandle: 'Агент підтримки',
     },
     footer: {
       copyright: '© {year} ACME Corporation. Лише для внутрішнього використання.',

@@ -175,113 +175,6 @@ const DocumentGridItem: React.FC<{ doc: Document; onClick: () => void; onRequire
   );
 };
 
-// --- Chat and Co-Browsing Components ---
-
-const AgentCursor: React.FC<{ position: { top: number; left: number } }> = ({ position }) => {
-    const { t } = useI18n();
-    return (
-      <div className="absolute z-50 flex items-center gap-2 transition-all duration-700 ease-out pointer-events-none" style={{ top: `${position.top}px`, left: `${position.left}px`, opacity: position.top > 0 ? 1 : 0 }}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-blue-500 dark:text-blue-400 drop-shadow-lg">
-            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-          </svg>
-          <span className="px-2 py-1 text-sm text-white bg-blue-500 rounded-md shadow-lg">{t('chat.agentHandle')}</span>
-      </div>
-    );
-};
-type ChatMessage = {
-  id: number;
-  sender: 'user' | 'agent';
-  text: string | React.ReactNode;
-  rated?: boolean;
-};
-
-const InteractiveChatWindow: React.FC<{ onClose: () => void; onStartCoBrowse: () => void }> = ({ onClose, onStartCoBrowse }) => {
-    const { t } = useI18n();
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        { id: 1, sender: 'agent', text: t('chat.welcome') },
-        { id: 2, sender: 'agent', text: (
-            <div className="flex flex-col gap-2">
-                <button className="chat-button">{t('chat.quickReplies.findDoc')}</button>
-                <button className="chat-button">{t('chat.quickReplies.contactSupport')}</button>
-            </div>
-        ), rated: true }, // Not rateable
-    ]);
-    const [feedbackGiven, setFeedbackGiven] = useState<Record<number, boolean>>({});
-    const chatBodyRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: 'smooth' });
-    }, [messages]);
-
-    const handleQuickReply = (question: string) => {
-        const userMessage: ChatMessage = { id: Date.now(), sender: 'user', text: question };
-        setMessages(prev => [...prev.filter(m => m.id !== 2), userMessage]);
-
-        setTimeout(() => {
-            let agentResponse: ChatMessage;
-            if (question === t('chat.quickReplies.findDoc')) {
-                agentResponse = { id: Date.now() + 1, sender: 'agent', text: t('chat.responses.findDoc') };
-            } else {
-                agentResponse = { id: Date.now() + 1, sender: 'agent', text: t('chat.responses.contactSupport') };
-            }
-            setMessages(prev => [...prev, agentResponse]);
-        }, 1000);
-    };
-    
-    const handleFeedback = (messageId: number, rating: 'good' | 'bad') => {
-        setFeedbackGiven(prev => ({ ...prev, [messageId]: true }));
-        const thankYouMessage: ChatMessage = { id: Date.now(), sender: 'agent', text: t('chat.feedbackThanks'), rated: true };
-        setTimeout(() => {
-            setMessages(prev => [...prev, thankYouMessage]);
-        }, 500);
-    };
-
-    return (
-        <div className="fixed bottom-24 right-6 w-80 h-[28rem] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl flex flex-col z-40 animate-fade-in-up">
-            <header className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600">
-                <h3 className="font-semibold text-gray-800 dark:text-white">{t('chat.title')}</h3>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl leading-none">&times;</button>
-            </header>
-            <div ref={chatBodyRef} className="flex-grow p-4 text-sm text-gray-600 dark:text-gray-300 space-y-4 overflow-y-auto">
-                {messages.map(msg => (
-                    <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                        <div
-                            className={`p-3 rounded-lg max-w-xs ${
-                                msg.sender === 'agent'
-                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                                : 'bg-blue-600 text-white'
-                            }`}
-                             onClick={(e) => {
-                                if ((e.target as HTMLElement).tagName === 'BUTTON') {
-                                    handleQuickReply((e.target as HTMLElement).innerText);
-                                }
-                            }}
-                        >
-                           {msg.text}
-                        </div>
-                        {msg.sender === 'agent' && !msg.rated && !feedbackGiven[msg.id] && (
-                            <div className="flex items-center gap-2 mt-2">
-                                <button onClick={() => handleFeedback(msg.id, 'good')} className="p-1 text-gray-400 hover:text-green-500 transition-colors">
-                                    <Icon name="thumb-up" className="w-5 h-5" />
-                                </button>
-                                <button onClick={() => handleFeedback(msg.id, 'bad')} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                                    <Icon name="thumb-down" className="w-5 h-5" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-            <footer className="p-3 border-t border-gray-200 dark:border-gray-600">
-                <button onClick={onStartCoBrowse} className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold">
-                    {t('chat.startCoBrowse')}
-                </button>
-            </footer>
-             <style>{`.chat-button { width: 100%; text-align: left; padding: 8px 12px; border-radius: 6px; background-color: rgba(255, 255, 255, 0.5); border: 1px solid #e5e7eb; } .dark .chat-button { background-color: rgba(255, 255, 255, 0.1); border-color: #4b5563; } .chat-button:hover { background-color: rgba(255,255,255,1); } .dark .chat-button:hover { background-color: rgba(255,255,255,0.2); }`}</style>
-        </div>
-    );
-};
-
 // --- Admin & Access Control Components ---
 const UserAccessControl: React.FC<{ role: UserRole; onLoginClick: () => void; onLogout: () => void; }> = ({ role, onLoginClick, onLogout }) => {
     const { t } = useI18n();
@@ -628,7 +521,7 @@ const emptyContentTemplate: DocumentContent = {
 };
 
 
-const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: React.RefObject<HTMLButtonElement>, onRequireLogin: () => void, currentUserRole: UserRole, onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => void, onCategoryClick: (categoryKey: string) => void }> = ({ doc, onClose, coBrowseRef, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick }) => {
+const DocumentView: React.FC<{ doc: Document, onClose: () => void, onRequireLogin: () => void, currentUserRole: UserRole, onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => void, onCategoryClick: (categoryKey: string) => void }> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick }) => {
     const { t, lang } = useI18n();
     const [downloadStatuses, setDownloadStatuses] = useState<{ pdf: DownloadStatus; dwg: DownloadStatus }>({ pdf: 'idle', dwg: 'idle' });
     const [uploadStatuses, setUploadStatuses] = useState<{ pdf: UploadStatus; dwg: UploadStatus }>({ pdf: 'idle', dwg: 'idle' });
@@ -683,7 +576,7 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
         )
     }
 
-    const renderFileAction = (fileType: 'pdf' | 'dwg', ref?: React.RefObject<HTMLButtonElement>) => {
+    const renderFileAction = (fileType: 'pdf' | 'dwg') => {
         const textKey = fileType === 'pdf' ? 'docView.downloadPdf' : 'docView.downloadDwg';
         const iconName = fileType;
         const status = downloadStatuses[fileType];
@@ -705,7 +598,6 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
                 </div>
                 <div className="flex flex-col items-end gap-1">
                     <button
-                        ref={ref}
                         onClick={() => handleDownload(fileType)}
                         disabled={status !== 'idle'}
                         className="flex items-center justify-center gap-1.5 px-3 py-1 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-md transition-colors w-28 text-center disabled:opacity-70 disabled:cursor-wait"
@@ -800,7 +692,7 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
                         <div>
                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3" id="appendix">{t('docView.downloadFiles')}</h4>
                            <div className="space-y-3">
-                                {renderFileAction('pdf', coBrowseRef)}
+                                {renderFileAction('pdf')}
                                 {renderFileAction('dwg')}
                            </div>
                         </div>
@@ -861,9 +753,6 @@ const App: React.FC = () => {
   const { t, lang } = useI18n();
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isCoBrowsingActive, setIsCoBrowsingActive] = useState(false);
-  const [agentCursorPosition, setAgentCursorPosition] = useState({ top: -100, left: -100 });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -878,7 +767,6 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortBy>('recent');
   
   const docListRefs = useRef(documents.map(() => createRef<HTMLDivElement>()));
-  const docViewCoBrowseRef = useRef<HTMLButtonElement>(null);
 
   const visibleCategories = useMemo(() => {
     return CATEGORIES.filter(cat => cat.viewPermissions.includes(currentUserRole));
@@ -952,38 +840,6 @@ const App: React.FC = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  useEffect(() => {
-    let timer: number;
-    if (isCoBrowsingActive) {
-      let targetElement: HTMLElement | null = null;
-      
-      if (selectedDoc && docViewCoBrowseRef.current) {
-        targetElement = docViewCoBrowseRef.current;
-      } else if (!selectedDoc && docListRefs.current[0]?.current) {
-        targetElement = docListRefs.current[0].current;
-      }
-
-      if (targetElement) {
-        const rect = targetElement.getBoundingClientRect();
-        setAgentCursorPosition({
-          top: rect.top + window.scrollY + (rect.height / 2) - 12,
-          left: rect.left + window.scrollX + 20,
-        });
-
-        timer = window.setTimeout(() => {
-          setIsCoBrowsingActive(false);
-          setAgentCursorPosition({ top: -100, left: -100 });
-        }, 5000);
-      }
-    }
-    return () => clearTimeout(timer);
-  }, [isCoBrowsingActive, selectedDoc]);
-
-  const handleStartCoBrowse = () => {
-    setIsCoBrowsingActive(true);
-    setIsChatOpen(false);
-  };
-  
   const handleSelectDoc = (doc: Document) => {
     const permissions = categoryPermissions.get(doc.categoryKey) || [];
     if (!permissions.includes(currentUserRole)) {
@@ -1119,7 +975,6 @@ const App: React.FC = () => {
           <DocumentView 
             doc={selectedDoc} 
             onClose={handleCloseDoc} 
-            coBrowseRef={docViewCoBrowseRef}
             onRequireLogin={handleRequireLogin}
             currentUserRole={currentUserRole}
             onUpdateContent={handleUpdateDocumentContent}
@@ -1166,21 +1021,6 @@ const App: React.FC = () => {
               onClose={() => setEditingDoc(null)}
               availableCategories={visibleCategories}
           />
-      )}
-
-      {/* Chat & Co-Browsing Visualization */}
-      {currentUserRole === 'guest' && (
-        <>
-            {isCoBrowsingActive && <AgentCursor position={agentCursorPosition} />}
-            {isChatOpen && <InteractiveChatWindow onClose={() => setIsChatOpen(false)} onStartCoBrowse={handleStartCoBrowse} />}
-            <button 
-                className="fixed bottom-6 right-6 bg-blue-600 p-3 rounded-full shadow-xl cursor-pointer hover:bg-blue-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500 z-30" 
-                onClick={() => setIsChatOpen(!isChatOpen)} 
-                aria-label={t('chat.title')}
-            >
-                <Icon name="chat-bubble-left-right" className="w-7 h-7 text-white" />
-            </button>
-        </>
       )}
 
       <style>{`
