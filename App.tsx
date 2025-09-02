@@ -458,6 +458,55 @@ const Sidebar: React.FC<{
     );
 }
 
+const Pagination: React.FC<{ currentPage: number; totalPages: number; onPageChange: (page: number) => void }> = ({ currentPage, totalPages, onPageChange }) => {
+    const { t } = useI18n();
+    if (totalPages <= 1) return null;
+
+    const handlePrev = () => onPageChange(Math.max(1, currentPage - 1));
+    const handleNext = () => onPageChange(Math.min(totalPages, currentPage + 1));
+    
+    // Simple page number logic for now
+    const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+    return (
+        <nav className="flex items-center justify-center gap-2 sm:gap-4 mt-8" aria-label="Pagination">
+            <button
+                onClick={handlePrev}
+                disabled={currentPage === 1}
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+                {t('pagination.prev')}
+            </button>
+            <div className="hidden sm:flex items-center gap-2">
+                {pageNumbers.map(number => (
+                    <button
+                        key={number}
+                        onClick={() => onPageChange(number)}
+                        aria-current={currentPage === number ? 'page' : undefined}
+                        className={`px-4 py-2 text-sm font-medium border rounded-md ${
+                            currentPage === number
+                                ? 'bg-blue-600 border-blue-600 text-white dark:bg-blue-500 dark:border-blue-500'
+                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                    >
+                        {number}
+                    </button>
+                ))}
+            </div>
+             <span className="sm:hidden text-sm text-gray-600 dark:text-gray-400">
+                {currentPage} / {totalPages}
+            </span>
+            <button
+                onClick={handleNext}
+                disabled={currentPage === totalPages}
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+                {t('pagination.next')}
+            </button>
+        </nav>
+    );
+};
+
 const DashboardView: React.FC<{ 
   onSelectDoc: (doc: Document) => void, 
   onRequireLogin: () => void,
@@ -465,7 +514,8 @@ const DashboardView: React.FC<{
   docRefs: React.RefObject<HTMLDivElement>[],
   searchTerm: string,
   onSearchChange: (term: string) => void,
-  sortedDocs: Document[],
+  docs: Document[],
+  totalDocsCount: number,
   showAdminControls: boolean,
   onEditDoc: (doc: Document) => void,
   onDeleteDoc: (id: string) => void,
@@ -481,10 +531,14 @@ const DashboardView: React.FC<{
   sortBy: SortBy,
   setSortBy: (sort: SortBy) => void,
   onClearFilters: () => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }> = ({ 
-    onSelectDoc, onRequireLogin, isGuest, docRefs, searchTerm, onSearchChange, sortedDocs, showAdminControls, 
+    onSelectDoc, onRequireLogin, isGuest, docRefs, searchTerm, onSearchChange, docs, totalDocsCount, showAdminControls, 
     onEditDoc, onDeleteDoc, onAddNewDoc, selectedCategory, onCategorySelect, visibleCategories,
-    allTags, selectedTags, onTagSelect, viewMode, setViewMode, sortBy, setSortBy, onClearFilters
+    allTags, selectedTags, onTagSelect, viewMode, setViewMode, sortBy, setSortBy, onClearFilters,
+    currentPage, totalPages, onPageChange
 }) => {
     const { t } = useI18n();
     const hasActiveFilters = selectedCategory || selectedTags.size > 0;
@@ -536,7 +590,7 @@ const DashboardView: React.FC<{
             </div>
 
             <div className="flex justify-between items-baseline mb-4">
-                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: sortedDocs.length })}</p>
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: totalDocsCount })}</p>
                 {hasActiveFilters && <button onClick={onClearFilters} className="text-sm text-red-500 hover:underline">{t('common.resetFilters')}</button>}
             </div>
 
@@ -549,14 +603,14 @@ const DashboardView: React.FC<{
                 </div>
             )}
 
-            {sortedDocs.length > 0 ? (
+            {docs.length > 0 ? (
                 viewMode === 'grid' ? (
                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
-                        {sortedDocs.map((doc) => <DocumentGridItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} onRequireLogin={onRequireLogin} isGuest={isGuest} />)}
+                        {docs.map((doc) => <DocumentGridItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} onRequireLogin={onRequireLogin} isGuest={isGuest} />)}
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {sortedDocs.map((doc, index) => <DocumentListItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} ref={docRefs[index]} onEdit={() => onEditDoc(doc)} onDelete={() => onDeleteDoc(doc.id)} showAdminControls={showAdminControls} />)}
+                        {docs.map((doc, index) => <DocumentListItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} ref={docRefs[index]} onEdit={() => onEditDoc(doc)} onDelete={() => onDeleteDoc(doc.id)} showAdminControls={showAdminControls} />)}
                     </div>
                 )
             ) : (
@@ -565,7 +619,7 @@ const DashboardView: React.FC<{
                 <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
                 </div>
             )}
-
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </main>
     </div>
   </>
@@ -848,6 +902,7 @@ const App: React.FC = () => {
   );
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('recent');
+  const [currentPage, setCurrentPage] = useState(1);
   
   const docListRefs = useRef(documents.map(() => createRef<HTMLDivElement>()));
 
@@ -911,6 +966,14 @@ const App: React.FC = () => {
     return sorted;
   }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t, sortBy, lang, currentUserRole, visibleCategories]);
   
+  const ITEMS_PER_PAGE = useMemo(() => (viewMode === 'grid' ? 9 : 10), [viewMode]);
+  const totalPages = Math.ceil(sortedAndFilteredDocs.length / ITEMS_PER_PAGE);
+  
+  const paginatedDocs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedAndFilteredDocs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [currentPage, sortedAndFilteredDocs, ITEMS_PER_PAGE]);
+  
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') {
@@ -919,6 +982,16 @@ const App: React.FC = () => {
       root.classList.remove('dark');
     }
   }, [theme]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedTags, sortBy, viewMode]);
+  
+  useEffect(() => {
+    if (!selectedDoc) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage, selectedDoc]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -1086,7 +1159,8 @@ const App: React.FC = () => {
             docRefs={docListRefs.current}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            sortedDocs={sortedAndFilteredDocs}
+            docs={paginatedDocs}
+            totalDocsCount={sortedAndFilteredDocs.length}
             showAdminControls={showAdminControls}
             onEditDoc={(doc) => setEditingDoc(doc)}
             onDeleteDoc={handleDeleteDocument}
@@ -1104,6 +1178,9 @@ const App: React.FC = () => {
             sortBy={sortBy}
             setSortBy={setSortBy}
             onClearFilters={handleClearFilters}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         )}
         

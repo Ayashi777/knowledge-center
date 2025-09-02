@@ -291,4 +291,97 @@ export const RECENT_DOCUMENTS: Document[] = [
       }
     }
   },
+  {
+    id: 'doc10',
+    titleKey: 'documents.titles.electricalSafetyHV',
+    updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+    categoryKey: 'categories.electrical',
+    tags: ['safety', 'high-voltage', 'procedure'],
+    content: {
+      en: {
+        intro: 'This document outlines critical safety procedures for all personnel working with or near high-voltage electrical equipment. Strict adherence is mandatory to prevent severe injury or fatalities.',
+        section1Title: 'Section 1: Personal Protective Equipment (PPE)',
+        section1Body: 'Appropriate PPE must be worn at all times within designated high-voltage areas. This includes, but is not limited to, voltage-rated gloves, arc-flash rated clothing, and insulated footwear.',
+        section1List: 'Voltage-rated gloves with leather protectors.\nArc-flash face shield and balaclava.\nInsulated hard hat.',
+        section2Title: 'Section 2: Lockout-Tagout (LOTO) Procedures',
+        section2Body: 'No work shall begin on high-voltage equipment until it has been properly de-energized and LOTO procedures have been applied. Each authorized employee must apply their personal lock and tag.',
+        importantNote: 'Important: Never assume equipment is de-energized. Always test for the absence of voltage using a properly rated and tested voltmeter before beginning work.',
+        section3Title: 'Section 3: Emergency Response',
+        section3Body: 'In the event of an electrical incident, do not touch the victim if they are still in contact with the energized source. Immediately shut off the power source and call emergency services. Administer first aid only when the area is safe.',
+      },
+      uk: {
+        intro: 'Цей документ описує критично важливі процедури безпеки для всього персоналу, що працює з високовольтним електричним обладнанням або поблизу нього. Суворе дотримання є обов\'язковим для запобігання важким травмам або смертельним випадкам.',
+        section1Title: 'Розділ 1: Засоби індивідуального захисту (ЗІЗ)',
+        section1Body: 'Відповідні ЗІЗ необхідно носити постійно в межах визначених зон високої напруги. Це включає, але не обмежується, рукавиці з номінальною напругою, одяг із захистом від дугового розряду та ізольоване взуття.',
+        section1List: 'Рукавиці з номінальною напругою та шкіряними протекторами.\nЗахисний щиток для обличчя та балаклава від дугового розряду.\nІзольована каска.',
+        section2Title: 'Розділ 2: Процедури блокування/маркування (LOTO)',
+        section2Body: 'Жодні роботи на високовольтному обладнанні не повинні починатися, доки воно не буде належним чином знеструмлене та не будуть застосовані процедури LOTO. Кожен уповноважений працівник повинен застосувати свій особистий замок та бирку.',
+        importantNote: 'Важливо: Ніколи не припускайте, що обладнання знеструмлене. Завжди перевіряйте відсутність напруги за допомогою належним чином номінованого та перевіреного вольтметра перед початком робіт.',
+        section3Title: 'Розділ 3: Реагування на надзвичайні ситуації',
+        section3Body: 'У разі електричного інциденту не торкайтеся потерпілого, якщо він все ще контактує з джерелом під напругою. Негайно вимкніть джерело живлення та викличте екстрені служби. Надавайте першу допомогу тільки тоді, коли зона є безпечною.',
+      }
+    }
+  },
+  {
+    id: 'doc11',
+    titleKey: 'documents.titles.fleetMaintenance',
+    updatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+    categoryKey: 'categories.logistics',
+    tags: ['maintenance', 'vehicles', 'schedule', 'logistics'],
+    content: {
+      en: {
+        intro: 'This document details the mandatory maintenance schedule for all vehicles in the company\'s logistics fleet to ensure operational safety, reliability, and compliance with regulations.',
+        section1Title: 'Section 1: Daily Driver Inspections',
+        section1Body: 'Before each trip, drivers must conduct a pre-trip inspection of their assigned vehicle. This includes checking tires, brakes, lights, and fluid levels. Any defects must be reported immediately using the Vehicle Inspection Report form.',
+        section1List: 'Check tire pressure and tread depth.\nTest all lights (headlights, brake lights, turn signals).\nVerify fluid levels (oil, coolant, windshield washer).',
+        section2Title: 'Section 2: Scheduled Preventive Maintenance',
+        section2Body: 'Vehicles must undergo scheduled maintenance at designated service intervals (e.g., every 10,000 km). The logistics manager is responsible for tracking service intervals and scheduling appointments.',
+        importantNote: 'Important: No vehicle is permitted to operate if it is overdue for critical safety-related maintenance. This includes brake services, tire replacements, and steering system checks.',
+        section3Title: 'Section 3: Record Keeping',
+        section3Body: 'A complete maintenance and repair history must be kept for each vehicle. All records, including daily inspection reports and service invoices, must be filed and retained for a minimum of two years.',
+      },
+      uk: {
+        intro: 'Цей документ детально описує обов\'язковий графік технічного обслуговування для всіх транспортних засобів у логістичному автопарку компанії для забезпечення експлуатаційної безпеки, надійності та відповідності нормам.',
+        section1Title: 'Розділ 1: Щоденні огляди водіями',
+        section1Body: 'Перед кожною поїздкою водії повинні проводити передрейсовий огляд свого транспортного засобу. Це включає перевірку шин, гальм, освітлювальних приладів та рівня рідин. Про будь-які дефекти необхідно негайно повідомляти за допомогою форми звіту про огляд транспортного засобу.',
+        section1List: 'Перевірка тиску в шинах та глибини протектора.\nТестування всіх освітлювальних приладів (фари, стоп-сигнали, покажчики повороту).\nПеревірка рівня рідин (масло, охолоджуюча рідина, омивач скла).',
+        section2Title: 'Розділ 2: Планове профілактичне обслуговування',
+        section2Body: 'Транспортні засоби повинні проходити планове технічне обслуговування через визначені інтервали (наприклад, кожні 10 000 км). Менеджер з логістики несе відповідальність за відстеження інтервалів обслуговування та планування візитів до сервісу.',
+        importantNote: 'Важливо: Жоден транспортний засіб не допускається до експлуатації, якщо він прострочив критично важливе технічне обслуговування, пов\'язане з безпекою. Це включає обслуговування гальм, заміну шин та перевірку системи рульового управління.',
+        section3Title: 'Розділ 3: Ведення обліку',
+        section3Body: 'Для кожного транспортного засобу повинна вестися повна історія технічного обслуговування та ремонту. Усі записи, включаючи щоденні звіти про огляд та рахунки-фактури за обслуговування, повинні бути підшиті та зберігатися щонайменше два роки.',
+      }
+    }
+  },
+  {
+    id: 'doc12',
+    titleKey: 'documents.titles.serverBackup',
+    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    categoryKey: 'categories.it',
+    tags: ['IT', 'backup', 'policy', 'disaster-recovery'],
+    content: {
+      en: {
+        intro: 'This policy defines the requirements for backing up company data from servers to ensure data integrity and availability in the event of a system failure or disaster.',
+        section1Title: 'Section 1: Backup Schedule and Scope',
+        section1Body: 'All production servers must be backed up according to a defined schedule. Critical systems require daily incremental backups and weekly full backups. Non-critical systems require weekly full backups.',
+        section1List: 'Critical database servers: Daily incremental, weekly full.\nApplication servers: Daily incremental, weekly full.\nFile servers: Daily differential, weekly full.',
+        section2Title: 'Section 2: Data Retention',
+        section2Body: 'Backup data must be retained for a specific period. Daily backups are kept for 14 days, weekly backups for 30 days, and monthly backups for one year. One annual backup must be archived indefinitely.',
+        importantNote: 'Important: All backup data must be encrypted both in transit and at rest. Backup media stored off-site must be in a secure, environmentally controlled facility.',
+        section3Title: 'Section 3: Restoration Testing',
+        section3Body: 'The IT department must conduct quarterly tests to verify the integrity of backups and the viability of the restoration process. Test results must be documented and reviewed by the IT manager.',
+      },
+      uk: {
+        intro: 'Ця політика визначає вимоги до резервного копіювання даних компанії з серверів для забезпечення цілісності та доступності даних у разі збою системи або катастрофи.',
+        section1Title: 'Розділ 1: Графік та обсяг резервного копіювання',
+        section1Body: 'Усі робочі сервери повинні проходити резервне копіювання за визначеним графіком. Критичні системи вимагають щоденних інкрементальних та щотижневих повних резервних копій. Некритичні системи вимагають щотижневих повних резервних копій.',
+        section1List: 'Критичні сервери баз даних: Щоденні інкрементальні, щотижневі повні.\nСервери додатків: Щоденні інкрементальні, щотижневі повні.\nФайлові сервери: Щоденні диференціальні, щотижневі повні.',
+        section2Title: 'Розділ 2: Зберігання даних',
+        section2Body: 'Резервні копії даних повинні зберігатися протягом певного періоду. Щоденні копії зберігаються 14 днів, щотижневі - 30 днів, а щомісячні - один рік. Одна щорічна резервна копія повинна архівуватися на невизначений термін.',
+        importantNote: 'Важливо: Усі резервні копії даних повинні бути зашифровані як під час передачі, так і в стані спокою. Носії з резервними копіями, що зберігаються поза межами офісу, повинні знаходитись у безпечному, екологічно контрольованому приміщенні.',
+        section3Title: 'Розділ 3: Тестування відновлення',
+        section3Body: 'ІТ-відділ повинен проводити щоквартальні тести для перевірки цілісності резервних копій та життєздатності процесу відновлення. Результати тестів повинні бути задокументовані та переглянуті ІТ-менеджером.',
+      }
+    }
+  },
 ];

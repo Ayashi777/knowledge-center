@@ -122,6 +122,10 @@ export const translations = {
     footer: {
       copyright: '© {year} ACME Corporation. For internal use only.',
     },
+    pagination: {
+      prev: 'Previous',
+      next: 'Next',
+    },
     categories: {
       construction: 'Construction Standards',
       electrical: 'Electrical Networks',
@@ -143,6 +147,9 @@ export const translations = {
         whInventory: 'Warehouse Inventory Management Protocol',
         onboarding: 'Employee Onboarding Process',
         concreteChecklist: 'Concrete Pouring Quality Checklist',
+        electricalSafetyHV: 'Electrical Safety for High-Voltage Equipment',
+        fleetMaintenance: 'Logistics Fleet Maintenance Schedule',
+        serverBackup: 'IT Department Server Backup Policy',
       },
     },
   },
@@ -267,6 +274,10 @@ export const translations = {
     footer: {
       copyright: '© {year} ACME Corporation. Лише для внутрішнього використання.',
     },
+    pagination: {
+      prev: 'Попередня',
+      next: 'Наступна',
+    },
     categories: {
       construction: 'Будівельні стандарти',
       electrical: 'Електричні мережі',
@@ -288,6 +299,9 @@ export const translations = {
         whInventory: 'Протокол управління складськими запасами',
         onboarding: 'Процес адаптації нових співробітників',
         concreteChecklist: 'Контрольний список якості заливки бетону',
+        electricalSafetyHV: 'Електробезпека для високовольтного обладнання',
+        fleetMaintenance: 'Графік обслуговування логістичного автопарку',
+        serverBackup: 'Політика резервного копіювання серверів ІТ-відділу',
       },
     },
   },
