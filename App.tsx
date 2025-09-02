@@ -8,6 +8,8 @@ const categoryPermissions = new Map(CATEGORIES.map(c => [c.nameKey, c.viewPermis
 
 type DownloadStatus = 'idle' | 'loading' | 'success';
 type UploadStatus = 'idle' | 'loading' | 'success';
+type ViewMode = 'grid' | 'list';
+type SortBy = 'recent' | 'alpha';
 
 // --- Utility Functions ---
 
@@ -48,37 +50,6 @@ function formatRelativeTime(date: Date, lang: Language, t: (key: string) => stri
 
 // --- Reusable Child Components ---
 
-const CategoryCard: React.FC<{ category: Category, onClick: () => void, isSelected: boolean }> = ({ category, onClick, isSelected }) => {
-  const { t } = useI18n();
-  const baseClasses = "group relative flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-300 cursor-pointer h-full";
-  const selectedClasses = "border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-500/50";
-  const hoverClasses = "hover:border-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700/50";
-
-  return (
-    <div onClick={onClick} className={`${baseClasses} ${isSelected ? selectedClasses : `border-gray-200 dark:border-gray-700 ${hoverClasses}`}`} role="button" tabIndex={0}>
-      <div className={`transition-colors duration-300 ${isSelected ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400'}`}>
-        <Icon name={category.iconName} className="w-10 h-10" />
-      </div>
-      <p className={`mt-4 text-sm font-medium text-center transition-colors duration-300 ${isSelected ? 'text-blue-600 dark:text-white' : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'}`}>
-        {t(category.nameKey)}
-      </p>
-    </div>
-  );
-};
-
-const Tag: React.FC<{ name: string; isSelected: boolean; onClick: () => void }> = ({ name, isSelected, onClick }) => {
-    const base = "flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors duration-200";
-    const selected = "bg-blue-600 text-white";
-    const idle = "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600";
-    
-    return (
-        <button onClick={onClick} className={`${base} ${isSelected ? selected : idle}`}>
-            <Icon name="tag" className="w-3 h-3" />
-            <span>{name}</span>
-        </button>
-    );
-};
-
 const DocumentListItem = forwardRef<HTMLDivElement, { doc: Document, onClick: () => void, onEdit: () => void, onDelete: () => void, showAdminControls: boolean }>(({ doc, onClick, onEdit, onDelete, showAdminControls }, ref) => {
   const { t, lang } = useI18n();
   const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title;
@@ -114,86 +85,94 @@ const DocumentListItem = forwardRef<HTMLDivElement, { doc: Document, onClick: ()
 });
 DocumentListItem.displayName = 'DocumentListItem';
 
+const DocumentThumbnail: React.FC<{ docTitle: string }> = ({ docTitle }) => (
+    <div className="aspect-[3/4] bg-white dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 p-4 flex flex-col overflow-hidden">
+        {/* Header with logos */}
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+            <div className="text-lg font-black text-gray-700 dark:text-gray-300">CE</div>
+            <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-red-600"></div>
+                <p className="font-bold text-xs text-gray-600 dark:text-gray-400">ACME CORP</p>
+            </div>
+        </div>
+        
+        {/* Title */}
+        <h3 className="text-[10px] leading-tight font-bold text-gray-800 dark:text-gray-100 mb-3 flex-shrink-0">{docTitle}</h3>
+        
+        {/* Fake content blocks */}
+        <div className="space-y-1.5 flex-grow">
+          {/* A block of text */}
+          {[...Array(4)].map((_, i) => (
+             <div key={`p1-${i}`} style={{width: `${[95, 100, 98, 90][i]}%`}} className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-sm"></div>
+          ))}
 
-const DownloadButton = forwardRef<HTMLButtonElement, { icon: IconName, text: string, onClick: () => void, status: DownloadStatus }>(({ icon, text, onClick, status }, ref) => {
-    const { t } = useI18n();
-    const content = {
-        idle: {
-            icon: <Icon name={icon} className="w-5 h-5 text-blue-500 dark:text-blue-400" />,
-            text: text,
-        },
-        loading: {
-            icon: <Icon name="loading" className="w-5 h-5 text-blue-500 dark:text-blue-400" />,
-            text: t('common.loading'),
-        },
-        success: {
-            icon: <Icon name="check-circle" className="w-5 h-5 text-green-500" />,
-            text: t('common.completed'),
-        }
-    };
-    
-    const current = content[status];
-    const baseStyle = "flex items-center justify-center gap-3 px-4 py-2 border rounded-md transition-all duration-200 disabled:cursor-not-allowed w-44";
-    const statusStyles = {
-      idle: 'bg-slate-100 dark:bg-gray-700 border-slate-200 dark:border-gray-600 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600',
-      loading: 'bg-slate-200 dark:bg-gray-600 border-slate-300 dark:border-gray-500 text-slate-700 dark:text-gray-300',
-      success: 'bg-green-100 dark:bg-green-800/50 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300',
-    };
+          {/* A table-like structure */}
+          <div className="!mt-4 space-y-1">
+              {[...Array(5)].map((_, i) => (
+                  <div key={`tbl-${i}`} className="flex gap-1.5">
+                      <div className="h-1.5 bg-gray-300 dark:bg-gray-500 rounded-sm w-1/4"></div>
+                      <div className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-sm w-3/4"></div>
+                  </div>
+              ))}
+          </div>
 
-    return (
-        <button
-            ref={ref}
-            onClick={onClick}
-            disabled={status !== 'idle'}
-            className={`${baseStyle} ${statusStyles[status]}`}
-        >
-            {current.icon}
-            <span className="text-sm font-medium">{current.text}</span>
-        </button>
-    );
-});
-DownloadButton.displayName = 'DownloadButton';
+          {/* Another block of text */}
+          <div className="!mt-4 space-y-1">
+          {[...Array(3)].map((_, i) => (
+             <div key={`p2-${i}`} style={{width: `${[100, 95, 50][i]}%`}} className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-sm"></div>
+          ))}
+          </div>
+        </div>
+    </div>
+);
 
-const UploadButton: React.FC<{ text: string, onFileSelect: (file: File) => void, status: UploadStatus }> = ({ text, onFileSelect, status }) => {
-    const { t } = useI18n();
-    const inputRef = useRef<HTMLInputElement>(null);
 
-    const content = {
-        idle: { icon: <Icon name="upload" className="w-5 h-5" />, text },
-        loading: { icon: <Icon name="loading" className="w-5 h-5" />, text: t('common.uploading') },
-        success: { icon: <Icon name="check-circle" className="w-5 h-5 text-green-500" />, text: t('common.completed') },
-    };
-    
-    const current = content[status];
-    const baseStyle = "flex items-center justify-center gap-3 px-4 py-2 border rounded-md transition-all duration-200 disabled:cursor-not-allowed w-52";
-    const statusStyles = {
-      idle: 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
-      loading: 'bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-300',
-      success: 'bg-green-100 dark:bg-green-800/50 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300',
-    };
-    
-    return (
-        <>
-            <input 
-                type="file" 
-                ref={inputRef}
-                className="hidden"
-                onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                        onFileSelect(e.target.files[0]);
-                    }
-                }}
-            />
-            <button
-                onClick={() => inputRef.current?.click()}
-                disabled={status !== 'idle'}
-                className={`${baseStyle} ${statusStyles[status]}`}
-            >
-                {current.icon}
-                <span className="text-sm font-medium">{current.text}</span>
-            </button>
-        </>
-    );
+const DocumentGridItem: React.FC<{ doc: Document; onClick: () => void; onRequireLogin: () => void; isGuest: boolean }> = ({ doc, onClick, onRequireLogin, isGuest }) => {
+  const { t } = useI18n();
+  const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isGuest) {
+        onRequireLogin();
+    } else {
+        alert('Downloading...');
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (navigator.share) {
+        navigator.share({
+            title: docTitle,
+            text: `Check out this document: ${docTitle}`,
+            url: window.location.href,
+        }).catch(console.error);
+    } else {
+        alert('Share functionality not available.');
+    }
+  };
+
+  return (
+    <div className="group cursor-pointer" onClick={onClick} onKeyPress={(e) => e.key === 'Enter' && onClick()} role="button" tabIndex={0}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 group-hover:shadow-2xl shadow-lg shadow-gray-200/50 dark:shadow-black/20 border border-gray-200 dark:border-gray-700/80 group-hover:border-gray-300 dark:group-hover:border-gray-600 group-hover:-translate-y-1">
+        <DocumentThumbnail docTitle={docTitle} />
+      </div>
+      <div className="pt-4 pb-2 px-1">
+        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-3 truncate group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">{docTitle}</p>
+        <div className="flex items-center gap-6 text-sm">
+          <button onClick={handleDownload} className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">
+            <Icon name="download" className="w-5 h-5" />
+            <span className="font-medium">{t('common.download')}</span>
+          </button>
+          <button onClick={handleShare} className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">
+            <Icon name="share" className="w-5 h-5" />
+            <span className="font-medium">{t('common.share')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // --- Chat and Co-Browsing Components ---
@@ -453,100 +432,171 @@ const LanguageSwitcher: React.FC = () => {
 
 // --- Page Views ---
 
+const FilterSection: React.FC<{ title: string; children: React.ReactNode; }> = ({ title, children }) => {
+  const [isOpen, setIsOpen] = useState(true);
+  return (
+    <div className="py-4 border-b border-gray-200 dark:border-gray-700">
+      <button onClick={() => setIsOpen(!isOpen)} className="w-full flex justify-between items-center text-left" aria-expanded={isOpen}>
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200">{title}</h3>
+        <Icon name={isOpen ? 'minus' : 'plus'} className="w-4 h-4 text-gray-500" />
+      </button>
+      {isOpen && <div className="mt-4">{children}</div>}
+    </div>
+  );
+};
+
+const Sidebar: React.FC<{
+  visibleCategories: Category[],
+  selectedCategory: string | null,
+  onCategorySelect: (key: string | null) => void,
+  allTags: string[],
+  selectedTags: Set<string>,
+  onTagSelect: (tag: string) => void
+}> = ({ visibleCategories, selectedCategory, onCategorySelect, allTags, selectedTags, onTagSelect }) => {
+    const { t } = useI18n();
+    return (
+        <aside className="w-full lg:w-64 lg:pr-8 flex-shrink-0">
+            <h2 className="text-lg font-bold mb-2">{t('sidebar.filterBy')}</h2>
+            <FilterSection title={t('sidebar.resourceType')}>
+                <ul className="space-y-2 text-sm">
+                    <li>
+                        <button onClick={() => onCategorySelect(null)} className={`w-full text-left ${!selectedCategory ? 'font-bold text-blue-600 dark:text-blue-400' : 'hover:text-blue-600 dark:hover:text-blue-400'}`}>
+                            {t('sidebar.allTypes')}
+                        </button>
+                    </li>
+                    {visibleCategories.map(cat => (
+                         <li key={cat.id}>
+                            <button onClick={() => onCategorySelect(cat.nameKey)} className={`w-full text-left ${selectedCategory === cat.nameKey ? 'font-bold text-blue-600 dark:text-blue-400' : 'hover:text-blue-600 dark:hover:text-blue-400'}`}>
+                                {t(cat.nameKey)}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </FilterSection>
+             <FilterSection title={t('sidebar.tags')}>
+                <div className="space-y-2">
+                    {allTags.map(tag => (
+                        <label key={tag} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <input type="checkbox" checked={selectedTags.has(tag)} onChange={() => onTagSelect(tag)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <span>{tag}</span>
+                        </label>
+                    ))}
+                </div>
+            </FilterSection>
+        </aside>
+    );
+}
+
 const DashboardView: React.FC<{ 
   onSelectDoc: (doc: Document) => void, 
+  onRequireLogin: () => void,
+  isGuest: boolean,
   docRefs: React.RefObject<HTMLDivElement>[],
   searchTerm: string,
   onSearchChange: (term: string) => void,
-  filteredDocs: Document[],
+  sortedDocs: Document[],
   showAdminControls: boolean,
   onEditDoc: (doc: Document) => void,
   onDeleteDoc: (id: string) => void,
   onAddNewDoc: () => void,
   selectedCategory: string | null,
-  onCategorySelect: (categoryName: string) => void,
+  onCategorySelect: (categoryName: string | null) => void,
   visibleCategories: Category[],
   allTags: string[],
   selectedTags: Set<string>,
   onTagSelect: (tagName: string) => void,
+  viewMode: ViewMode,
+  setViewMode: (mode: ViewMode) => void,
+  sortBy: SortBy,
+  setSortBy: (sort: SortBy) => void,
+  onClearFilters: () => void;
 }> = ({ 
-    onSelectDoc, docRefs, searchTerm, onSearchChange, filteredDocs, showAdminControls, 
+    onSelectDoc, onRequireLogin, isGuest, docRefs, searchTerm, onSearchChange, sortedDocs, showAdminControls, 
     onEditDoc, onDeleteDoc, onAddNewDoc, selectedCategory, onCategorySelect, visibleCategories,
-    allTags, selectedTags, onTagSelect
+    allTags, selectedTags, onTagSelect, viewMode, setViewMode, sortBy, setSortBy, onClearFilters
 }) => {
     const { t } = useI18n();
+    const hasActiveFilters = selectedCategory || selectedTags.size > 0;
+    
     return (
   <>
-    <header className="mb-12 text-center pt-16 sm:pt-12">
+    <header className="mb-8 text-center pt-16 sm:pt-12">
       <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
       <p className="mt-3 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t('dashboard.description')}</p>
-      <div className="mt-8 max-w-2xl mx-auto">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <svg className="h-5 w-5 text-gray-400 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>
-          </div>
-          <input 
-            type="search" 
-            name="search" 
-            id="search" 
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="block w-full rounded-md border-0 bg-gray-100 dark:bg-gray-800 py-3 pl-10 pr-3 text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6 transition-all" 
-            placeholder={t('dashboard.searchPlaceholder')}
-          />
-        </div>
-      </div>
     </header>
-    <main className="space-y-12">
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight text-blue-600 dark:text-blue-400 border-b-2 border-gray-200 dark:border-gray-700 pb-2 mb-6">{t('dashboard.categoryView')}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-          {visibleCategories.map(category => <CategoryCard key={category.id} category={category} onClick={() => onCategorySelect(category.nameKey)} isSelected={selectedCategory === category.nameKey} />)}
-        </div>
-      </section>
-
-      {allTags.length > 0 && (
-          <section>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-300 mb-3">{t('dashboard.filterByTags')}</h3>
-              <div className="flex flex-wrap gap-2">
-                  {allTags.map(tag => (
-                      <Tag key={tag} name={tag} isSelected={selectedTags.has(tag)} onClick={() => onTagSelect(tag)} />
-                  ))}
+    <div className="flex flex-col lg:flex-row gap-8">
+        <Sidebar 
+            visibleCategories={visibleCategories}
+            selectedCategory={selectedCategory}
+            onCategorySelect={onCategorySelect}
+            allTags={allTags}
+            selectedTags={selectedTags}
+            onTagSelect={onTagSelect}
+        />
+        <main className="flex-grow">
+            <div className="relative mb-6">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-400 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>
               </div>
-          </section>
-      )}
+              <input 
+                type="search" 
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="block w-full rounded-md border-0 bg-gray-100 dark:bg-gray-800 py-3 pl-10 pr-3 text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6 transition-all" 
+                placeholder={t('dashboard.searchPlaceholder')}
+              />
+            </div>
 
-      <section>
-        <div className="flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-700 pb-2 mb-6">
-            <div className="flex items-baseline gap-4 flex-wrap">
-                 <h2 className="text-2xl font-semibold tracking-tight text-blue-600 dark:text-blue-400">
-                    {selectedCategory ? t('common.documentsFor', { category: t(selectedCategory) }) : t('common.allDocuments')}
-                </h2>
-                {(selectedCategory || selectedTags.size > 0) && (
-                    <button onClick={() => { onCategorySelect(selectedCategory!); onTagSelect(''); }} className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors">
-                        {t('common.resetFilters')}
+            <div className="flex flex-wrap justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4 mb-6 gap-4">
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">{t('dashboard.sortBy')}</span>
+                    <div className="flex items-center p-0.5 bg-gray-200 dark:bg-gray-700 rounded-md">
+                        <button onClick={() => setSortBy('recent')} className={`px-2 py-0.5 text-xs font-semibold rounded ${sortBy === 'recent' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}>{t('dashboard.mostRecent')}</button>
+                        <button onClick={() => setSortBy('alpha')} className={`px-2 py-0.5 text-xs font-semibold rounded ${sortBy === 'alpha' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}>{t('dashboard.alphabetical')}</button>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{t('dashboard.viewAs')}</span>
+                     <div className="flex items-center p-0.5 bg-gray-200 dark:bg-gray-700 rounded-md">
+                        <button onClick={() => setViewMode('grid')} aria-label="Grid view" className={`p-1 rounded ${viewMode === 'grid' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}><Icon name="view-grid" className="w-5 h-5"/></button>
+                        <button onClick={() => setViewMode('list')} aria-label="List view" className={`p-1 rounded ${viewMode === 'list' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}><Icon name="view-list" className="w-5 h-5"/></button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-baseline mb-4">
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: sortedDocs.length })}</p>
+                {hasActiveFilters && <button onClick={onClearFilters} className="text-sm text-red-500 hover:underline">{t('common.resetFilters')}</button>}
+            </div>
+
+             {showAdminControls && (
+                <div className="mb-4 text-right">
+                    <button onClick={onAddNewDoc} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110 2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                        <span>{t('common.add')}</span>
                     </button>
-                )}
-            </div>
-            {showAdminControls && (
-                <button onClick={onAddNewDoc} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                    <span>{t('common.add')}</span>
-                </button>
+                </div>
             )}
-        </div>
-        <div className="space-y-3">
-          {filteredDocs.length > 0 ? (
-            filteredDocs.map((doc, index) => <DocumentListItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} ref={docRefs[index]} onEdit={() => onEditDoc(doc)} onDelete={() => onDeleteDoc(doc.id)} showAdminControls={showAdminControls} />)
-          ) : (
-            <div className="text-center py-10 px-4 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">{t('dashboard.noResults')}</p>
-              <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
-            </div>
-          )}
-        </div>
-      </section>
-    </main>
+
+            {sortedDocs.length > 0 ? (
+                viewMode === 'grid' ? (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                        {sortedDocs.map((doc) => <DocumentGridItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} onRequireLogin={onRequireLogin} isGuest={isGuest} />)}
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {sortedDocs.map((doc, index) => <DocumentListItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} ref={docRefs[index]} onEdit={() => onEditDoc(doc)} onDelete={() => onDeleteDoc(doc.id)} showAdminControls={showAdminControls} />)}
+                    </div>
+                )
+            ) : (
+                <div className="text-center py-10 px-4 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg">
+                <p className="text-gray-500 dark:text-gray-400">{t('dashboard.noResults')}</p>
+                <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
+                </div>
+            )}
+
+        </main>
+    </div>
   </>
 )};
 
@@ -578,7 +628,7 @@ const emptyContentTemplate: DocumentContent = {
 };
 
 
-const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: React.RefObject<HTMLButtonElement>, onRequireLogin: () => void, currentUserRole: UserRole, onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => void }> = ({ doc, onClose, coBrowseRef, onRequireLogin, currentUserRole, onUpdateContent }) => {
+const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: React.RefObject<HTMLButtonElement>, onRequireLogin: () => void, currentUserRole: UserRole, onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => void, onCategoryClick: (categoryKey: string) => void }> = ({ doc, onClose, coBrowseRef, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick }) => {
     const { t, lang } = useI18n();
     const [downloadStatuses, setDownloadStatuses] = useState<{ pdf: DownloadStatus; dwg: DownloadStatus }>({ pdf: 'idle', dwg: 'idle' });
     const [uploadStatuses, setUploadStatuses] = useState<{ pdf: UploadStatus; dwg: UploadStatus }>({ pdf: 'idle', dwg: 'idle' });
@@ -602,7 +652,8 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
         setTimeout(() => setDownloadStatuses(prev => ({ ...prev, [fileType]: 'idle' })), 3500);
     };
 
-    const handleFileUpload = (fileType: 'pdf' | 'dwg') => {
+    const handleFileUpload = (fileType: 'pdf' | 'dwg', file: File) => {
+        console.log(`Uploading ${file.name} for ${fileType}`);
         setUploadStatuses(prev => ({...prev, [fileType]: 'loading'}));
         setTimeout(() => setUploadStatuses(prev => ({...prev, [fileType]: 'success'})), 1500);
         setTimeout(() => setUploadStatuses(prev => ({...prev, [fileType]: 'idle'})), 3500);
@@ -615,14 +666,67 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
     
     const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
     const currentContent = doc.content[lang] || emptyContentTemplate;
+    
+    const MiniUploadButton: React.FC<{ onFileSelect: (file: File) => void; status: UploadStatus; }> = ({ onFileSelect, status }) => {
+        const inputRef = useRef<HTMLInputElement>(null);
+        if (status !== 'idle') {
+            const statusText = status === 'loading' ? t('common.uploading') : t('common.completed');
+            return <span className={`text-xs ${status === 'success' ? 'text-green-600' : 'text-gray-500'}`}>{statusText}</span>;
+        }
+        return (
+            <>
+                <input type="file" ref={inputRef} className="hidden" onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])} />
+                <button onClick={() => inputRef.current?.click()} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    {t('docView.uploadNewLabel')}
+                </button>
+            </>
+        )
+    }
+
+    const renderFileAction = (fileType: 'pdf' | 'dwg', ref?: React.RefObject<HTMLButtonElement>) => {
+        const textKey = fileType === 'pdf' ? 'docView.downloadPdf' : 'docView.downloadDwg';
+        const iconName = fileType;
+        const status = downloadStatuses[fileType];
+
+        const statusContent = {
+            loading: <><Icon name="loading" className="w-4 h-4"/><span>{t('common.loading')}</span></>,
+            success: <><Icon name="check-circle" className="w-4 h-4 text-green-500"/><span>{t('common.completed')}</span></>,
+            idle: <>{t('common.download')}</>
+        };
+
+        return (
+            <div key={fileType} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700/80 transition-shadow hover:shadow-md dark:hover:shadow-black/20">
+                <div className="flex items-center gap-3">
+                    <Icon name={iconName} className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                    <div>
+                        <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">{doc.id}-{fileType}.{fileType}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">1.2 MB</p>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <button
+                        ref={ref}
+                        onClick={() => handleDownload(fileType)}
+                        disabled={status !== 'idle'}
+                        className="flex items-center justify-center gap-1.5 px-3 py-1 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-md transition-colors w-28 text-center disabled:opacity-70 disabled:cursor-wait"
+                    >
+                        {statusContent[status]}
+                    </button>
+                    {currentUserRole === 'admin' && <MiniUploadButton onFileSelect={(file) => handleFileUpload(fileType, file)} status={uploadStatuses[fileType]} />}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="animate-fade-in pt-16 sm:pt-12">
-            <header className="mb-8">
+            <header className="mb-4">
                 <nav className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex flex-wrap items-center">
                     <a href="#" onClick={(e) => { e.preventDefault(); onClose(); }} className="hover:text-blue-600 dark:hover:text-blue-400">{t('dashboard.title')}</a>
                     <span className="mx-2">/</span>
-                    <span className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{t(doc.categoryKey)}</span>
+                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 dark:hover:text-blue-400 text-left">
+                        {t(doc.categoryKey)}
+                    </button>
                     <span className="mx-2">/</span>
                     <span className="text-gray-800 dark:text-gray-200">{docTitle}</span>
                 </nav>
@@ -632,36 +736,10 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
                 </button>
             </header>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                <aside className="lg:w-1/4 order-2 lg:order-1">
-                    <div className="sticky top-8 p-4 bg-slate-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-lg">
-                        <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">{t('docView.tableOfContents')}</h3>
-                        <ul className="space-y-2 text-sm">
-                            <li><a href="#intro" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('docView.content.toc.intro')}</a></li>
-                            <li><a href="#section1" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('docView.content.toc.s1')}</a></li>
-                            <li><a href="#section2" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('docView.content.toc.s2')}</a></li>
-                            <li><a href="#section3" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('docView.content.toc.s3')}</a></li>
-                            <li><a href="#appendix" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('docView.content.toc.appendix')}</a></li>
-                        </ul>
-                         {currentUserRole === 'admin' && (
-                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                {!isEditingContent ? (
-                                    <button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold">
-                                        {t('docView.editContent')}
-                                    </button>
-                                ) : (
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setIsEditingContent(false)} className="w-full px-4 py-2 rounded-md text-gray-600 dark:text-gray-300 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors text-sm">{t('common.cancel')}</button>
-                                        <button onClick={handleSaveContent} className="w-full px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors text-sm">{t('common.save')}</button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </aside>
-                <main className="lg:w-3/4 order-1 lg:order-2">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{docTitle}</h1>
-                    <div className="flex flex-wrap items-center gap-2 mb-6">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+                <main className="lg:w-2/3 order-1">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">{docTitle}</h1>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
                         <p className="text-sm text-gray-500 dark:text-gray-500 font-mono">{t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}</p>
                         <div className="flex flex-wrap gap-2">
                              {doc.tags.map(tag => (
@@ -694,26 +772,84 @@ const DocumentView: React.FC<{ doc: Document, onClose: () => void, coBrowseRef: 
                             </ul>
                             <h3 id="section2">{currentContent.section2Title}</h3>
                             <p>{currentContent.section2Body}</p>
-                            {currentContent.importantNote && <blockquote><p><strong>{currentContent.importantNote}</strong></p></blockquote>}
+                            {currentContent.importantNote && (
+                                <blockquote className="note">
+                                    <div className="flex items-start gap-3">
+                                        <Icon name="information-circle" className="w-6 h-6 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-1" />
+                                        <p><strong>{currentContent.importantNote}</strong></p>
+                                    </div>
+                                </blockquote>
+                            )}
                             <h3 id="section3">{currentContent.section3Title}</h3>
                             <p>{currentContent.section3Body}</p>
                         </div>
                     )}
-
-
-                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">{t('docView.downloadFiles')}</h4>
-                        <div className="flex items-center gap-4 flex-wrap">
-                            <DownloadButton ref={coBrowseRef} icon="pdf" text={t('docView.downloadPdf')} onClick={() => handleDownload('pdf')} status={downloadStatuses.pdf} />
-                            {currentUserRole === 'admin' && <UploadButton text={t('docView.uploadNewPdf')} onFileSelect={() => handleFileUpload('pdf')} status={uploadStatuses.pdf} />}
-                        </div>
-                        <div className="flex items-center gap-4 flex-wrap mt-4">
-                            <DownloadButton icon="dwg" text={t('docView.downloadDwg')} onClick={() => handleDownload('dwg')} status={downloadStatuses.dwg} />
-                            {currentUserRole === 'admin' && <UploadButton text={t('docView.uploadNewDwg')} onFileSelect={() => handleFileUpload('dwg')} status={uploadStatuses.dwg} />}
-                        </div>
-                    </div>
                 </main>
+                <aside className="lg:w-1/3 order-2 lg:order-none">
+                     <div className="sticky top-24 space-y-8">
+                        <div className="p-5 bg-slate-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-lg">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('docView.tableOfContents')}</h3>
+                            <ul className="space-y-2 text-sm">
+                                <li><a href="#intro" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">{t('docView.content.toc.intro')}</a></li>
+                                <li><a href="#section1" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">{t('docView.content.toc.s1')}</a></li>
+                                <li><a href="#section2" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">{t('docView.content.toc.s2')}</a></li>
+                                <li><a href="#section3" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">{t('docView.content.toc.s3')}</a></li>
+                                <li><a href="#appendix" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">{t('docView.content.toc.appendix')}</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3" id="appendix">{t('docView.downloadFiles')}</h4>
+                           <div className="space-y-3">
+                                {renderFileAction('pdf', coBrowseRef)}
+                                {renderFileAction('dwg')}
+                           </div>
+                        </div>
+                         {currentUserRole === 'admin' && (
+                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700/50">
+                                {!isEditingContent ? (
+                                    <button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold">
+                                        {t('docView.editContent')}
+                                    </button>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setIsEditingContent(false)} className="w-full px-4 py-2 rounded-md text-gray-600 dark:text-gray-300 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors text-sm">{t('common.cancel')}</button>
+                                        <button onClick={handleSaveContent} className="w-full px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors text-sm">{t('common.save')}</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </aside>
             </div>
+             <style>{`
+                .note {
+                    background-color: #EFF6FF; /* blue-50 */
+                    border-left-color: #3B82F6; /* blue-500 */
+                    border-left-width: 4px;
+                    padding: 1rem;
+                    margin-top: 1.5em;
+                    margin-bottom: 1.5em;
+                    border-radius: 0.25rem;
+                }
+                .dark .note {
+                    background-color: rgba(37, 99, 235, 0.1); /* blue-600 with alpha */
+                    border-left-color: #60A5FA; /* blue-400 */
+                }
+                .note p {
+                    margin: 0 !important;
+                    color: #1E40AF !important; /* blue-800 */
+                }
+                .dark .note p {
+                    color: #BFDBFE !important; /* blue-200 */
+                }
+                .prose blockquote {
+                    font-style: normal;
+                    color: inherit;
+                }
+                .dark .prose blockquote {
+                    color: inherit;
+                }
+            `}</style>
         </div>
     );
 };
@@ -731,13 +867,15 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-
+  
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('guest');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
 
   const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortBy>('recent');
   
   const docListRefs = useRef(documents.map(() => createRef<HTMLDivElement>()));
   const docViewCoBrowseRef = useRef<HTMLButtonElement>(null);
@@ -760,7 +898,7 @@ const App: React.FC = () => {
       return Array.from(tags).sort();
   }, [visibleDocuments]);
 
-  const filteredDocs = useMemo(() => {
+  const sortedAndFilteredDocs = useMemo(() => {
     let docs = visibleDocuments;
 
     if (selectedCategory) {
@@ -780,8 +918,20 @@ const App: React.FC = () => {
         doc.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm));
       });
     }
-    return docs;
-  }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t]);
+
+    const sorted = [...docs];
+    if (sortBy === 'alpha') {
+        sorted.sort((a, b) => {
+            const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
+            const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
+            return titleA.localeCompare(titleB, lang);
+        });
+    } else { // 'recent'
+        sorted.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
+
+    return sorted;
+  }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t, sortBy, lang]);
   
   useEffect(() => {
     const root = window.document.documentElement;
@@ -848,6 +998,11 @@ const App: React.FC = () => {
   
   const handleCloseDoc = () => {
     setSelectedDoc(null);
+  };
+
+  const handleBreadcrumbCategoryClick = (categoryKey: string) => {
+    setSelectedDoc(null);
+    setSelectedCategory(categoryKey);
   };
   
   const handleRequireLogin = () => {
@@ -920,16 +1075,11 @@ const App: React.FC = () => {
     }
   };
   
-  const handleCategorySelect = (categoryKey: string) => {
-    setSelectedCategory(prev => (prev === categoryKey ? null : categoryKey));
+  const handleCategorySelect = (categoryKey: string | null) => {
+    setSelectedCategory(categoryKey);
   };
   
   const handleTagSelect = (tagName: string) => {
-      if (tagName === '') { 
-          setSelectedTags(new Set());
-          setSelectedCategory(null);
-          return;
-      }
     setSelectedTags(prev => {
       const newTags = new Set(prev);
       if (newTags.has(tagName)) {
@@ -940,13 +1090,19 @@ const App: React.FC = () => {
       return newTags;
     });
   };
+  
+  const handleClearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedTags(new Set());
+    setSearchTerm('');
+  };
 
   const showAdminControls = currentUserRole === 'admin';
 
 
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500' : ''}`}>
-      <header className="absolute top-0 left-0 right-0 p-4 z-50 flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-slate-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-gray-800/50">
           <UserAccessControl 
               role={currentUserRole}
               onLoginClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }}
@@ -967,6 +1123,7 @@ const App: React.FC = () => {
             onRequireLogin={handleRequireLogin}
             currentUserRole={currentUserRole}
             onUpdateContent={handleUpdateDocumentContent}
+            onCategoryClick={handleBreadcrumbCategoryClick}
           />
         ) : (
           <DashboardView 
@@ -974,7 +1131,7 @@ const App: React.FC = () => {
             docRefs={docListRefs.current}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            filteredDocs={filteredDocs}
+            sortedDocs={sortedAndFilteredDocs}
             showAdminControls={showAdminControls}
             onEditDoc={(doc) => setEditingDoc(doc)}
             onDeleteDoc={handleDeleteDocument}
@@ -985,6 +1142,13 @@ const App: React.FC = () => {
             allTags={allTags}
             selectedTags={selectedTags}
             onTagSelect={handleTagSelect}
+            onRequireLogin={handleRequireLogin}
+            isGuest={currentUserRole==='guest'}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onClearFilters={handleClearFilters}
           />
         )}
         
@@ -1019,7 +1183,6 @@ const App: React.FC = () => {
         </>
       )}
 
-
       <style>{`
         @keyframes spin {
             from { transform: rotate(0deg); }
@@ -1036,6 +1199,39 @@ const App: React.FC = () => {
         }
         .animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
         .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+        .prose {
+          --tw-prose-body: #374151;
+          --tw-prose-headings: #111827;
+          --tw-prose-lead: #4b5563;
+          --tw-prose-links: #1d4ed8;
+          --tw-prose-bold: #111827;
+          --tw-prose-counters: #6b7280;
+          --tw-prose-bullets: #d1d5db;
+          --tw-prose-hr: #e5e7eb;
+          --tw-prose-quotes: #111827;
+          --tw-prose-quote-borders: #e5e7eb;
+          --tw-prose-captions: #6b7280;
+          --tw-prose-code: #111827;
+          --tw-prose-pre-code: #e5e7eb;
+          --tw-prose-pre-bg: #1f2937;
+          --tw-prose-td-borders: #e5e7eb;
+          --tw-prose-invert-body: #d1d5db;
+          --tw-prose-invert-headings: #fff;
+          --tw-prose-invert-lead: #9ca3af;
+          --tw-prose-invert-links: #60a5fa;
+          --tw-prose-invert-bold: #fff;
+          --tw-prose-invert-counters: #9ca3af;
+          --tw-prose-invert-bullets: #4b5563;
+          --tw-prose-invert-hr: #374151;
+          --tw-prose-invert-quotes: #f3f4f6;
+          --tw-prose-invert-quote-borders: #374151;
+          --tw-prose-invert-captions: #9ca3af;
+          --tw-prose-invert-code: #fff;
+          --tw-prose-invert-pre-code: #d1d5db;
+          --tw-prose-invert-pre-bg: rgb(0 0 0 / 50%);
+          --tw-prose-invert-th-borders: #4b5563;
+          --tw-prose-invert-td-borders: #374151;
+        }
       `}</style>
     </div>
   );

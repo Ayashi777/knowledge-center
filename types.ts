@@ -56,4 +56,11 @@ export type IconName =
   | 'thumb-up'
   | 'thumb-down'
   | 'chat-bubble-left-right'
-  | 'upload';
+  | 'upload'
+  | 'download'
+  | 'share'
+  | 'view-grid'
+  | 'view-list'
+  | 'plus'
+  | 'minus'
+  | 'information-circle';
