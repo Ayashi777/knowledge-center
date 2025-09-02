@@ -235,6 +235,84 @@ const LoginModal: React.FC<{ onLogin: (role: UserRole) => void; onClose: () => v
     );
 };
 
+const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const { t } = useI18n();
+    const [status, setStatus] = useState<'form' | 'success'>('form');
+    const [name, setName] = useState('');
+    const [company, setCompany] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [activity, setActivity] = useState('');
+
+    useEffect(() => {
+        const handleEsc = (event: KeyboardEvent) => {
+           if (event.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
+
+    const isFormValid = name.trim() && company.trim() && email.includes('@') && phone.trim() && activity.trim();
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isFormValid) {
+            console.log('Form submitted:', { name, company, email, phone, activity });
+            setStatus('success');
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-8 text-center" onClick={e => e.stopPropagation()}>
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/50 mb-4">
+                        <Icon name="paper-airplane" className="h-8 w-8 text-green-600 dark:text-green-400 -rotate-45" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('registrationModal.successTitle')}</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">{t('registrationModal.successDescription')}</p>
+                    <button onClick={onClose} className="w-full px-6 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t('registrationModal.buttonClose')}</button>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">{t('registrationModal.description')}</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="reg-name" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t('registrationModal.fieldName')}</label>
+                        <input id="reg-name" type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2.5 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500" placeholder={t('registrationModal.placeholderName')} required />
+                    </div>
+                     <div>
+                        <label htmlFor="reg-company" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t('registrationModal.fieldCompany')}</label>
+                        <input id="reg-company" type="text" value={company} onChange={e => setCompany(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2.5 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500" placeholder={t('registrationModal.placeholderCompany')} required />
+                    </div>
+                    <div>
+                        <label htmlFor="reg-activity" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t('registrationModal.fieldActivity')}</label>
+                        <input id="reg-activity" type="text" value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2.5 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500" placeholder={t('registrationModal.placeholderActivity')} required />
+                    </div>
+                    <div>
+                        <label htmlFor="reg-email" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t('registrationModal.fieldEmail')}</label>
+                        <input id="reg-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2.5 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500" placeholder={t('registrationModal.placeholderEmail')} required />
+                    </div>
+                    <div>
+                        <label htmlFor="reg-phone" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t('registrationModal.fieldPhone')}</label>
+                        <input id="reg-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2.5 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500" placeholder={t('registrationModal.placeholderPhone')} required />
+                    </div>
+                    <div className="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end sm:gap-3">
+                        <button type="button" onClick={onClose} className="mt-2 sm:mt-0 w-full sm:w-auto px-4 py-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">{t('common.cancel')}</button>
+                        <button type="submit" disabled={!isFormValid} className="w-full sm:w-auto px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed">{t('registrationModal.buttonSubmit')}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 
 const DocumentEditorModal: React.FC<{ doc: Partial<Document> | null, onSave: (doc: Partial<Document>) => void, onClose: () => void, availableCategories: Category[] }> = ({ doc, onSave, onClose, availableCategories }) => {
     const { t } = useI18n();
@@ -760,6 +838,7 @@ const App: React.FC = () => {
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('guest');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
 
   const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => 
@@ -779,19 +858,26 @@ const App: React.FC = () => {
   const visibleCategoryKeys = useMemo(() => new Set(visibleCategories.map(c => c.nameKey)), [visibleCategories]);
   
   const visibleDocuments = useMemo(() => {
+      if (currentUserRole === 'guest') {
+        return documents;
+      }
       return documents.filter(doc => visibleCategoryKeys.has(doc.categoryKey));
-  }, [documents, visibleCategoryKeys]);
+  }, [documents, visibleCategoryKeys, currentUserRole]);
 
   const allTags = useMemo(() => {
+      const docsToList = currentUserRole === 'guest' ? documents : visibleDocuments;
       const tags = new Set<string>();
-      visibleDocuments.forEach(doc => {
+      docsToList.forEach(doc => {
           doc.tags.forEach(tag => tags.add(tag));
       });
       return Array.from(tags).sort();
-  }, [visibleDocuments]);
+  }, [visibleDocuments, documents, currentUserRole]);
 
   const sortedAndFilteredDocs = useMemo(() => {
     let docs = visibleDocuments;
+    
+    // For guests, categories are all visible but filtering should still work
+    const categoriesForFiltering = currentUserRole === 'guest' ? CATEGORIES : visibleCategories;
 
     if (selectedCategory) {
       docs = docs.filter(doc => doc.categoryKey === selectedCategory);
@@ -823,7 +909,7 @@ const App: React.FC = () => {
     }
 
     return sorted;
-  }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t, sortBy, lang]);
+  }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t, sortBy, lang, currentUserRole, visibleCategories]);
   
   useEffect(() => {
     const root = window.document.documentElement;
@@ -845,6 +931,10 @@ const App: React.FC = () => {
   };
 
   const handleSelectDoc = (doc: Document) => {
+     if (currentUserRole === 'guest') {
+        setIsRegistrationModalOpen(true);
+        return;
+    }
     const permissions = categoryPermissions.get(doc.categoryKey) || [];
     if (!permissions.includes(currentUserRole)) {
         setLoginContext('view');
@@ -866,8 +956,14 @@ const App: React.FC = () => {
   };
   
   const handleRequireLogin = () => {
-      setLoginContext('download');
-      setIsLoginModalOpen(true);
+      // This is only called from grid item for guests, or from document view for download
+      if (currentUserRole === 'guest') {
+        setIsRegistrationModalOpen(true);
+      } else {
+        // This case should not happen from the grid view for logged in users, but for completeness:
+        setLoginContext('download');
+        setIsLoginModalOpen(true);
+      }
   };
 
   const handleLogin = (role: UserRole) => {
@@ -997,7 +1093,7 @@ const App: React.FC = () => {
             onAddNewDoc={() => setEditingDoc({})}
             selectedCategory={selectedCategory}
             onCategorySelect={handleCategorySelect}
-            visibleCategories={visibleCategories}
+            visibleCategories={currentUserRole === 'guest' ? CATEGORIES : visibleCategories}
             allTags={allTags}
             selectedTags={selectedTags}
             onTagSelect={handleTagSelect}
@@ -1016,6 +1112,7 @@ const App: React.FC = () => {
         </footer>
       </div>
       
+      {isRegistrationModalOpen && <RegistrationRequestModal onClose={() => setIsRegistrationModalOpen(false)} />}
       {isLoginModalOpen && <LoginModal onLogin={handleLogin} onClose={() => setIsLoginModalOpen(false)} context={loginContext} />}
       
       {editingDoc !== null && (

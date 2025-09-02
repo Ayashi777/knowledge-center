@@ -60,4 +60,5 @@ export type IconName =
   | 'view-list'
   | 'plus'
   | 'minus'
-  | 'information-circle';
+  | 'information-circle'
+  | 'paper-airplane';
