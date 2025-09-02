@@ -22,7 +22,7 @@ const resolveKey = (obj: any, key: string): string => {
 };
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLang] = useState<Language>('uk');
 
   const t = useCallback((key: string, options?: Record<string, string | number>): string => {
     let text = resolveKey(translations[lang], key);

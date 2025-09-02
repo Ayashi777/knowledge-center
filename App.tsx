@@ -762,7 +762,11 @@ const App: React.FC = () => {
   const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
 
   const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => 
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches 
+        ? 'dark' 
+        : 'light'
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('recent');
   
