@@ -1,5 +1,3 @@
-
-
 export const translations = {
   en: {
     title: 'Corporate Knowledge Center',
@@ -127,30 +125,11 @@ export const translations = {
       next: 'Next',
     },
     categories: {
-      construction: 'Construction Standards',
-      electrical: 'Electrical Networks',
-      safety: 'Safety Protocols',
-      logistics: 'Logistics & Supply',
-      it: 'IT Infrastructure',
-      hr: 'HR Policies',
-      finance: 'Financial Reporting',
-      legal: 'Legal & Compliance',
-    },
-    documents: {
-      titles: {
-        matSpecQ3: 'Building Material Specifications Q3 (Update)',
-        netSecPol: 'Network Security Policy v2.1',
-        fireDrill: 'Annual Fire Drill Procedure',
-        substationMaint: 'Substation Maintenance Schedule',
-        q2report: 'Quarterly Financial Report Q2',
-        gdpr: 'GDPR Compliance Protocol',
-        whInventory: 'Warehouse Inventory Management Protocol',
-        onboarding: 'Employee Onboarding Process',
-        concreteChecklist: 'Concrete Pouring Quality Checklist',
-        electricalSafetyHV: 'Electrical Safety for High-Voltage Equipment',
-        fleetMaintenance: 'Logistics Fleet Maintenance Schedule',
-        serverBackup: 'IT Department Server Backup Policy',
-      },
+      armoplit: "ArmoPlit",
+      edilmodulo: "Edilmodulo",
+      fixit: "Fixit",
+      freudenberg: "Freudenberg",
+      typar: "Typar"
     },
   },
   uk: {
@@ -279,30 +258,11 @@ export const translations = {
       next: 'Наступна',
     },
     categories: {
-      construction: 'Будівельні стандарти',
-      electrical: 'Електричні мережі',
-      safety: 'Протоколи безпеки',
-      logistics: 'Логістика та постачання',
-      it: 'ІТ-інфраструктура',
-      hr: 'Кадрові політики',
-      finance: 'Фінансова звітність',
-      legal: 'Право та відповідність',
-    },
-    documents: {
-      titles: {
-        matSpecQ3: 'Специфікації будматеріалів Q3 (Оновлення)',
-        netSecPol: 'Політика мережевої безпеки v2.1',
-        fireDrill: 'Щорічна процедура пожежних навчань',
-        substationMaint: 'Графік обслуговування підстанцій',
-        q2report: 'Квартальний фінансовий звіт Q2',
-        gdpr: 'Протокол відповідності GDPR',
-        whInventory: 'Протокол управління складськими запасами',
-        onboarding: 'Процес адаптації нових співробітників',
-        concreteChecklist: 'Контрольний список якості заливки бетону',
-        electricalSafetyHV: 'Електробезпека для високовольтного обладнання',
-        fleetMaintenance: 'Графік обслуговування логістичного автопарку',
-        serverBackup: 'Політика резервного копіювання серверів ІТ-відділу',
-      },
+      armoplit: "ArmoPlit",
+      edilmodulo: "Edilmodulo",
+      fixit: "Fixit",
+      freudenberg: "Freudenberg",
+      typar: "Typar"
     },
   },
 };
