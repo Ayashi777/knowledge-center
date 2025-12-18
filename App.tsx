@@ -11,6 +11,8 @@ import { useDocuments } from './hooks/useDocuments';
 import { Icon } from './components/icons';
 import { subscribeToAuthChanges, logoutUser } from './utils/auth';
 import { User } from 'firebase/auth';
+import { doc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebase";
 
 // --- User Control Component ---
 const UserAccessControl: React.FC<{ 
@@ -58,13 +60,12 @@ const AppContent: React.FC = () => {
     const [currentUserRole, setCurrentUserRole] = useState<UserRole>('guest');
     const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
-    
     const {
-        documents, setDocuments, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory,
+        documents, setDocuments, categories, setCategories, isLoading: isDocsLoading,
+        searchTerm, setSearchTerm, selectedCategory, setSelectedCategory,
         selectedTags, handleTagSelect, sortBy, setSortBy, viewMode, setViewMode, currentPage, setCurrentPage,
         totalPages, paginatedDocs, visibleCategories, allTags, sortedAndFilteredDocs, clearFilters
-    } = useDocuments(initialDocuments, categories, currentUserRole, t, lang);
+    } = useDocuments(currentUserRole, t, lang);
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
@@ -77,7 +78,7 @@ const AppContent: React.FC = () => {
         return (saved as 'light' | 'dark') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     });
 
-    // Real Firebase Auth Subscription
+    // Firebase Auth Subscription
     useEffect(() => {
         const unsubscribe = subscribeToAuthChanges((user, role) => {
             setCurrentUser(user);
@@ -97,32 +98,74 @@ const AppContent: React.FC = () => {
         document.title = t('title');
     }, [lang, t]);
 
-    const handleSaveDocument = (docToSave: Partial<Document>) => {
-        const exists = documents.some(d => d.id === docToSave.id);
-        if (exists) {
-            setDocuments(documents.map(d => d.id === docToSave.id ? { ...d, ...docToSave, updatedAt: new Date() } as Document : d));
-        } else {
-            const newDoc: Document = {
-                id: `doc${Date.now()}`, title: docToSave.title, categoryKey: docToSave.categoryKey!,
-                updatedAt: new Date(), tags: docToSave.tags || [], content: { en: {}, uk: {} }
-            };
-            setDocuments([newDoc, ...documents]);
+    // --- Database Operations ---
+    const initDatabase = async () => {
+        if (!window.confirm("Initialize database with default categories and documents?")) return;
+        
+        // Push Categories
+        for (const cat of initialCategories) {
+            await setDoc(doc(db, "categories", cat.id), cat);
         }
-        setEditingDoc(null);
+        
+        // Push Documents
+        for (const d of initialDocuments) {
+            await setDoc(doc(db, "documents", d.id), {
+                ...d,
+                updatedAt: new Date(d.updatedAt) // Store as Date for Firestore
+            });
+        }
+        alert("Database initialized! Refresh the page.");
     };
 
-    const handleUpdateContent = (docId: string, lang: Language, newContent: DocumentContent) => {
-        setDocuments(prev => prev.map(doc => doc.id === docId ? { ...doc, updatedAt: new Date(), content: { ...doc.content, [lang]: newContent } } : doc));
+    const handleSaveDocument = async (docToSave: Partial<Document>) => {
+        const id = docToSave.id || `doc${Date.now()}`;
+        const newDoc = {
+            ...docToSave,
+            id,
+            updatedAt: new Date(),
+            categoryKey: docToSave.categoryKey!,
+            tags: docToSave.tags || [],
+            content: docToSave.content || { en: {}, uk: {} }
+        };
+        
+        try {
+            await setDoc(doc(db, "documents", id), newDoc, { merge: true });
+            setEditingDoc(null);
+        } catch (error) {
+            alert("Error saving document: " + error);
+        }
     };
 
-    const handleSaveCategory = (catToSave: Category) => {
-        setCategories(prev => prev.map(c => c.id === catToSave.id ? catToSave : c));
-        setEditingCategory(null);
+    const handleUpdateContent = async (docId: string, lang: Language, newContent: DocumentContent) => {
+        const docRef = doc(db, "documents", docId);
+        try {
+            await setDoc(docRef, {
+                content: { [lang]: newContent },
+                updatedAt: new Date()
+            }, { merge: true });
+        } catch (error) {
+            alert("Error updating content: " + error);
+        }
     };
 
-    const handleDeleteCategory = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this category?')) {
-            setCategories(prev => prev.filter(c => c.id !== id));
+    const handleSaveCategory = async (catToSave: Category) => {
+        try {
+            await setDoc(doc(db, "categories", catToSave.id), catToSave, { merge: true });
+            setEditingCategory(null);
+        } catch (error) {
+            alert("Error saving category: " + error);
+        }
+    };
+
+    const handleDeleteCategory = async (id: string) => {
+        if (window.confirm('Delete this category?')) {
+            await deleteDoc(doc(db, "categories", id));
+        }
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        if (window.confirm(t('dashboard.confirmDelete'))) {
+            await deleteDoc(doc(db, "documents", id));
         }
     };
 
@@ -131,27 +174,36 @@ const AppContent: React.FC = () => {
     // Route Components
     const DocPageRoute = () => {
         const { id } = useParams();
-        const doc = documents.find(d => d.id === id);
-        if (isAuthLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
-        if (!doc) return <Navigate to="/" />;
+        const docItem = documents.find(d => d.id === id);
+        if (isAuthLoading || isDocsLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
+        if (!docItem) return <Navigate to="/" />;
         if (!currentUser) {
             return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-xl font-bold mb-4">{t('loginModal.accessRequired')}</h2><button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Log in for full access</button></div>;
         }
-        const cat = categories.find(c => c.nameKey === doc.categoryKey);
-        if (!cat?.viewPermissions.includes(currentUserRole)) return <div className="pt-32 text-center text-red-500 font-bold">{t('docView.accessDenied')}</div>;
+        const cat = categories.find(c => c.nameKey === docItem.categoryKey);
+        if (!cat?.viewPermissions?.includes(currentUserRole)) return <div className="pt-32 text-center text-red-500 font-bold">{t('docView.accessDenied')}</div>;
 
-        return <DocumentView doc={doc} onClose={() => navigate('/')} onRequireLogin={() => setIsLoginModalOpen(true)} currentUserRole={currentUserRole} onUpdateContent={handleUpdateContent} onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} />;
+        return <DocumentView doc={docItem} onClose={() => navigate('/')} onRequireLogin={() => setIsLoginModalOpen(true)} currentUserRole={currentUserRole} onUpdateContent={handleUpdateContent} onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} />;
     };
 
     const AdminPageRoute = () => {
-        if (isAuthLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
+        if (isAuthLoading || isDocsLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
         if (!showAdminControls) return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-2xl font-bold mb-2">Admin Access Required</h2><button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold mt-4">Login as Admin</button></div>;
         return (
-            <AdminPanel categories={categories} documents={documents} onUpdateCategory={setEditingCategory} onDeleteCategory={handleDeleteCategory}
-                onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] })}
-                onDeleteDocument={(id) => window.confirm(t('dashboard.confirmDelete')) && setDocuments(documents.filter(d => d.id !== id))}
-                onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
-            />
+            <div className="relative">
+                <AdminPanel categories={categories} documents={documents} onUpdateCategory={setEditingCategory} onDeleteCategory={handleDeleteCategory}
+                    onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] } as any)}
+                    onDeleteDocument={handleDeleteDocument}
+                    onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
+                />
+                {categories.length === 0 && (
+                    <div className="fixed bottom-10 right-10">
+                        <button onClick={initDatabase} className="bg-red-600 text-white px-6 py-3 rounded-full font-black shadow-2xl animate-pulse">
+                            🚨 INITIALIZE DB
+                        </button>
+                    </div>
+                )}
+            </div>
         );
     };
 
@@ -166,15 +218,15 @@ const AppContent: React.FC = () => {
             </header>
 
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen">
-                {isAuthLoading ? (
-                    <div className="flex items-center justify-center h-screen"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>
+                {(isAuthLoading || (currentUser && isDocsLoading)) ? (
+                    <div className="flex items-center justify-center h-[80vh]"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>
                 ) : (
                     <Routes>
                         <Route path="/" element={
                             <DashboardView 
                                 onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)} 
                                 searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
-                                showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={(id) => window.confirm(t('dashboard.confirmDelete')) && setDocuments(documents.filter(d => d.id !== id))} 
+                                showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={handleDeleteDocument} 
                                 onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
                                 visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
                                 onRequireLogin={() => setIsLoginModalOpen(true)} isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
@@ -194,12 +246,7 @@ const AppContent: React.FC = () => {
             
             {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} context={loginContext} />}
             {editingDoc !== null && <DocumentEditorModal doc={editingDoc} onSave={handleSaveDocument} onClose={() => setEditingDoc(null)} availableCategories={categories} />}
-            {editingCategory !== null && <CategoryEditorModal category={editingCategory} onSave={(cat) => {
-                const exists = categories.find(c => c.id === cat.id);
-                if (exists) setCategories(prev => prev.map(c => c.id === cat.id ? cat : c));
-                else setCategories(prev => [...prev, cat]);
-                setEditingCategory(null);
-            }} onClose={() => setEditingCategory(null)} />}
+            {editingCategory !== null && <CategoryEditorModal category={editingCategory} onSave={handleSaveCategory} onClose={() => setEditingCategory(null)} />}
         </div>
     );
 };

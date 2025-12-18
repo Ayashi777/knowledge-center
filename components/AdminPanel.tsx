@@ -3,6 +3,8 @@ import { Category, Document, UserRole, IconName } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
 import { uploadDocumentFile, listDocumentFiles, deleteDocumentFile, isFileTypeAllowed } from '../utils/storage';
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 interface AccessRequest {
     id: string;
@@ -13,9 +15,14 @@ interface AccessRequest {
     date: string;
 }
 
+interface UserProfile {
+    uid: string;
+    email: string;
+    role: UserRole;
+}
+
 const mockRequests: AccessRequest[] = [
     { id: '1', name: 'Ivan Petrov', email: 'ivan@stroy.ua', company: 'StroyInvest', status: 'pending', date: '2025-12-18' },
-    { id: '2', name: 'Olena Sydorenko', email: 'o.syd@arch.com', company: 'Design Bureau', status: 'pending', date: '2025-12-17' },
 ];
 
 export const AdminPanel: React.FC<{ 
@@ -29,25 +36,52 @@ export const AdminPanel: React.FC<{
     onAddDocument: () => void,
     onClose: () => void 
 }> = ({ 
-    categories, 
-    documents,
-    onUpdateCategory, 
-    onDeleteCategory,
-    onAddCategory,
-    onDeleteDocument,
-    onEditDocument,
-    onAddDocument,
-    onClose 
+    categories, documents, onUpdateCategory, onDeleteCategory, onAddCategory,
+    onDeleteDocument, onEditDocument, onAddDocument, onClose 
 }) => {
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<'roles' | 'categories' | 'documents' | 'requests'>('roles');
+    const [activeTab, setActiveTab] = useState<'roles' | 'categories' | 'documents' | 'requests' | 'users'>('roles');
     const [requests, setRequests] = useState<AccessRequest[]>(mockRequests);
+    const [users, setUsers] = useState<UserProfile[]>([]);
     const [selectedDocForFiles, setSelectedDocForFiles] = useState<Document | null>(null);
     const [docFiles, setDocFiles] = useState<{name: string, url: string, extension?: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false);
     
     const roles: UserRole[] = ['guest', 'foreman', 'designer', 'admin'];
 
+    // --- Users Logic ---
+    const loadUsers = async () => {
+        setIsLoadingUsers(true);
+        try {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            const usersList = querySnapshot.docs.map(doc => ({
+                uid: doc.id,
+                email: doc.data().email,
+                role: doc.data().role
+            })) as UserProfile[];
+            setUsers(usersList);
+        } catch (error) {
+            console.error("Error loading users:", error);
+        } finally {
+            setIsLoadingUsers(false);
+        }
+    };
+
+    const handleRoleChange = async (uid: string, newRole: UserRole) => {
+        try {
+            await updateDoc(doc(db, "users", uid), { role: newRole });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+        } catch (error) {
+            alert("Failed to update role. Check Firestore permissions.");
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'users') loadUsers();
+    }, [activeTab]);
+
+    // --- Rest of Logic ---
     const togglePermission = (category: Category, role: UserRole) => {
         const newPermissions = category.viewPermissions.includes(role)
             ? category.viewPermissions.filter(r => r !== role)
@@ -64,29 +98,17 @@ export const AdminPanel: React.FC<{
         setDocFiles(files);
     };
 
-    useEffect(() => {
-        if (selectedDocForFiles) loadFiles(selectedDocForFiles);
-    }, [selectedDocForFiles]);
+    useEffect(() => { if (selectedDocForFiles) loadFiles(selectedDocForFiles); }, [selectedDocForFiles]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!selectedDocForFiles || !e.target.files?.[0]) return;
         const file = e.target.files[0];
-        
-        if (!isFileTypeAllowed(file.name)) {
-            alert("Invalid file type! Only PDF, Word, and Excel are allowed.");
-            return;
-        }
-
+        if (!isFileTypeAllowed(file.name)) { alert("Invalid file type!"); return; }
         setIsUploading(true);
         try {
             await uploadDocumentFile(selectedDocForFiles.id, file);
             await loadFiles(selectedDocForFiles);
-        } catch (error) {
-            console.error(error);
-            alert("Upload failed. Make sure Firebase Storage is configured correctly.");
-        } finally {
-            setIsUploading(false);
-        }
+        } catch (error) { console.error(error); alert("Upload failed."); } finally { setIsUploading(false); }
     };
 
     const handleFileDelete = async (fileName: string) => {
@@ -97,6 +119,7 @@ export const AdminPanel: React.FC<{
 
     const navItems = [
         { id: 'roles', label: t('adminPanel.tabs.roles'), icon: 'users' as IconName },
+        { id: 'users', label: 'User Directory', icon: 'users' as IconName }, // Using users icon
         { id: 'categories', label: t('adminPanel.tabs.categories'), icon: 'view-grid' as IconName },
         { id: 'documents', label: t('adminPanel.tabs.documents'), icon: 'hr' as IconName },
         { id: 'requests', label: 'Requests', icon: 'paper-airplane' as IconName },
@@ -104,7 +127,6 @@ export const AdminPanel: React.FC<{
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 pt-16 sm:pt-12 min-h-[80vh]">
-            {/* Admin Internal Sidebar */}
             <aside className="w-full lg:w-64 flex-shrink-0">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
@@ -123,30 +145,19 @@ export const AdminPanel: React.FC<{
                 </div>
             </aside>
 
-            {/* Admin Content Area */}
             <main className="flex-grow">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-full p-6">
                     {selectedDocForFiles ? (
                         <div className="animate-fade-in">
-                             <button onClick={() => setSelectedDocForFiles(null)} className="flex items-center gap-2 text-sm font-bold text-blue-600 mb-6 hover:underline">
-                                <Icon name="plus" className="w-4 h-4 rotate-45" /> Back to Documents
-                            </button>
+                             <button onClick={() => setSelectedDocForFiles(null)} className="flex items-center gap-2 text-sm font-bold text-blue-600 mb-6 hover:underline"><Icon name="plus" className="w-4 h-4 rotate-45" /> Back to Documents</button>
                             <h3 className="text-xl font-black mb-1">{selectedDocForFiles.title || t(selectedDocForFiles.titleKey!)}</h3>
-                            <p className="text-sm text-gray-500 mb-8 uppercase tracking-widest font-bold">Manage Storage Files</p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                                 <div className="space-y-4">
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Files in Storage</h4>
                                     {docFiles.map(file => (
                                         <div key={file.name} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                            <div className="flex items-center gap-3">
-                                                <Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-6 h-6 text-gray-400" />
-                                                <span className="text-sm font-bold truncate max-w-[150px]">{file.name}</span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <a href={file.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Icon name="download" className="w-4 h-4" /></a>
-                                                <button onClick={() => handleFileDelete(file.name)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Icon name="plus" className="w-4 h-4 rotate-45" /></button>
-                                            </div>
+                                            <div className="flex items-center gap-3"><Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-6 h-6 text-gray-400" /><span className="text-sm font-bold truncate max-w-[150px]">{file.name}</span></div>
+                                            <div className="flex gap-2"><a href={file.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Icon name="download" className="w-4 h-4" /></a><button onClick={() => handleFileDelete(file.name)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Icon name="plus" className="w-4 h-4 rotate-45" /></button></div>
                                         </div>
                                     ))}
                                     {docFiles.length === 0 && <p className="text-sm text-gray-400 italic">No files uploaded yet.</p>}
@@ -154,22 +165,54 @@ export const AdminPanel: React.FC<{
                                 <div className="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-2xl border border-dashed border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
                                     <Icon name="upload" className={`w-12 h-12 mb-4 ${isUploading ? 'animate-bounce text-blue-400' : 'text-blue-600'}`} />
                                     <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Upload New File</h4>
-                                    <p className="text-xs text-blue-700/60 dark:text-blue-400/60 mb-6">Allowed: .pdf, .doc, .docx, .xls, .xlsx</p>
                                     <input type="file" id="admin-file-upload" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
-                                    <label htmlFor="admin-file-upload" className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm cursor-pointer hover:bg-blue-700 transition-all ${isUploading ? 'opacity-50 cursor-wait' : ''}`}>
-                                        {isUploading ? 'Uploading...' : 'Select File'}
-                                    </label>
+                                    <label htmlFor="admin-file-upload" className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm cursor-pointer hover:bg-blue-700 ${isUploading ? 'opacity-50 cursor-wait' : ''}`}>{isUploading ? 'Uploading...' : 'Select File'}</label>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <>
-                        {activeTab === 'roles' && (
+                        {activeTab === 'users' && (
                             <div className="animate-fade-in">
                                 <header className="mb-6">
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.roles')}</h3>
-                                    <p className="text-sm text-gray-500">Manage category visibility permissions.</p>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">User Directory</h3>
+                                    <p className="text-sm text-gray-500">Manage user roles and system access.</p>
                                 </header>
+                                {isLoadingUsers ? (
+                                    <div className="flex justify-center py-10"><Icon name="loading" className="w-8 h-8 text-blue-600" /></div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {users.map(user => (
+                                            <div key={user.uid} className="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-900 dark:text-white">{user.email}</p>
+                                                    <p className="text-[10px] text-gray-400 font-mono">{user.uid}</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    {roles.map(r => (
+                                                        <button 
+                                                            key={r} 
+                                                            onClick={() => handleRoleChange(user.uid, r)}
+                                                            className={`px-3 py-1 text-[10px] font-black uppercase rounded-md transition-all ${
+                                                                user.role === r 
+                                                                ? 'bg-blue-600 text-white shadow-sm' 
+                                                                : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 border border-gray-200 dark:border-gray-700'
+                                                            }`}
+                                                        >
+                                                            {r}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'roles' && (
+                            <div className="animate-fade-in">
+                                <header className="mb-6"><h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.roles')}</h3><p className="text-sm text-gray-500">Manage category visibility permissions.</p></header>
                                 <div className="overflow-x-auto border border-gray-100 dark:border-gray-700 rounded-xl">
                                     <table className="w-full text-left border-collapse">
                                         <thead><tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700"><th className="py-4 px-6 font-bold text-xs text-gray-500 dark:text-gray-400 uppercase">Category</th>{roles.map(role => (<th key={role} className="py-4 px-4 font-bold text-[10px] text-gray-500 dark:text-gray-400 uppercase text-center">{t(`roles.${role}`)}</th>))}</tr></thead>
@@ -181,20 +224,14 @@ export const AdminPanel: React.FC<{
 
                         {activeTab === 'categories' && (
                             <div className="animate-fade-in">
-                                <header className="mb-6 flex justify-between items-center">
-                                    <div><h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.categories')}</h3><p className="text-sm text-gray-500">Manage system categories.</p></div>
-                                    <button onClick={() => onAddCategory({})} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700"><Icon name="plus" className="w-4 h-4" /> {t('common.add')}</button>
-                                </header>
+                                <header className="mb-6 flex justify-between items-center"><div><h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.categories')}</h3><p className="text-sm text-gray-500">Manage system categories.</p></div><button onClick={() => onAddCategory({})} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700"><Icon name="plus" className="w-4 h-4" /> {t('common.add')}</button></header>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{categories.map(cat => (<div key={cat.id} className="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group"><div className="flex items-center gap-4"><div className="p-3 bg-white dark:bg-gray-800 rounded-lg text-blue-600 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700"><Icon name={cat.iconName} className="w-6 h-6" /></div><div><p className="font-bold text-gray-900 dark:text-white text-base">{t(cat.nameKey)}</p></div></div><div className="flex gap-2"><button onClick={() => onUpdateCategory(cat)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Icon name="cog" className="w-4 h-4" /></button><button onClick={() => onDeleteCategory(cat.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Icon name="plus" className="w-4 h-4 rotate-45" /></button></div></div>))}</div>
                             </div>
                         )}
 
                         {activeTab === 'documents' && (
                             <div className="animate-fade-in">
-                                <header className="mb-6 flex justify-between items-center">
-                                    <div><h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.documents')}</h3><p className="text-sm text-gray-500">Manage documents and attach files.</p></div>
-                                    <button onClick={onAddDocument} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700"><Icon name="plus" className="w-4 h-4" /> {t('common.add')}</button>
-                                </header>
+                                <header className="mb-6 flex justify-between items-center"><div><h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('adminPanel.tabs.documents')}</h3><p className="text-sm text-gray-500">Manage documents and attach files.</p></div><button onClick={onAddDocument} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700"><Icon name="plus" className="w-4 h-4" /> {t('common.add')}</button></header>
                                 <div className="space-y-2">{documents.map(doc => (<div key={doc.id} className="p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between hover:border-blue-300 transition-all group"><div className="flex-grow min-w-0 pr-4"><p className="font-bold text-gray-900 dark:text-white text-sm truncate">{doc.titleKey ? t(doc.titleKey) : doc.title}</p><p className="text-[10px] text-gray-500 font-mono mt-0.5">{t(doc.categoryKey)} • {doc.updatedAt.toLocaleDateString()}</p></div><div className="flex items-center gap-2"><button onClick={() => setSelectedDocForFiles(doc)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-colors shadow-sm"><Icon name="upload" className="w-3.5 h-3.5" /> Files</button><button onClick={() => onEditDocument(doc)} className="p-2 text-gray-400 hover:text-blue-600"><Icon name="cog" className="w-4 h-4" /></button><button onClick={() => onDeleteDocument(doc.id)} className="p-2 text-gray-400 hover:text-red-600"><Icon name="plus" className="w-4 h-4 rotate-45" /></button></div></div>))}</div>
                             </div>
                         )}

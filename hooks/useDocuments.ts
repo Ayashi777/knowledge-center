@@ -1,9 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Document, Category, UserRole, SortBy, ViewMode } from '../types';
-import { useI18n, Language } from '../i18n';
+import { Language } from '../i18n';
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "../firebase";
 
-export const useDocuments = (initialDocuments: Document[], categories: Category[], currentUserRole: UserRole, t: (key: string) => string, lang: Language) => {
-    const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+export const useDocuments = (currentUserRole: UserRole, t: (key: string) => string, lang: Language) => {
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -11,8 +16,39 @@ export const useDocuments = (initialDocuments: Document[], categories: Category[
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [currentPage, setCurrentPage] = useState(1);
 
+    // --- Real-time Sync with Firestore ---
+    useEffect(() => {
+        setIsLoading(true);
+        
+        // Listen to Categories
+        const unsubscribeCats = onSnapshot(collection(db, "categories"), (snapshot) => {
+            const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Category[];
+            setCategories(cats);
+        });
+
+        // Listen to Documents
+        const unsubscribeDocs = onSnapshot(collection(db, "documents"), (snapshot) => {
+            const docs = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    // Convert Firestore Timestamp to JS Date
+                    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt)
+                };
+            }) as Document[];
+            setDocuments(docs);
+            setIsLoading(false);
+        });
+
+        return () => {
+            unsubscribeCats();
+            unsubscribeDocs();
+        };
+    }, []);
+
     const visibleCategories = useMemo(() => {
-        return categories.filter(cat => cat.viewPermissions.includes(currentUserRole));
+        return categories.filter(cat => cat.viewPermissions?.includes(currentUserRole));
     }, [categories, currentUserRole]);
 
     const visibleCategoryKeys = useMemo(() => new Set(visibleCategories.map(c => c.nameKey)), [visibleCategories]);
@@ -26,20 +62,20 @@ export const useDocuments = (initialDocuments: Document[], categories: Category[
         const docsToList = currentUserRole === 'guest' ? documents : visibleDocuments;
         const tags = new Set<string>();
         docsToList.forEach(doc => {
-            doc.tags.forEach(tag => tags.add(tag));
+            doc.tags?.forEach(tag => tags.add(tag));
         });
         return Array.from(tags).sort();
     }, [visibleDocuments, documents, currentUserRole]);
 
     const sortedAndFilteredDocs = useMemo(() => {
-        let docs = visibleDocuments;
+        let docs = [...visibleDocuments];
 
         if (selectedCategory) {
             docs = docs.filter(doc => doc.categoryKey === selectedCategory);
         }
 
         if (selectedTags.size > 0) {
-            docs = docs.filter(doc => doc.tags.some(tag => selectedTags.has(tag)));
+            docs = docs.filter(doc => doc.tags?.some(tag => selectedTags.has(tag)));
         }
 
         if (searchTerm) {
@@ -48,22 +84,21 @@ export const useDocuments = (initialDocuments: Document[], categories: Category[
                 const title = doc.titleKey ? t(doc.titleKey) : doc.title || '';
                 return title.toLowerCase().includes(lowerSearchTerm) ||
                     t(doc.categoryKey).toLowerCase().includes(lowerSearchTerm) ||
-                    doc.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm));
+                    doc.tags?.some(tag => tag.toLowerCase().includes(lowerSearchTerm));
             });
         }
 
-        const sorted = [...docs];
         if (sortBy === 'alpha') {
-            sorted.sort((a, b) => {
+            docs.sort((a, b) => {
                 const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
                 const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
                 return titleA.localeCompare(titleB, lang);
             });
         } else {
-            sorted.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+            docs.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         }
 
-        return sorted;
+        return docs;
     }, [searchTerm, visibleDocuments, selectedCategory, selectedTags, t, sortBy, lang]);
 
     const ITEMS_PER_PAGE = viewMode === 'grid' ? 9 : 10;
@@ -95,6 +130,8 @@ export const useDocuments = (initialDocuments: Document[], categories: Category[
 
     return {
         documents, setDocuments,
+        categories, setCategories,
+        isLoading,
         searchTerm, setSearchTerm,
         selectedCategory, setSelectedCategory,
         selectedTags, handleTagSelect,
