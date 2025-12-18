@@ -124,19 +124,27 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label>
-                                    <input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                    <input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderName')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label>
-                                    <input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                    <input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderCompany')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label>
-                                    <input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                    <input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderPhone')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label>
-                                    <input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                    <input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderEmail')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
                                 
                                 <div className="sm:col-span-2 flex gap-3 pt-2">

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2025-05-24
+### Added
+- **Form Placeholders**: Added helpful placeholders to the Access Request form fields to match the login form experience.
+
 ## [2.2.0] - 2025-12-18
 ### Added
 - **Closed Registration System**: Replaced public sign-up with an "Access Request" workflow.
