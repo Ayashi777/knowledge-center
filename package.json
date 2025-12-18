@@ -1,11 +1,12 @@
 {
   "name": "corporate-knowledge-center",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "echo '⚠️ Reminder: Ensure Changelog.md is updated before deploying! ⚠️' && vite build && firebase deploy --only hosting",
     "preview": "vite preview"
   },
   "dependencies": {
