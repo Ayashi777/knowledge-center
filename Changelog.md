@@ -2,17 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.0] - 2025-12-18
+## [1.8.0] - 2025-12-18
 ### Added
-- **Admin File Management System**: Dedicated UI to manage files for each document.
-- **Support for More Formats**: Now supports `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`.
-- **File CRUD**: Admins can now view, upload, and delete files directly from the `/admin` page.
-- **Enhanced Validation**: Client-side file extension checking.
-- **Storage UI**: Loading indicators and empty states for file management.
+- **Full Firebase Authentication**: Real email/password sign-in and registration.
+- **Firestore User Profiles**: User roles are now stored and fetched from Firestore `users` collection.
+- **Auth State Observer**: Automatic session recovery on page refresh.
+- **Enhanced Login UI**: Multi-view modal for login and registration with validation.
+- **Secure Logout**: Clear session and redirect to home.
 
 ### Changed
-- Refactored `AdminPanel.tsx` to support a nested "File Manager" view for documents.
-- Improved layout consistency in the Admin dashboard.
+- Replaced simulated role selection with secure Firebase Auth.
+- Updated `App.tsx` to handle async auth loading states.
+- Cleaned up `localStorage` role persistence in favor of Firebase's native session management.
 
 ### Fixed
-- Fixed issue where file types other than PDF/DWG were not correctly handled.
+- UI flickering during initial authentication check.
