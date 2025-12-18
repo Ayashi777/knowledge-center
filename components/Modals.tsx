@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserRole, Document, Category, IconName } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
@@ -21,11 +21,25 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [reqPassword, setReqPassword] = useState('');
     const [reqPasswordConfirm, setReqPasswordConfirm] = useState('');
     const [reqPhone, setReqPhone] = useState('');
-    const [reqActivity, setReqActivity] = useState('');
     const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); 
     
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Validation Logic
+    const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reqEmail), [reqEmail]);
+    const isPhoneValid = useMemo(() => /^\+?3?8?(0\d{9})$/.test(reqPhone.replace(/\s/g, '')), [reqPhone]);
+    const isPasswordValid = useMemo(() => reqPassword.length >= 8, [reqPassword]);
+    const isPasswordMatch = useMemo(() => reqPassword === reqPasswordConfirm && reqPasswordConfirm !== '', [reqPassword, reqPasswordConfirm]);
+    const isFormValid = useMemo(() => 
+        reqName.trim() !== '' && 
+        reqCompany.trim() !== '' && 
+        isEmailValid && 
+        isPhoneValid && 
+        isPasswordValid && 
+        isPasswordMatch && 
+        reqRoleType !== '', 
+    [reqName, reqCompany, isEmailValid, isPhoneValid, isPasswordValid, isPasswordMatch, reqRoleType]);
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
@@ -50,26 +64,10 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
     const handleRequestSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isFormValid) return;
+        
         setError('');
         setIsLoading(true);
-
-        if (!reqRoleType) {
-            setError("Будь ласка, оберіть бажаний тип доступу.");
-            setIsLoading(false);
-            return;
-        }
-
-        if (reqPassword.length < 8) {
-            setError("Пароль повинен містити мінімум 8 символів.");
-            setIsLoading(false);
-            return;
-        }
-
-        if (reqPassword !== reqPasswordConfirm) {
-            setError("Паролі не співпадають.");
-            setIsLoading(false);
-            return;
-        }
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, reqEmail, reqPassword);
@@ -81,7 +79,6 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                 name: reqName,
                 company: reqCompany,
                 phone: reqPhone,
-                activity: reqActivity,
                 requestedRole: reqRoleType,
                 createdAt: new Date().toISOString()
             });
@@ -120,7 +117,14 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
     const selectableRoles: UserRole[] = ['foreman', 'designer'];
 
-    const inputClasses = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:ring-inset outline-none dark:text-white text-sm font-semibold transition-all";
+    const getStatusClass = (valid: boolean, value: string) => {
+        if (!value) return "border-gray-200 dark:border-gray-700";
+        return valid 
+            ? "border-green-500 ring-1 ring-green-500 focus:ring-green-500" 
+            : "border-red-500 ring-1 ring-red-500 focus:ring-red-500";
+    };
+
+    const inputBase = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-inset outline-none dark:text-white text-sm font-semibold transition-all";
 
     return (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
@@ -138,14 +142,14 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label>
                                     <input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                                        className={inputClasses}
+                                        className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`}
                                         placeholder="name@company.com"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label>
                                     <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                                        className={inputClasses}
+                                        className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`}
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -189,46 +193,45 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label>
                                     <input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderName')}
-                                        className={inputClasses} />
+                                        className={`${inputBase} ${reqName ? 'border-green-500/50' : 'border-gray-200 dark:border-gray-700'}`} />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label>
                                     <input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderCompany')}
-                                        className={inputClasses} />
+                                        className={`${inputBase} ${reqCompany ? 'border-green-500/50' : 'border-gray-200 dark:border-gray-700'}`} />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label>
                                     <input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} 
-                                        placeholder={t('registrationModal.placeholderPhone')}
-                                        className={inputClasses} />
+                                        placeholder="+380..."
+                                        className={`${inputBase} ${getStatusClass(isPhoneValid, reqPhone)}`} />
+                                    {!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold">Формат: +380XXXXXXXXX</p>}
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label>
                                     <input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} 
-                                        placeholder={t('registrationModal.placeholderEmail')}
-                                        className={inputClasses} />
+                                        placeholder="email@example.com"
+                                        className={`${inputBase} ${getStatusClass(isEmailValid, reqEmail)}`} />
                                 </div>
                                 
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
                                     <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
-                                        placeholder={t('registrationModal.placeholderPassword')}
-                                        className={inputClasses} />
-                                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Мінімум 8 символів</p>
+                                        className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)}`} />
+                                    <p className={`text-[9px] mt-1 uppercase font-bold tracking-widest ${isPasswordValid ? 'text-green-500' : 'text-gray-400'}`}>Мінімум 8 символів</p>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
                                     <input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} 
-                                        placeholder={t('registrationModal.placeholderPasswordConfirm')}
-                                        className={inputClasses} />
+                                        className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)}`} />
                                 </div>
                                 
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
 
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
                                     <button type="button" onClick={() => setView('login')} className="flex-1 py-4 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700">{t('common.cancel')}</button>
-                                    <button type="submit" disabled={isLoading} className={`flex-1 py-4 bg-blue-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50' : ''}`}>
+                                    <button type="submit" disabled={!isFormValid || isLoading} className={`flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'}`}>
                                         {isLoading ? '...' : t('registrationModal.buttonSubmit')}
                                     </button>
                                 </div>
@@ -274,13 +277,6 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                             </div>
                         </div>
                     </div>
-                    {view === 'login' && (
-                        <div className="mt-10 pt-6">
-                            <button onClick={onClose} className="w-full py-3 text-xs font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-widest transition-colors border border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
-                                {t('common.cancel')}
-                            </button>
-                        </div>
-                    )}
                 </div>
 
             </div>
