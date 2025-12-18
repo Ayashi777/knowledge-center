@@ -26,10 +26,16 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    // Detailed Password Validation
+    const hasMinLen = reqPassword.length >= 8;
+    const hasNumber = /\d/.test(reqPassword);
+    const hasUpper = /[A-Z]/.test(reqPassword);
+    const hasLower = /[a-z]/.test(reqPassword);
+
     // Validation Logic
     const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reqEmail), [reqEmail]);
     const isPhoneValid = useMemo(() => /^\+?3?8?(0\d{9})$/.test(reqPhone.replace(/\s/g, '')), [reqPhone]);
-    const isPasswordValid = useMemo(() => reqPassword.length >= 8, [reqPassword]);
+    const isPasswordValid = useMemo(() => hasMinLen && hasNumber && hasUpper && hasLower, [hasMinLen, hasNumber, hasUpper, hasLower]);
     const isPasswordMatch = useMemo(() => reqPassword === reqPasswordConfirm && reqPasswordConfirm !== '', [reqPassword, reqPasswordConfirm]);
     const isFormValid = useMemo(() => 
         reqName.trim() !== '' && 
@@ -215,13 +221,31 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                         className={`${inputBase} ${getStatusClass(isEmailValid, reqEmail)}`} />
                                 </div>
                                 
-                                <div>
+                                <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
                                     <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
                                         className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)}`} />
-                                    <p className={`text-[9px] mt-1 uppercase font-bold tracking-widest ${isPasswordValid ? 'text-green-500' : 'text-gray-400'}`}>Мінімум 8 символів</p>
+                                    
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasMinLen ? 'text-green-500' : 'text-gray-400'}`}>
+                                            <Icon name={hasMinLen ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasMinLen ? 'rotate-45 text-gray-300' : ''}`} />
+                                            8+ символів
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasNumber ? 'text-green-500' : 'text-gray-400'}`}>
+                                            <Icon name={hasNumber ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasNumber ? 'rotate-45 text-gray-300' : ''}`} />
+                                            Цифра
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasUpper ? 'text-green-500' : 'text-gray-400'}`}>
+                                            <Icon name={hasUpper ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasUpper ? 'rotate-45 text-gray-300' : ''}`} />
+                                            Велика літера
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasLower ? 'text-green-500' : 'text-gray-400'}`}>
+                                            <Icon name={hasLower ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasLower ? 'rotate-45 text-gray-300' : ''}`} />
+                                            Мала літера
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
+                                <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
                                     <input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} 
                                         className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)}`} />
