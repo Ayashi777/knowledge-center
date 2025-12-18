@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Navigat
 import { Category, Document, DocumentContent, UserRole } from './types';
 import { CATEGORIES as initialCategories, RECENT_DOCUMENTS as initialDocuments } from './constants';
 import { useI18n, Language } from './i18n';
-import { ThemeSwitcher, LanguageSwitcher } from './components/UI';
+import { ThemeSwitcher } from './components/UI';
 import { LoginModal, RegistrationRequestModal, DocumentEditorModal, CategoryEditorModal } from './components/Modals';
 import { DashboardView, DocumentView } from './components/Views';
 import { AdminPanel } from './components/AdminPanel';
@@ -90,16 +90,9 @@ const AppContent: React.FC = () => {
         document.title = t('title');
     }, [lang, t]);
 
-    const initDatabase = async () => {
-        if (!window.confirm("Seed database with default data?")) return;
-        for (const cat of initialCategories) await setDoc(doc(db, "categories", cat.id), cat);
-        for (const d of initialDocuments) await setDoc(doc(db, "documents", d.id), { ...d, updatedAt: new Date(d.updatedAt) });
-        alert("Success! Refresh to see data.");
-    };
-
     const handleSaveDocument = async (docToSave: Partial<Document>) => {
         const id = docToSave.id || `doc${Date.now()}`;
-        await setDoc(doc(db, "documents", id), { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { en: {}, uk: {} } }, { merge: true });
+        await setDoc(doc(db, "documents", id), { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { uk: {} } }, { merge: true });
         setEditingDoc(null);
     };
 
@@ -112,7 +105,7 @@ const AppContent: React.FC = () => {
         setEditingCategory(null);
     };
 
-    const handleDeleteCategory = async (id: string) => { if (window.confirm('Delete category?')) await deleteDoc(doc(db, "categories", id)); };
+    const handleDeleteCategory = async (id: string) => { if (window.confirm('Видалити категорію?')) await deleteDoc(doc(db, "categories", id)); };
     const handleDeleteDocument = async (id: string) => { if (window.confirm(t('dashboard.confirmDelete'))) await deleteDoc(doc(db, "documents", id)); };
 
     const showAdminControls = currentUserRole === 'admin';
@@ -128,8 +121,8 @@ const AppContent: React.FC = () => {
                 <div className="pt-32 text-center animate-fade-in">
                     <Icon name="lock-closed" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{t('loginModal.accessRequired')}</h2>
-                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">This resource is restricted. Please sign in to verify your access level.</p>
-                    <button onClick={() => { setLoginContext('view'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Sign In Now</button>
+                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">Цей ресурс обмежений. Будь ласка, увійдіть, щоб підтвердити свій рівень доступу.</p>
+                    <button onClick={() => { setLoginContext('view'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Увійти зараз</button>
                 </div>
             );
         }
@@ -145,9 +138,9 @@ const AppContent: React.FC = () => {
             return (
                 <div className="pt-32 text-center animate-fade-in">
                     <Icon name="cog" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Administrator Area</h2>
-                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">Please authorize with administrative credentials to access management tools.</p>
-                    <button onClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Admin Login</button>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Зона Адміністратора</h2>
+                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">Будь ласка, авторизуйтесь з правами адміністратора для доступу до інструментів керування.</p>
+                    <button onClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Вхід для Адміна</button>
                 </div>
             );
         }
@@ -157,22 +150,18 @@ const AppContent: React.FC = () => {
                     onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] } as any)}
                     onDeleteDocument={handleDeleteDocument} onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
                 />
-                {categories.length === 0 && (
-                    <div className="fixed bottom-10 right-10"><button onClick={initDatabase} className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black shadow-2xl animate-pulse uppercase tracking-widest text-xs">🚨 Initialize Database</button></div>
-                )}
             </div>
         );
     };
 
     return (
-        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-600/5' : ''}`}>
+        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500/5' : ''}`}>
             <header className="fixed top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-6">
                     <button onClick={() => navigate('/')} className="text-lg font-black tracking-tighter text-gray-900 dark:text-white flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs">CE</div>
-                        <span className="hidden sm:block">KNOWLEDGE</span>
+                        <span className="hidden sm:block">ЦЕНТР ЗНАНЬ</span>
                     </button>
-                    <LanguageSwitcher />
                 </div>
                 <div className="flex items-center gap-6">
                     <UserAccessControl user={currentUser} role={currentUserRole} onLoginClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} />
