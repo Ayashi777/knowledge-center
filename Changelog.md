@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.4] - 2025-12-19
+### Fixed
+- **Cache Invalidation**: Bumped package version to `1.2.1` to force cache clearing and ensure users see the latest registration form updates.
+- **Registration Form**: Confirmed presence of password confirmation fields and validation logic in the production build.
+
 ## [2.4.3] - 2025-12-19
 ### Added
 - **Secure Registration**: Implemented password confirmation field and length validation (min 8 chars) in the registration form.
