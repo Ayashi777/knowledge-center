@@ -77,6 +77,8 @@ export const translations = {
         foremanDesc: 'Перегляд будівельних норм і протоколів безпеки.',
         designer: 'Проєктувальник',
         designerDesc: 'Доступ до технічних креслень та логістики.',
+        architect: 'Архітектор',
+        architectDesc: 'Доступ до архітектурних планів та специфікацій матеріалів.',
         admin: 'Адміністратор',
         adminDesc: 'Повний доступ до всіх документів та налаштувань.',
       },
@@ -142,6 +144,7 @@ export const translations = {
         guest: 'Гість',
         foreman: 'Прораб',
         designer: 'Проєктувальник',
+        architect: 'Архітектор',
         admin: 'Адміністратор',
     }
   },
@@ -221,6 +224,8 @@ export const translations = {
             foremanDesc: 'Site protocols access.',
             designer: 'Designer',
             designerDesc: 'Blueprints access.',
+            architect: 'Architect',
+            architectDesc: 'Access to material specs and plans.',
             admin: 'Admin',
             adminDesc: 'Full access.',
         },
@@ -286,6 +291,7 @@ export const translations = {
         guest: 'Guest',
         foreman: 'Foreman',
         designer: 'Designer',
+        architect: 'Architect',
         admin: 'Admin',
     }
   }

@@ -1,6 +1,6 @@
 import { Language } from './i18n';
 
-export type UserRole = 'guest' | 'foreman' | 'designer' | 'admin';
+export type UserRole = 'guest' | 'foreman' | 'designer' | 'architect' | 'admin';
 
 export interface Category {
   id: string;
@@ -68,4 +68,5 @@ export type IconName =
   | 'information-circle'
   | 'paper-airplane'
   | 'cog'
-  | 'users';
+  | 'users'
+  | 'view-boards';

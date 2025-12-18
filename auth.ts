@@ -4,7 +4,7 @@ import { CATEGORIES } from './constants';
 
 // Define which categories each role can VIEW
 const viewPermissions: Record<UserRole, string[]> = {
-    guest: [], // Guests see no documents, they should be prompted to register/login
+    guest: [], 
     foreman: [
         'categories.armoplit',
         'categories.fixit',
@@ -15,7 +15,14 @@ const viewPermissions: Record<UserRole, string[]> = {
         'categories.freudenberg',
         'categories.typar',
     ],
-    admin: CATEGORIES.map(c => c.nameKey), // Admin can see all categories
+    architect: [
+        'categories.armoplit',
+        'categories.edilmodulo',
+        'categories.freudenberg',
+        'categories.typar',
+        'categories.fixit',
+    ],
+    admin: CATEGORIES.map(c => c.nameKey), 
 };
 
 /**
