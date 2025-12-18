@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2025-12-19
+### Added
+- **User Management**: Introduced a fully functional "Users" tab in the Admin Panel with a detailed table view.
+- **Profile Editing**: Administrators can now edit user details (Name, Company, Phone, Role) via a new modal interface directly from the user list.
+- **Architect Role**: Added a new `Architect` role with specific permissions, replacing `Admin` in public-facing role selection menus.
+- **Admin Visibility**: The `Admin` role is now hidden from registration forms and public role lists to improve security and UX.
+
+### Fixed
+- **Admin Panel Restoration**: Fixed a regression where some admin tabs (Roles, Categories, Documents) were not rendering correctly.
+- **Translation Keys**: Resolved missing translation keys for dashboard sorting, sidebar filters, and role descriptions (`roles.guest`, `sidebar.*`, `dashboard.*`).
+- **Request Metadata**: Access requests now display full contact details (Phone, Email, Company) and the user's requested role for better vetting.
+
 ## [2.4.7] - 2025-12-19
 ### Added
 - **Interactive Password Requirements**: Added a real-time checklist under the password field in the registration form.
