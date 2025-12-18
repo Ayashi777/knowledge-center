@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.6] - 2025-12-19
+### Changed
+- **Optimization**: Implemented code splitting (manual chunks) in Vite config. Large libraries are now bundled into a separate `vendor.js` file to improve load times and fix "chunk size" warnings.
+- **Build**: Increased chunkSizeWarningLimit to 1000kB for better development experience.
+
 ## [2.4.5] - 2025-12-19
 ### Fixed
 - **UI Polishing**: Added `focus:ring-inset` to input fields to prevent focus outlines from being clipped by containers.
