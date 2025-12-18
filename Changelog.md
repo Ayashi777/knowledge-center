@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2025-12-19
+### Fixed
+- **Admin Approval Logic**: Fixed an issue where approving a request would not correctly assign the role if the user was not found by UID (added email fallback).
+- **Request Metadata**: Added display of "Requested Role" in the Admin Panel so admins can see what the user asked for.
+- **Role Assignment**: The approval dropdown now defaults to the user's requested role instead of always defaulting to "Foreman".
+
 ## [2.4.1] - 2025-12-19
 ### Fixed
 - **App Crash Protection**: Added robust safety checks in the i18n translation engine to prevent application crashes during hard refreshes (`Ctrl+Shift+R`) or when data is partially loaded.

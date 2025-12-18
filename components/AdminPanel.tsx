@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Category, Document, UserRole, IconName } from '../types';
+import { UserRole, Document, Category, IconName } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
 import { uploadDocumentFile, listDocumentFiles, deleteDocumentFile, isFileTypeAllowed } from '../utils/storage';
@@ -11,7 +11,9 @@ interface AccessRequest {
     uid?: string; // Optional because old requests might not have it
     name: string;
     email: string;
+    phone?: string;
     company: string;
+    requestedRole?: UserRole;
     status: 'pending' | 'approved' | 'denied';
     date: string;
 }
@@ -69,25 +71,33 @@ export const AdminPanel: React.FC<{
     };
 
     const handleApproveRequest = async (req: AccessRequest) => {
-        const roleToAssign = pendingRoles[req.id] || 'foreman';
+        // If a specific role was selected in dropdown, use it. Otherwise fallback to requestedRole or default 'foreman'
+        const roleToAssign = pendingRoles[req.id] || req.requestedRole || 'foreman';
+        
         try {
             // 1. Update Request Status
             await updateDoc(doc(db, "requests", req.id), { status: 'approved', assignedRole: roleToAssign });
 
             // 2. Update User Role
-            // Strategy: Check if we have a UID. If so, update directly. 
-            // If not (legacy request), try to find user by email.
             let userUid = req.uid;
             
+            // If we don't have a UID attached to the request, try to find user by email
             if (!userUid) {
                 const existingUser = users.find(u => u.email === req.email);
                 if (existingUser) userUid = existingUser.uid;
             }
 
             if (userUid) {
+                // User exists in Auth/Firestore -> Update Role
                 await updateDoc(doc(db, "users", userUid), { role: roleToAssign });
             } else {
-                console.warn("User not found for request, role update deferred until user logs in (or manual update required).");
+                // EDGE CASE: Request exists but User does NOT exist.
+                // This happens if the user submitted a request via the old "Request Form" (without Auth)
+                // OR if the user was deleted from Auth but the request remained.
+                // In a real app, we might want to create a provisional user here, but since we switched to
+                // "Register First" flow, this is mostly for legacy cleanup.
+                console.warn("User not found for request. They must register first or be manually created.");
+                alert("Увага: Користувач не знайдений в базі даних акаунтів. Можливо, він подав заявку через стару форму. Йому потрібно зареєструватися самостійно.");
             }
 
         } catch (error) {
@@ -239,13 +249,15 @@ export const AdminPanel: React.FC<{
                         {activeTab === 'requests' && (
                             <div className="animate-fade-in text-center sm:text-left">
                                 <header className="mb-6"><h3 className="text-2xl font-black text-gray-900 dark:text-white">Запити на доступ</h3><p className="text-sm text-gray-500">Обробка вхідних заявок від нових користувачів.</p></header>
-                                <div className="space-y-4">{requests.map(req => (<div key={req.id} className="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm"><div className="flex items-center gap-5"><div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-xl shadow-lg">{req.name ? req.name[0].toUpperCase() : '?'}</div><div className="text-left"><p className="font-black text-gray-900 dark:text-white text-lg">{req.name}</p><p className="text-sm text-gray-500 font-bold">{req.email} • <span className="text-blue-600 dark:text-blue-400">{req.company}</span></p><p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">{new Date(req.date).toLocaleDateString()}</p></div></div>
+                                <div className="space-y-4">{requests.map(req => (<div key={req.id} className="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm"><div className="flex items-center gap-5"><div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-xl shadow-lg">{req.name ? req.name[0].toUpperCase() : '?'}</div><div className="text-left"><p className="font-black text-gray-900 dark:text-white text-lg">{req.name}</p><p className="text-sm text-gray-500 font-bold">{req.email} • <span className="text-blue-600 dark:text-blue-400">{req.company}</span></p>
+                                {req.requestedRole && (<p className="text-[10px] text-purple-500 font-black uppercase mt-1">Бажана роль: {t(`roles.${req.requestedRole}`)}</p>)}
+                                <p className="text-[10px] text-gray-400 mt-0.5 uppercase font-bold">{new Date(req.date).toLocaleDateString()}</p></div></div>
                                 
                                 {req.status === 'pending' ? (
                                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center">
                                         <select 
                                             className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-300"
-                                            value={pendingRoles[req.id] || 'foreman'}
+                                            value={pendingRoles[req.id] || req.requestedRole || 'foreman'}
                                             onChange={(e) => setPendingRoles({ ...pendingRoles, [req.id]: e.target.value as UserRole })}
                                         >
                                             {roles.filter(r => r !== 'guest').map(role => (
