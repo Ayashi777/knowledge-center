@@ -2,17 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.5.0] - 2025-12-18
+## [1.7.0] - 2025-12-18
 ### Added
-- **Full Admin Dashboard**: Transformed Admin Panel from a modal to a dedicated page layout with internal navigation.
-- **Category Management**: Admins can now add, edit, and delete resource categories.
-- **Document Management Tab**: Centralized list of all documents with quick edit/delete actions.
-- **Improved Sidebar for Admin**: Added internal admin navigation with status indicators for pending requests.
+- **Admin File Management System**: Dedicated UI to manage files for each document.
+- **Support for More Formats**: Now supports `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`.
+- **File CRUD**: Admins can now view, upload, and delete files directly from the `/admin` page.
+- **Enhanced Validation**: Client-side file extension checking.
+- **Storage UI**: Loading indicators and empty states for file management.
 
 ### Changed
-- Replaced modal-based admin interface with a structured page at `/admin`.
-- Enhanced document and category save logic to handle creations and updates consistently.
-- Updated `App.tsx` to support the new Admin API and navigation state.
+- Refactored `AdminPanel.tsx` to support a nested "File Manager" view for documents.
+- Improved layout consistency in the Admin dashboard.
 
 ### Fixed
-- Navigation guards for admin routes now provide a clear landing state for unauthorized users.
+- Fixed issue where file types other than PDF/DWG were not correctly handled.
