@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { UserRole, Document, Category, IconName } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
-import { setUserRole } from "../utils/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'download' | 'login' }> = ({ onClose, context }) => {
     const { t } = useI18n();
-    const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showRegistrationRequest, setShowRegistrationRequest] = useState(false);
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
@@ -26,20 +26,19 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
         setIsLoading(true);
 
         try {
-            if (isRegister) {
-                const credential = await createUserWithEmailAndPassword(auth, email, password);
-                await setUserRole(credential.user.uid, 'guest', email);
-                alert("Account created! Please ask administrator to assign your role.");
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-            }
+            await signInWithEmailAndPassword(auth, email, password);
             onClose();
         } catch (err: any) {
-            setError(err.message || "Authentication failed");
+            console.error(err);
+            setError("Помилка авторизації. Перевірте email та пароль.");
         } finally {
             setIsLoading(false);
         }
     };
+
+    if (showRegistrationRequest) {
+        return <RegistrationRequestModal onClose={() => setShowRegistrationRequest(false)} />;
+    }
 
     const roleInfo = [
         { role: 'foreman', title: t('loginModal.roles.foreman'), desc: t('loginModal.roles.foremanDesc'), icon: 'construction' },
@@ -55,23 +54,23 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                 <div className="flex-1 p-8 md:p-12 bg-white dark:bg-gray-800">
                     <div className="mb-10">
                         <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
-                            {isRegister ? "Join the Center" : "Welcome Back"}
+                            {t('loginModal.welcome')}
                         </h2>
                         <p className="text-gray-500 text-sm">
-                            {isRegister ? "Create an account to request access to restricted documents." : "Log in to access your authorized resources."}
+                            {t('loginModal.subtitle')}
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">Email Address</label>
+                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label>
                             <input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)}
                                 className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-all font-semibold"
                                 placeholder="name@company.com"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">Password</label>
+                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label>
                             <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
                                 className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-all font-semibold"
                                 placeholder="••••••••"
@@ -87,20 +86,20 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                         <button type="submit" disabled={isLoading}
                             className={`w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
                         >
-                            {isLoading ? "Processing..." : (isRegister ? "Create Account" : "Log In")}
+                            {isLoading ? t('loginModal.processing') : t('loginModal.submitButton')}
                         </button>
                     </form>
 
                     <div className="mt-8 text-center">
-                        <button onClick={() => setIsRegister(!isRegister)} className="text-sm font-bold text-blue-600 hover:underline">
-                            {isRegister ? "Already have an account? Log in" : "Need more access? Register here"}
+                        <button onClick={() => setShowRegistrationRequest(true)} className="text-sm font-bold text-blue-600 hover:underline">
+                            {t('loginModal.noAccount')}
                         </button>
                     </div>
                 </div>
 
                 {/* Right Side: Role Info (Dark Section) */}
                 <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-900/50 p-8 border-l border-gray-100 dark:border-gray-800">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">Access Levels</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">{t('loginModal.accessLevelsTitle')}</h3>
                     <div className="space-y-6">
                         {roleInfo.map(info => (
                             <div key={info.role} className="flex gap-4">
@@ -120,7 +119,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{t('roles.guest')}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">Default level for new users. Basic visibility only.</p>
+                                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t('loginModal.defaultLevelDesc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -139,15 +138,70 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
 export const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const { t } = useI18n();
+    const [name, setName] = useState('');
+    const [company, setCompany] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [status, setStatus] = useState<'form' | 'success'>('form');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await addDoc(collection(db, "requests"), {
+                name, company, email, phone,
+                status: 'pending',
+                date: new Date().toISOString()
+            });
+            setStatus('success');
+        } catch (error) {
+            alert("Помилка відправки. Спробуйте пізніше.");
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+                <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 max-w-sm text-center border border-gray-100 dark:border-gray-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                        <Icon name="check-circle" className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-2xl font-black mb-3 text-gray-900 dark:text-white">{t('registrationModal.successTitle')}</h2>
+                    <p className="text-gray-500 mb-8 leading-relaxed">{t('registrationModal.successDescription')}</p>
+                    <button onClick={onClose} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black shadow-lg shadow-green-500/30 hover:bg-green-700 transition-all uppercase tracking-widest text-sm">{t('registrationModal.buttonClose')}</button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 max-w-sm text-center border border-gray-100 dark:border-gray-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                    <Icon name="information-circle" className="w-10 h-10" />
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-w-md p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+                <div className="text-center mb-6">
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
+                    <p className="text-sm text-gray-500">{t('registrationModal.description')}</p>
                 </div>
-                <h2 className="text-2xl font-black mb-3 text-gray-900 dark:text-white">{t('registrationModal.title')}</h2>
-                <p className="text-gray-500 mb-8 leading-relaxed">{t('registrationModal.description')}</p>
-                <button onClick={onClose} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-sm">{t('registrationModal.buttonClose')}</button>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label>
+                        <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white font-semibold" placeholder={t('registrationModal.placeholderName')} />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label>
+                        <input required type="text" value={company} onChange={e => setCompany(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white font-semibold" placeholder={t('registrationModal.placeholderCompany')} />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label>
+                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white font-semibold" placeholder={t('registrationModal.placeholderEmail')} />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label>
+                        <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white font-semibold" placeholder={t('registrationModal.placeholderPhone')} />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors">{t('common.cancel')}</button>
+                        <button type="submit" className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-widest text-xs">{t('registrationModal.buttonSubmit')}</button>
+                    </div>
+                </form>
             </div>
         </div>
     );

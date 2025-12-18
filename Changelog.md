@@ -2,11 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - 2025-12-18
+## [2.2.0] - 2025-12-18
+### Added
+- **Closed Registration System**: Replaced public sign-up with an "Access Request" workflow.
+- **Request Management**: New user requests are saved to Firestore `requests` collection for admin review.
+- **Localized Auth UI**: Fully translated Login and Request modals into Ukrainian.
+
 ### Changed
-- **Default Language**: Switched default application language to Ukrainian.
-- **Simplified UI**: Removed language switcher from the header to focus on single-language experience.
-- **Localized Components**: Updated core UI strings and labels to Ukrainian.
+- Removed "Create Account" functionality from the login screen to enforce security.
+- Updated `LoginModal` design with a side-by-side layout (Form + Info Panel).
+- Refined "Access Levels" descriptions to better explain role capabilities to new users.
 
 ### Fixed
-- Navigation state naming consistency across localized routes.
+- Addressed UI inconsistencies in modal rendering on mobile devices.
