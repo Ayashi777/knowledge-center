@@ -24,12 +24,14 @@ export const translations = {
       resetFilters: 'Clear all',
       download: 'Download',
       share: 'Share',
+      settings: 'Settings',
     },
     header: {
       currentRole: 'Current role',
       logout: '(Log out)',
       login: 'Log In',
       toggleTheme: 'Toggle theme',
+      adminPanel: 'Admin Panel',
     },
     dashboard: {
       title: 'Knowledge Center',
@@ -64,7 +66,9 @@ export const translations = {
       uploadNewDwg: 'Upload new DWG',
       editContent: 'Edit Content',
       uploadNewLabel: 'Upload new',
-      content: { // This part is mainly for labels and TOC now
+      accessDenied: 'Access Denied',
+      downloadRestricted: 'Download is restricted for your role.',
+      content: { 
         importantNoteLabel: 'Important Note Text',
         toc: {
           intro: 'Introduction',
@@ -73,6 +77,19 @@ export const translations = {
           s3: 'Section 3',
           appendix: 'Appendices',
         },
+      },
+    },
+    adminPanel: {
+      title: 'Admin Settings',
+      tabs: {
+        categories: 'Categories',
+        documents: 'Documents',
+        roles: 'Role matrix',
+      },
+      matrix: {
+        role: 'Role',
+        category: 'Category',
+        canView: 'Can View',
       },
     },
     loginModal: {
@@ -116,6 +133,7 @@ export const translations = {
       labelCategory: 'Category',
       labelTags: 'Tags (comma-separated)',
       placeholderTags: 'e.g., safety, update, report',
+      labelDownloadPermissions: 'Who can download?',
     },
     categoryEditorModal: {
       editTitle: 'Edit Category Permissions',
@@ -163,12 +181,14 @@ export const translations = {
       resetFilters: 'Очистити все',
       download: 'Завантажити',
       share: 'Поділитися',
+      settings: 'Налаштування',
     },
     header: {
       currentRole: 'Поточна роль',
       logout: '(Вийти)',
       login: 'Увійти',
       toggleTheme: 'Змінити тему',
+      adminPanel: 'Адмін-панель',
     },
     dashboard: {
       title: 'Центр знань',
@@ -203,6 +223,8 @@ export const translations = {
       uploadNewDwg: 'Завантажити новий DWG',
       editContent: 'Редагувати вміст',
       uploadNewLabel: 'Завантажити новий',
+      accessDenied: 'Доступ заборонено',
+      downloadRestricted: 'Завантаження обмежено для вашої ролі.',
        content: {
         importantNoteLabel: 'Текст важливої примітки',
         toc: {
@@ -212,6 +234,19 @@ export const translations = {
           s3: 'Розділ 3',
           appendix: 'Додатки',
         },
+      },
+    },
+    adminPanel: {
+      title: 'Налаштування Адміна',
+      tabs: {
+        categories: 'Категорії',
+        documents: 'Документи',
+        roles: 'Матриця ролей',
+      },
+      matrix: {
+        role: 'Роль',
+        category: 'Категорія',
+        canView: 'Може бачити',
       },
     },
     loginModal: {
@@ -255,6 +290,7 @@ export const translations = {
       labelCategory: 'Категорія',
       labelTags: 'Теги (через кому)',
       placeholderTags: 'наприклад, безпека, оновлення, звіт',
+      labelDownloadPermissions: 'Хто може завантажувати?',
     },
     categoryEditorModal: {
       editTitle: 'Редагувати дозволи категорії',

@@ -21,12 +21,9 @@ export interface DocumentContent {
   section3Body: string;
 }
 
-
 export interface Document {
   id: string;
-  // Use titleKey for initial, translatable documents
   titleKey?: string;
-  // Use title for user-created/edited documents
   title?: string;
   updatedAt: Date;
   categoryKey: string;
@@ -34,7 +31,15 @@ export interface Document {
   content: {
     [key in Language]?: Partial<DocumentContent>;
   };
+  // Нові поля для доступу на рівні документа
+  viewPermissions?: UserRole[]; 
+  downloadPermissions?: UserRole[];
 }
+
+export type SortBy = 'recent' | 'alpha';
+export type ViewMode = 'grid' | 'list';
+export type DownloadStatus = 'idle' | 'loading' | 'success';
+export type UploadStatus = 'idle' | 'loading' | 'success';
 
 export type IconName = 
   | 'construction' 
@@ -61,4 +66,6 @@ export type IconName =
   | 'plus'
   | 'minus'
   | 'information-circle'
-  | 'paper-airplane';
+  | 'paper-airplane'
+  | 'cog'
+  | 'users';
