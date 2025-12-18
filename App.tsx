@@ -114,6 +114,34 @@ const AppContent: React.FC = () => {
 
     const showAdminControls = currentUserRole === 'admin';
 
+    // Guard Component for Admin
+    const AdminRoute = () => {
+        useEffect(() => {
+            if (!showAdminControls) {
+                setLoginContext('login');
+                setIsLoginModalOpen(true);
+            }
+        }, [showAdminControls]);
+
+        if (!showAdminControls) {
+            return (
+                <div className="pt-32 text-center">
+                    <Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" />
+                    <h2 className="text-2xl font-bold mb-2">Admin Access Required</h2>
+                    <p className="text-gray-500 mb-8">Please log in as administrator to access settings.</p>
+                    <button 
+                        onClick={() => setIsLoginModalOpen(true)}
+                        className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold hover:bg-blue-700 transition-colors"
+                    >
+                        Login as Admin
+                    </button>
+                </div>
+            );
+        }
+
+        return <AdminPanel categories={categories} onUpdateCategory={handleSaveCategory} onClose={() => navigate('/')} />;
+    };
+
     // Access Check logic for document route
     const DocPageRoute = () => {
         const { id } = useParams();
@@ -177,13 +205,7 @@ const AppContent: React.FC = () => {
                         />
                     } />
                     <Route path="/doc/:id" element={<DocPageRoute />} />
-                    <Route path="/admin" element={
-                        showAdminControls ? (
-                            <AdminPanel categories={categories} onUpdateCategory={handleSaveCategory} onClose={() => navigate('/')} />
-                        ) : (
-                            <Navigate to="/" />
-                        )
-                    } />
+                    <Route path="/admin" element={<AdminRoute />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
                 
