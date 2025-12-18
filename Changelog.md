@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.7] - 2025-12-19
+### Added
+- **Interactive Password Requirements**: Added a real-time checklist under the password field in the registration form.
+- **Visual Feedback**: Requirements (length, numbers, uppercase, lowercase) now turn green with a checkmark as the user types.
+
+### Fixed
+- **Password Validation Logic**: Completely rewrote the regex-based validation to correctly handle special characters like `_`, `$`, and others.
+- **UI Polishing**: Enhanced the spacing and layout of the password requirement indicators for better readability.
+
 ## [2.4.6] - 2025-12-19
 ### Changed
 - **Optimization**: Implemented code splitting (manual chunks) in Vite config. Large libraries are now bundled into a separate `vendor.js` file to improve load times and fix "chunk size" warnings.
