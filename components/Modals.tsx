@@ -5,6 +5,10 @@ import { Icon } from './icons';
 
 export const LoginModal: React.FC<{ onLogin: (role: UserRole) => void; onClose: () => void; context: 'view' | 'download' | 'login' }> = ({ onLogin, onClose, context }) => {
     const { t } = useI18n();
+    const [step, setStep] = useState<'selection' | 'password'>('selection');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
            if (event.key === 'Escape') onClose();
@@ -19,26 +23,87 @@ export const LoginModal: React.FC<{ onLogin: (role: UserRole) => void; onClose: 
         { role: 'admin', label: t('loginModal.roles.admin'), description: t('loginModal.roles.adminDesc') },
     ];
 
+    const handleRoleSelect = (role: UserRole) => {
+        if (role === 'admin') {
+            setStep('password');
+        } else {
+            onLogin(role);
+        }
+    };
+
+    const handlePasswordSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Simple hardcoded password for simulation
+        if (password === 'admin2025') {
+            onLogin('admin');
+        } else {
+            setError(t('common.incorrectPassword'));
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-                <div className="text-center">
-                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-600/20 mb-4">
-                        <Icon name="lock-closed" className="h-6 w-6 text-blue-500 dark:text-blue-400" />
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('loginModal.accessRequired')}</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6">{t(`loginModal.context.${context}`)}</p>
-                </div>
-                <div className="space-y-3">
-                    {roles.map(({ role, label, description }) => (
-                        <button key={role} type="button" onClick={() => onLogin(role as UserRole)} className="w-full text-left p-4 rounded-md bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition-colors">
-                            <p className="font-semibold text-gray-800 dark:text-white">{label}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
-                        </button>
-                    ))}
-                </div>
+                {step === 'selection' ? (
+                    <>
+                        <div className="text-center">
+                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-600/20 mb-4">
+                                <Icon name="lock-closed" className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('loginModal.accessRequired')}</h2>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">{t(`loginModal.context.${context}`)}</p>
+                        </div>
+                        <div className="space-y-3">
+                            {roles.map(({ role, label, description }) => (
+                                <button key={role} type="button" onClick={() => handleRoleSelect(role as UserRole)} className="w-full text-left p-4 rounded-md bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition-colors">
+                                    <p className="font-semibold text-gray-800 dark:text-white">{label}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <form onSubmit={handlePasswordSubmit} className="animate-fade-in">
+                        <div className="text-center mb-6">
+                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                                <Icon name="cog" className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('loginModal.adminPasswordTitle')}</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t('loginModal.adminPasswordDesc')}</p>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.password')}</label>
+                                <input 
+                                    autoFocus
+                                    type="password" 
+                                    value={password} 
+                                    onChange={e => { setPassword(e.target.value); setError(''); }}
+                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                    placeholder="••••••••"
+                                />
+                                {error && <p className="mt-1 text-xs text-red-500 font-bold">{error}</p>}
+                            </div>
+                            <div className="flex gap-3">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setStep('selection')}
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200"
+                                >
+                                    {t('common.cancel')}
+                                </button>
+                                <button 
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-lg"
+                                >
+                                    {t('common.login')}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                )}
                  <div className="mt-6 text-center">
-                    <button type="button" onClick={onClose} className="w-full sm:w-auto px-6 py-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('common.cancel')}</button>
+                    <button type="button" onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 transition-colors underline">{t('common.cancel')}</button>
                 </div>
             </div>
         </div>
@@ -75,7 +140,7 @@ export const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ on
     if (status === 'success') {
         return (
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-8 text-center" onClick={e => e.stopPropagation()}>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-md p-8 text-center" onClick={e => e.stopPropagation()}>
                     <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/50 mb-4">
                         <Icon name="paper-airplane" className="h-8 w-8 text-green-600 dark:text-green-400 -rotate-45" />
                     </div>

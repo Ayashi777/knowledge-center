@@ -25,6 +25,9 @@ export const translations = {
       download: 'Download',
       share: 'Share',
       settings: 'Settings',
+      password: 'Password',
+      login: 'Login',
+      incorrectPassword: 'Incorrect password',
     },
     header: {
       currentRole: 'Current role',
@@ -94,6 +97,8 @@ export const translations = {
     },
     loginModal: {
       accessRequired: 'Access Required',
+      adminPasswordTitle: 'Admin Authentication',
+      adminPasswordDesc: 'Please enter the administrator password to continue.',
       context: {
         view: 'Authorization is required to view this document.',
         download: 'You need to be logged in to download files.',
@@ -182,6 +187,9 @@ export const translations = {
       download: 'Завантажити',
       share: 'Поділитися',
       settings: 'Налаштування',
+      password: 'Пароль',
+      login: 'Увійти',
+      incorrectPassword: 'Неправильний пароль',
     },
     header: {
       currentRole: 'Поточна роль',
@@ -251,6 +259,8 @@ export const translations = {
     },
     loginModal: {
       accessRequired: 'Потрібен доступ',
+      adminPasswordTitle: 'Авторизація Адміністратора',
+      adminPasswordDesc: 'Будь ласка, введіть пароль адміністратора, щоб продовжити.',
       context: {
         view: 'Для перегляду цього документа потрібна авторизація.',
         download: 'Для скачування файлів потрібно увійти в систему.',

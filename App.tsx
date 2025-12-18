@@ -55,7 +55,11 @@ const UserAccessControl: React.FC<{
 const App: React.FC = () => {
   const { t, lang } = useI18n();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [currentUserRole, setCurrentUserRole] = useState<UserRole>('guest');
+  
+  // Persistence: Initial Role
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => {
+    return (localStorage.getItem('userRole') as UserRole) || 'guest';
+  });
   
   const {
       documents, setDocuments, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory,
@@ -71,11 +75,19 @@ const App: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => 
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  );
+  // Persistence: Initial Theme
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved as 'light' | 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
+    localStorage.setItem('userRole', currentUserRole);
+  }, [currentUserRole]);
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
     const root = window.document.documentElement;
     theme === 'dark' ? root.classList.add('dark') : root.classList.remove('dark');
   }, [theme]);
@@ -185,7 +197,7 @@ const App: React.FC = () => {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         .prose {
           --tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #1d4ed8; --tw-prose-bold: #111827; --tw-prose-bullets: #d1d5db; --tw-prose-hr: #e5e7eb; --tw-prose-quote-borders: #e5e7eb; --tw-prose-invert-body: #d1d5db; --tw-prose-invert-headings: #fff; --tw-prose-invert-links: #60a5fa; --tw-prose-invert-bold: #fff; --tw-prose-invert-bullets: #4b5563; --tw-prose-invert-hr: #374151;
         }
