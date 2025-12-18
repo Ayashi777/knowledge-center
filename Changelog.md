@@ -2,16 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.9.0] - 2025-12-18
+## [2.0.0] - 2025-12-18
 ### Added
-- **Full Firestore Integration**: All documents and categories are now managed via Firebase Firestore.
-- **Real-time Updates**: Live synchronization of data across all connected clients.
-- **Database Initialization Tool**: Added a one-click button for admins to seed the database with initial content.
-- **Persistent User Profiles**: User roles are fully integrated with Firestore `users` collection.
+- **Modern Authentication Flow**: Replaced simulated roles with a unified Email/Password system.
+- **Access Level Information**: New UI component in login modal explaining user roles and permissions.
+- **Enhanced Admin Landing**: Dedicated unauthorized state for `/admin` with clear call-to-action.
+- **User Directory Real-time Management**: Admins can now manage all registered users directly from the dashboard.
+- **Firestore Full Synchronization**: Categories and Documents are now 100% cloud-based.
 
 ### Changed
-- Migrated `useDocuments` hook to use Firebase `onSnapshot` for real-time data flow.
-- Updated `App.tsx` with async Firestore CRUD operations for documents and categories.
+- Major UI overhaul of Modals and Header.
+- Improved UX for unauthorized route access.
+- Unified Register/Login into a single professional multi-pane component.
 
 ### Fixed
-- Fixed data loss on page refresh (data now persists in the cloud).
+- Navigation loop issues on restricted routes.
+- Tag selection reference error.

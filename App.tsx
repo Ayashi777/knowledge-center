@@ -15,37 +15,31 @@ import { doc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "fi
 import { db } from "./firebase";
 
 // --- User Control Component ---
-const UserAccessControl: React.FC<{ 
-    user: User | null;
-    role: UserRole; 
-    onLoginClick: () => void; 
-}> = ({ user, role, onLoginClick }) => {
+const UserAccessControl: React.FC<{ user: User | null; role: UserRole; onLoginClick: () => void; }> = ({ user, role, onLoginClick }) => {
     const { t } = useI18n();
     const navigate = useNavigate();
     return (
     <div className="flex items-center gap-3">
-        <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                {user ? user.email : t('header.currentRole')}
-            </span>
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-800 dark:text-gray-200 capitalize">
+        <div className="flex flex-col text-right">
+            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">{user ? user.email : t('roles.guest')}</span>
+            <div className="flex items-center justify-end gap-2">
+                <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
                     {t(`roles.${role}`)}
                 </span>
                 {user && (
-                    <button onClick={() => logoutUser()} className="text-[10px] text-red-500 hover:underline font-bold uppercase tracking-tighter">
+                    <button onClick={() => logoutUser()} className="text-[10px] text-red-500 hover:underline font-black uppercase tracking-tighter">
                         {t('header.logout')}
                     </button>
                 )}
             </div>
         </div>
         {role === 'admin' && (
-            <button onClick={() => navigate('/admin')} className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-blue-600 dark:text-blue-400" title={t('header.adminPanel')}>
+            <button onClick={() => navigate('/admin')} className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30" title={t('header.adminPanel')}>
                 <Icon name="cog" className="w-5 h-5" />
             </button>
         )}
         {!user && (
-            <button onClick={onLoginClick} className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm uppercase tracking-wide">
+            <button onClick={onLoginClick} className="px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest">
                 {t('header.login')}
             </button>
         )}
@@ -69,7 +63,6 @@ const AppContent: React.FC = () => {
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
-    const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
     const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -78,7 +71,6 @@ const AppContent: React.FC = () => {
         return (saved as 'light' | 'dark') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     });
 
-    // Firebase Auth Subscription
     useEffect(() => {
         const unsubscribe = subscribeToAuthChanges((user, role) => {
             setCurrentUser(user);
@@ -98,76 +90,30 @@ const AppContent: React.FC = () => {
         document.title = t('title');
     }, [lang, t]);
 
-    // --- Database Operations ---
     const initDatabase = async () => {
-        if (!window.confirm("Initialize database with default categories and documents?")) return;
-        
-        // Push Categories
-        for (const cat of initialCategories) {
-            await setDoc(doc(db, "categories", cat.id), cat);
-        }
-        
-        // Push Documents
-        for (const d of initialDocuments) {
-            await setDoc(doc(db, "documents", d.id), {
-                ...d,
-                updatedAt: new Date(d.updatedAt) // Store as Date for Firestore
-            });
-        }
-        alert("Database initialized! Refresh the page.");
+        if (!window.confirm("Seed database with default data?")) return;
+        for (const cat of initialCategories) await setDoc(doc(db, "categories", cat.id), cat);
+        for (const d of initialDocuments) await setDoc(doc(db, "documents", d.id), { ...d, updatedAt: new Date(d.updatedAt) });
+        alert("Success! Refresh to see data.");
     };
 
     const handleSaveDocument = async (docToSave: Partial<Document>) => {
         const id = docToSave.id || `doc${Date.now()}`;
-        const newDoc = {
-            ...docToSave,
-            id,
-            updatedAt: new Date(),
-            categoryKey: docToSave.categoryKey!,
-            tags: docToSave.tags || [],
-            content: docToSave.content || { en: {}, uk: {} }
-        };
-        
-        try {
-            await setDoc(doc(db, "documents", id), newDoc, { merge: true });
-            setEditingDoc(null);
-        } catch (error) {
-            alert("Error saving document: " + error);
-        }
+        await setDoc(doc(db, "documents", id), { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { en: {}, uk: {} } }, { merge: true });
+        setEditingDoc(null);
     };
 
     const handleUpdateContent = async (docId: string, lang: Language, newContent: DocumentContent) => {
-        const docRef = doc(db, "documents", docId);
-        try {
-            await setDoc(docRef, {
-                content: { [lang]: newContent },
-                updatedAt: new Date()
-            }, { merge: true });
-        } catch (error) {
-            alert("Error updating content: " + error);
-        }
+        await setDoc(doc(db, "documents", docId), { content: { [lang]: newContent }, updatedAt: new Date() }, { merge: true });
     };
 
     const handleSaveCategory = async (catToSave: Category) => {
-        try {
-            await setDoc(doc(db, "categories", catToSave.id), catToSave, { merge: true });
-            setEditingCategory(null);
-        } catch (error) {
-            alert("Error saving category: " + error);
-        }
+        await setDoc(doc(db, "categories", catToSave.id), catToSave, { merge: true });
+        setEditingCategory(null);
     };
 
-    const handleDeleteCategory = async (id: string) => {
-        if (window.confirm('Delete this category?')) {
-            await deleteDoc(doc(db, "categories", id));
-        }
-    };
-
-    const handleDeleteDocument = async (id: string) => {
-        if (window.confirm(t('dashboard.confirmDelete'))) {
-            await deleteDoc(doc(db, "documents", id));
-        }
-    };
+    const handleDeleteCategory = async (id: string) => { if (window.confirm('Delete category?')) await deleteDoc(doc(db, "categories", id)); };
+    const handleDeleteDocument = async (id: string) => { if (window.confirm(t('dashboard.confirmDelete'))) await deleteDoc(doc(db, "documents", id)); };
 
     const showAdminControls = currentUserRole === 'admin';
 
@@ -175,71 +121,84 @@ const AppContent: React.FC = () => {
     const DocPageRoute = () => {
         const { id } = useParams();
         const docItem = documents.find(d => d.id === id);
-        if (isAuthLoading || isDocsLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
+        if (isAuthLoading || isDocsLoading) return <div className="flex items-center justify-center h-[80vh]"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>;
         if (!docItem) return <Navigate to="/" />;
         if (!currentUser) {
-            return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-xl font-bold mb-4">{t('loginModal.accessRequired')}</h2><button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Log in for full access</button></div>;
+            return (
+                <div className="pt-32 text-center animate-fade-in">
+                    <Icon name="lock-closed" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{t('loginModal.accessRequired')}</h2>
+                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">This resource is restricted. Please sign in to verify your access level.</p>
+                    <button onClick={() => { setLoginContext('view'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Sign In Now</button>
+                </div>
+            );
         }
         const cat = categories.find(c => c.nameKey === docItem.categoryKey);
-        if (!cat?.viewPermissions?.includes(currentUserRole)) return <div className="pt-32 text-center text-red-500 font-bold">{t('docView.accessDenied')}</div>;
+        if (!cat?.viewPermissions?.includes(currentUserRole)) return <div className="pt-40 text-center text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 p-20 rounded-3xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto"><Icon name="lock-closed" className="mx-auto mb-4 w-12 h-12" />{t('docView.accessDenied')}</div>;
 
         return <DocumentView doc={docItem} onClose={() => navigate('/')} onRequireLogin={() => setIsLoginModalOpen(true)} currentUserRole={currentUserRole} onUpdateContent={handleUpdateContent} onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} />;
     };
 
     const AdminPageRoute = () => {
-        if (isAuthLoading || isDocsLoading) return <div className="pt-32 text-center text-gray-400">Loading...</div>;
-        if (!showAdminControls) return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-2xl font-bold mb-2">Admin Access Required</h2><button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold mt-4">Login as Admin</button></div>;
+        if (isAuthLoading || isDocsLoading) return <div className="flex items-center justify-center h-[80vh]"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>;
+        if (!showAdminControls) {
+            return (
+                <div className="pt-32 text-center animate-fade-in">
+                    <Icon name="cog" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Administrator Area</h2>
+                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">Please authorize with administrative credentials to access management tools.</p>
+                    <button onClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Admin Login</button>
+                </div>
+            );
+        }
         return (
             <div className="relative">
                 <AdminPanel categories={categories} documents={documents} onUpdateCategory={setEditingCategory} onDeleteCategory={handleDeleteCategory}
                     onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] } as any)}
-                    onDeleteDocument={handleDeleteDocument}
-                    onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
+                    onDeleteDocument={handleDeleteDocument} onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
                 />
                 {categories.length === 0 && (
-                    <div className="fixed bottom-10 right-10">
-                        <button onClick={initDatabase} className="bg-red-600 text-white px-6 py-3 rounded-full font-black shadow-2xl animate-pulse">
-                            🚨 INITIALIZE DB
-                        </button>
-                    </div>
+                    <div className="fixed bottom-10 right-10"><button onClick={initDatabase} className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black shadow-2xl animate-pulse uppercase tracking-widest text-xs">🚨 Initialize Database</button></div>
                 )}
             </div>
         );
     };
 
     return (
-        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500/10' : ''}`}>
-            <header className="fixed top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-slate-50/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-gray-800/50">
-                <UserAccessControl user={currentUser} role={currentUserRole} onLoginClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} />
-                <div className="flex items-center gap-4">
+        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-600/5' : ''}`}>
+            <header className="fixed top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-6">
+                    <button onClick={() => navigate('/')} className="text-lg font-black tracking-tighter text-gray-900 dark:text-white flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs">CE</div>
+                        <span className="hidden sm:block">KNOWLEDGE</span>
+                    </button>
                     <LanguageSwitcher />
+                </div>
+                <div className="flex items-center gap-6">
+                    <UserAccessControl user={currentUser} role={currentUserRole} onLoginClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} />
                     <ThemeSwitcher theme={theme} toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} />
                 </div>
             </header>
 
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen">
-                {(isAuthLoading || (currentUser && isDocsLoading)) ? (
-                    <div className="flex items-center justify-center h-[80vh]"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>
-                ) : (
-                    <Routes>
-                        <Route path="/" element={
-                            <DashboardView 
-                                onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)} 
-                                searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
-                                showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={handleDeleteDocument} 
-                                onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
-                                visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
-                                onRequireLogin={() => setIsLoginModalOpen(true)} isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
-                                sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onEditCategory={setEditingCategory} 
-                            />
-                        } />
-                        <Route path="/doc/:id" element={<DocPageRoute />} />
-                        <Route path="/admin" element={<AdminPageRoute />} />
-                        <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
-                )}
+                <Routes>
+                    <Route path="/" element={
+                        <DashboardView 
+                            onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)} 
+                            searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
+                            showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={handleDeleteDocument} 
+                            onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
+                            visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
+                            onRequireLogin={() => setIsLoginModalOpen(true)} isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
+                            sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onEditCategory={setEditingCategory} 
+                        />
+                    } />
+                    <Route path="/doc/:id" element={<DocPageRoute />} />
+                    <Route path="/admin" element={<AdminPageRoute />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
                 
-                <footer className="mt-16 text-center text-gray-400 dark:text-gray-600 font-mono text-[10px] uppercase tracking-widest pb-8">
+                <footer className="mt-20 text-center text-gray-400 dark:text-gray-600 font-mono text-[9px] uppercase tracking-widest pb-12">
                     <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
                 </footer>
             </div>
