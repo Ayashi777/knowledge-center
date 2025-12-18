@@ -1,11 +1,11 @@
 import { Category, Document } from './types';
 
 export const CATEGORIES: Category[] = [
-    { id: 'cat1', nameKey: 'categories.armoplit' },
-    { id: 'cat2', nameKey: 'categories.edilmodulo' },
-    { id: 'cat3', nameKey: 'categories.fixit' },
-    { id: 'cat4', nameKey: 'categories.freudenberg' },
-    { id: 'cat5', nameKey: 'categories.typar' },
+    { id: 'cat1', nameKey: 'categories.armoplit', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat2', nameKey: 'categories.edilmodulo', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat3', nameKey: 'categories.fixit', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat4', nameKey: 'categories.freudenberg', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat5', nameKey: 'categories.typar', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
 ];
 
 export const RECENT_DOCUMENTS: Document[] = [
