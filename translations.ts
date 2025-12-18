@@ -111,6 +111,14 @@ export const translations = {
       successDescription: 'Ви успішно зареєструвалися. Наразі у вас статус "Гість". Адміністратор розгляне вашу заявку та надасть розширений доступ найближчим часом.',
       buttonClose: 'Увійти в систему',
     },
+    userEditorModal: {
+      title: 'Редагування користувача',
+      labelName: 'ПІБ',
+      labelCompany: 'Компанія',
+      labelPhone: 'Телефон',
+      labelRole: 'Роль',
+      successMessage: 'Дані користувача успішно оновлено',
+    },
     editorModal: {
       createTitle: 'Створити документ',
       editTitle: 'Редагувати документ',
@@ -257,6 +265,14 @@ export const translations = {
         successTitle: 'Account Created!',
         successDescription: 'You are now registered as Guest. Wait for admin approval.',
         buttonClose: 'Login',
+    },
+    userEditorModal: {
+      title: 'Edit User',
+      labelName: 'Full Name',
+      labelCompany: 'Company',
+      labelPhone: 'Phone',
+      labelRole: 'Role',
+      successMessage: 'User updated successfully',
     },
     editorModal: {
         createTitle: 'Create Document',
