@@ -26,26 +26,28 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Detailed Password Validation
+    // Reliable Password Validation logic using state values directly to avoid memo lag
     const hasMinLen = reqPassword.length >= 8;
-    const hasNumber = /\d/.test(reqPassword);
+    const hasNumber = /[0-9]/.test(reqPassword);
     const hasUpper = /[A-Z]/.test(reqPassword);
     const hasLower = /[a-z]/.test(reqPassword);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>_]/.test(reqPassword);
 
-    // Validation Logic
-    const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reqEmail), [reqEmail]);
-    const isPhoneValid = useMemo(() => /^\+?3?8?(0\d{9})$/.test(reqPhone.replace(/\s/g, '')), [reqPhone]);
-    const isPasswordValid = useMemo(() => hasMinLen && hasNumber && hasUpper && hasLower, [hasMinLen, hasNumber, hasUpper, hasLower]);
-    const isPasswordMatch = useMemo(() => reqPassword === reqPasswordConfirm && reqPasswordConfirm !== '', [reqPassword, reqPasswordConfirm]);
-    const isFormValid = useMemo(() => 
-        reqName.trim() !== '' && 
-        reqCompany.trim() !== '' && 
-        isEmailValid && 
-        isPhoneValid && 
-        isPasswordValid && 
-        isPasswordMatch && 
-        reqRoleType !== '', 
-    [reqName, reqCompany, isEmailValid, isPhoneValid, isPasswordValid, isPasswordMatch, reqRoleType]);
+    const isPasswordValid = hasMinLen && hasNumber && hasUpper && hasLower;
+
+    // Email & Phone Validation
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reqEmail);
+    const isPhoneValid = /^\+?3?8?(0\d{9})$/.test(reqPhone.replace(/\s/g, ''));
+    
+    const isPasswordMatch = reqPassword === reqPasswordConfirm && reqPasswordConfirm !== '';
+    
+    const isFormValid = reqName.trim() !== '' && 
+                        reqCompany.trim() !== '' && 
+                        isEmailValid && 
+                        isPhoneValid && 
+                        isPasswordValid && 
+                        isPasswordMatch && 
+                        reqRoleType !== '';
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
@@ -126,8 +128,8 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const getStatusClass = (valid: boolean, value: string) => {
         if (!value) return "border-gray-200 dark:border-gray-700";
         return valid 
-            ? "border-green-500 ring-1 ring-green-500 focus:ring-green-500" 
-            : "border-red-500 ring-1 ring-red-500 focus:ring-red-500";
+            ? "border-green-500 ring-1 ring-green-500/30" 
+            : "border-red-500 ring-1 ring-red-500/30";
     };
 
     const inputBase = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-inset outline-none dark:text-white text-sm font-semibold transition-all";
@@ -212,7 +214,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                     <input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} 
                                         placeholder="+380..."
                                         className={`${inputBase} ${getStatusClass(isPhoneValid, reqPhone)}`} />
-                                    {!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold">Формат: +380XXXXXXXXX</p>}
+                                    {!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold tracking-tight">Формат: +380XXXXXXXXX</p>}
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label>
@@ -226,21 +228,21 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                     <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
                                         className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)}`} />
                                     
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasMinLen ? 'text-green-500' : 'text-gray-400'}`}>
-                                            <Icon name={hasMinLen ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasMinLen ? 'rotate-45 text-gray-300' : ''}`} />
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2 bg-gray-50/50 dark:bg-black/20 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasMinLen ? 'text-green-500 scale-105' : 'text-gray-400'}`}>
+                                            <Icon name={hasMinLen ? 'check-circle' : 'hr'} className={`w-3 h-3 ${hasMinLen ? 'text-green-500' : 'text-gray-300'}`} />
                                             8+ символів
                                         </div>
-                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasNumber ? 'text-green-500' : 'text-gray-400'}`}>
-                                            <Icon name={hasNumber ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasNumber ? 'rotate-45 text-gray-300' : ''}`} />
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasNumber ? 'text-green-500 scale-105' : 'text-gray-400'}`}>
+                                            <Icon name={hasNumber ? 'check-circle' : 'hr'} className={`w-3 h-3 ${hasNumber ? 'text-green-500' : 'text-gray-300'}`} />
                                             Цифра
                                         </div>
-                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasUpper ? 'text-green-500' : 'text-gray-400'}`}>
-                                            <Icon name={hasUpper ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasUpper ? 'rotate-45 text-gray-300' : ''}`} />
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasUpper ? 'text-green-500 scale-105' : 'text-gray-400'}`}>
+                                            <Icon name={hasUpper ? 'check-circle' : 'hr'} className={`w-3 h-3 ${hasUpper ? 'text-green-500' : 'text-gray-300'}`} />
                                             Велика літера
                                         </div>
-                                        <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter transition-colors ${hasLower ? 'text-green-500' : 'text-gray-400'}`}>
-                                            <Icon name={hasLower ? 'check-circle' : 'plus'} className={`w-3 h-3 ${!hasLower ? 'rotate-45 text-gray-300' : ''}`} />
+                                        <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasLower ? 'text-green-500 scale-105' : 'text-gray-400'}`}>
+                                            <Icon name={hasLower ? 'check-circle' : 'hr'} className={`w-3 h-3 ${hasLower ? 'text-green-500' : 'text-gray-300'}`} />
                                             Мала літера
                                         </div>
                                     </div>
