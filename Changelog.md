@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.3] - 2025-12-19
+### Added
+- **Secure Registration**: Implemented password confirmation field and length validation (min 8 chars) in the registration form.
+- **Enhanced Validation**: Added checks to ensure passwords match and required fields are filled before submission.
+
 ## [2.4.2] - 2025-12-19
 ### Fixed
 - **Admin Approval Logic**: Fixed an issue where approving a request would not correctly assign the role if the user was not found by UID (added email fallback).

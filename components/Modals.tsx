@@ -19,6 +19,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [reqCompany, setReqCompany] = useState('');
     const [reqEmail, setReqEmail] = useState('');
     const [reqPassword, setReqPassword] = useState('');
+    const [reqPasswordConfirm, setReqPasswordConfirm] = useState('');
     const [reqPhone, setReqPhone] = useState('');
     const [reqActivity, setReqActivity] = useState('');
     const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); // New field for role selection
@@ -54,6 +55,18 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
         if (!reqRoleType) {
             setError("Будь ласка, оберіть бажаний тип доступу.");
+            setIsLoading(false);
+            return;
+        }
+
+        if (reqPassword.length < 8) {
+            setError("Пароль повинен містити мінімум 8 символів.");
+            setIsLoading(false);
+            return;
+        }
+
+        if (reqPassword !== reqPasswordConfirm) {
+            setError("Паролі не співпадають.");
             setIsLoading(false);
             return;
         }
@@ -94,7 +107,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
             if (error.code === 'auth/email-already-in-use') {
                 setError("Цей email вже зареєстрований.");
             } else if (error.code === 'auth/weak-password') {
-                setError("Пароль повинен містити мінімум 6 символів.");
+                setError("Пароль занадто слабкий.");
             } else {
                 setError("Помилка реєстрації. Спробуйте пізніше.");
             }
@@ -199,10 +212,17 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                         placeholder={t('registrationModal.placeholderEmail')}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
-                                <div className="sm:col-span-2">
+                                
+                                <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
                                     <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderPassword')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
+                                    <input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderPasswordConfirm')}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
                                 
