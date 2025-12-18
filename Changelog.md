@@ -2,20 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.2.1] - 2025-05-24
+## [2.3.0] - 2025-12-18
 ### Added
-- **Form Placeholders**: Added helpful placeholders to the Access Request form fields to match the login form experience.
-
-## [2.2.0] - 2025-12-18
-### Added
-- **Closed Registration System**: Replaced public sign-up with an "Access Request" workflow.
-- **Request Management**: New user requests are saved to Firestore `requests` collection for admin review.
-- **Localized Auth UI**: Fully translated Login and Request modals into Ukrainian.
+- **Bootstrap Admin Logic**: The very first user to sign in now automatically receives the `admin` role if the database is empty.
+- **User Directory**: Real-time management of registered users in the Admin Panel.
+- **Request Workflow Integration**: Access requests are now stored in Firestore and manageable from the Admin Panel.
+- **Improved UI for Admin Routes**: Added localized labels and professional styling for admin navigation.
 
 ### Changed
-- Removed "Create Account" functionality from the login screen to enforce security.
-- Updated `LoginModal` design with a side-by-side layout (Form + Info Panel).
-- Refined "Access Levels" descriptions to better explain role capabilities to new users.
+- **Ukrainian-First UI**: Set Ukrainian as the default and only active language. Removed the language switcher for a cleaner experience.
+- **Integrated Auth Modal**: Merged the registration request form directly into the Login Modal to avoid unnecessary popups.
+- **Access Level Panel**: Added a dedicated section in the Login Modal explaining the benefits of each user role (Foreman, Designer, Admin).
+- **Security Update**: Enforced closed registration where new users must be approved or manually assigned roles by an admin.
 
 ### Fixed
-- Addressed UI inconsistencies in modal rendering on mobile devices.
+- **Real-time Sync**: Fixed issues with data not updating immediately across different tabs.
+- **Tag Selection**: Resolved a reference error in the Dashboard's tag filtering logic.
+- **Firestore Rules Compatibility**: Updated Auth logic to work seamlessly with initial empty database states.
