@@ -10,13 +10,8 @@ import { AdminPanel } from './components/AdminPanel';
 import { useDocuments } from './hooks/useDocuments';
 import { Icon } from './components/icons';
 
-// --- Components for Auth Control ---
-
-const UserAccessControl: React.FC<{ 
-    role: UserRole; 
-    onLoginClick: () => void; 
-    onLogout: () => void; 
-}> = ({ role, onLoginClick, onLogout }) => {
+// --- User Control Component ---
+const UserAccessControl: React.FC<{ role: UserRole; onLoginClick: () => void; onLogout: () => void; }> = ({ role, onLoginClick, onLogout }) => {
     const { t } = useI18n();
     const navigate = useNavigate();
     return (
@@ -30,27 +25,20 @@ const UserAccessControl: React.FC<{
                 )}
             </div>
         </div>
-        
         {role === 'admin' && (
-            <button onClick={() => navigate('/admin')} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400" title={t('header.adminPanel')}>
+            <button onClick={() => navigate('/admin')} className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-blue-600 dark:text-blue-400" title={t('header.adminPanel')}>
                 <Icon name="cog" className="w-5 h-5" />
             </button>
         )}
-
         {role === 'guest' && (
-            <button onClick={onLoginClick} className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm uppercase tracking-wide">
-                {t('header.login')}
-            </button>
+            <button onClick={onLoginClick} className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm uppercase tracking-wide">{t('header.login')}</button>
         )}
     </div>
 )};
 
-// --- Page Components Wrapper ---
-
 const AppContent: React.FC = () => {
     const { t, lang } = useI18n();
     const navigate = useNavigate();
-    const location = useLocation();
     
     const [categories, setCategories] = useState<Category[]>(initialCategories);
     const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => (localStorage.getItem('userRole') as UserRole) || 'guest');
@@ -83,11 +71,7 @@ const AppContent: React.FC = () => {
         document.title = t('title');
     }, [lang, t]);
 
-    const handleLogout = () => {
-        setCurrentUserRole('guest');
-        clearFilters();
-        navigate('/');
-    };
+    const handleLogout = () => { setCurrentUserRole('guest'); clearFilters(); navigate('/'); };
 
     const handleSaveDocument = (docToSave: Partial<Document>) => {
         const exists = documents.some(d => d.id === docToSave.id);
@@ -112,70 +96,49 @@ const AppContent: React.FC = () => {
         setEditingCategory(null);
     };
 
-    const showAdminControls = currentUserRole === 'admin';
-
-    // Guard Component for Admin
-    const AdminRoute = () => {
-        useEffect(() => {
-            if (!showAdminControls) {
-                setLoginContext('login');
-                setIsLoginModalOpen(true);
-            }
-        }, [showAdminControls]);
-
-        if (!showAdminControls) {
-            return (
-                <div className="pt-32 text-center">
-                    <Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" />
-                    <h2 className="text-2xl font-bold mb-2">Admin Access Required</h2>
-                    <p className="text-gray-500 mb-8">Please log in as administrator to access settings.</p>
-                    <button 
-                        onClick={() => setIsLoginModalOpen(true)}
-                        className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold hover:bg-blue-700 transition-colors"
-                    >
-                        Login as Admin
-                    </button>
-                </div>
-            );
+    const handleDeleteCategory = (id: string) => {
+        if (window.confirm('Are you sure you want to delete this category? All documents in this category will be inaccessible.')) {
+            setCategories(prev => prev.filter(c => c.id !== id));
         }
-
-        return <AdminPanel categories={categories} onUpdateCategory={handleSaveCategory} onClose={() => navigate('/')} />;
     };
 
-    // Access Check logic for document route
+    const showAdminControls = currentUserRole === 'admin';
+
+    // Route Components
     const DocPageRoute = () => {
         const { id } = useParams();
         const doc = documents.find(d => d.id === id);
-        
         if (!doc) return <Navigate to="/" />;
-
         if (currentUserRole === 'guest') {
-            return <div className="pt-20 text-center">
-                <Icon name="lock-closed" className="mx-auto mb-4 text-gray-400" />
-                <h2 className="text-xl font-bold mb-4">{t('loginModal.accessRequired')}</h2>
-                <button onClick={() => setIsRegistrationModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">
-                    {t('registrationModal.title')}
-                </button>
-            </div>;
+            return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-xl font-bold mb-4">{t('loginModal.accessRequired')}</h2><button onClick={() => setIsRegistrationModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">{t('registrationModal.title')}</button></div>;
         }
-
         const cat = categories.find(c => c.nameKey === doc.categoryKey);
-        if (!cat?.viewPermissions.includes(currentUserRole)) {
-            return <div className="pt-20 text-center text-red-500 font-bold">{t('docView.accessDenied')}</div>;
-        }
+        if (!cat?.viewPermissions.includes(currentUserRole)) return <div className="pt-32 text-center text-red-500 font-bold">{t('docView.accessDenied')}</div>;
 
-        return <DocumentView 
-            doc={doc} 
-            onClose={() => navigate('/')} 
-            onRequireLogin={() => setIsRegistrationModalOpen(true)} 
-            currentUserRole={currentUserRole} 
-            onUpdateContent={handleUpdateContent} 
-            onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} 
-        />;
+        return <DocumentView doc={doc} onClose={() => navigate('/')} onRequireLogin={() => setIsRegistrationModalOpen(true)} currentUserRole={currentUserRole} onUpdateContent={handleUpdateContent} onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} />;
+    };
+
+    const AdminPageRoute = () => {
+        useEffect(() => { if (!showAdminControls) { setLoginContext('login'); setIsLoginModalOpen(true); } }, []);
+        if (!showAdminControls) return <div className="pt-32 text-center"><Icon name="lock-closed" className="mx-auto mb-4 text-gray-400 w-12 h-12" /><h2 className="text-2xl font-bold mb-2">Admin Access Required</h2><button onClick={() => setIsLoginModalOpen(true)} className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold mt-4">Login as Admin</button></div>;
+
+        return (
+            <AdminPanel 
+                categories={categories} 
+                documents={documents}
+                onUpdateCategory={setEditingCategory} 
+                onDeleteCategory={handleDeleteCategory}
+                onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] })}
+                onDeleteDocument={(id) => window.confirm(t('dashboard.confirmDelete')) && setDocuments(documents.filter(d => d.id !== id))}
+                onEditDocument={setEditingDoc}
+                onAddDocument={() => setEditingDoc({})}
+                onClose={() => navigate('/')} 
+            />
+        );
     };
 
     return (
-        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500/30' : ''}`}>
+        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500/10' : ''}`}>
             <header className="fixed top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-slate-50/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-gray-800/50">
                 <UserAccessControl role={currentUserRole} onLoginClick={() => { setLoginContext('login'); setIsLoginModalOpen(true); }} onLogout={handleLogout} />
                 <div className="flex items-center gap-4">
@@ -189,23 +152,16 @@ const AppContent: React.FC = () => {
                     <Route path="/" element={
                         <DashboardView 
                             onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)} 
-                            searchTerm={searchTerm} onSearchChange={setSearchTerm} 
-                            docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
-                            showAdminControls={showAdminControls} onEditDoc={setEditingDoc} 
-                            onDeleteDoc={(id) => window.confirm(t('dashboard.confirmDelete')) && setDocuments(documents.filter(d => d.id !== id))} 
-                            onAddNewDoc={() => setEditingDoc({})} 
-                            selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
-                            visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} 
-                            allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
-                            onRequireLogin={() => setIsRegistrationModalOpen(true)} 
-                            isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
-                            sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} 
-                            currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} 
-                            onEditCategory={setEditingCategory} 
+                            searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
+                            showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={(id) => window.confirm(t('dashboard.confirmDelete')) && setDocuments(documents.filter(d => d.id !== id))} 
+                            onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
+                            visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
+                            onRequireLogin={() => setIsRegistrationModalOpen(true)} isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
+                            sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onEditCategory={setEditingCategory} 
                         />
                     } />
                     <Route path="/doc/:id" element={<DocPageRoute />} />
-                    <Route path="/admin" element={<AdminRoute />} />
+                    <Route path="/admin" element={<AdminPageRoute />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
                 
@@ -216,16 +172,16 @@ const AppContent: React.FC = () => {
             
             {isRegistrationModalOpen && <RegistrationRequestModal onClose={() => setIsRegistrationModalOpen(false)} />}
             {isLoginModalOpen && <LoginModal onLogin={(role) => { setCurrentUserRole(role); setIsLoginModalOpen(false); }} onClose={() => setIsLoginModalOpen(false)} context={loginContext} />}
-            {editingDoc !== null && <DocumentEditorModal doc={editingDoc} onSave={handleSaveDocument} onClose={() => setEditingDoc(null)} availableCategories={visibleCategories} />}
-            {editingCategory !== null && <CategoryEditorModal category={editingCategory} onSave={handleSaveCategory} onClose={() => setEditingCategory(null)} />}
+            {editingDoc !== null && <DocumentEditorModal doc={editingDoc} onSave={handleSaveDocument} onClose={() => setEditingDoc(null)} availableCategories={categories} />}
+            {editingCategory !== null && <CategoryEditorModal category={editingCategory} onSave={(cat) => {
+                const exists = categories.find(c => c.id === cat.id);
+                if (exists) setCategories(prev => prev.map(c => c.id === cat.id ? cat : c));
+                else setCategories(prev => [...prev, cat]);
+                setEditingCategory(null);
+            }} onClose={() => setEditingCategory(null)} />}
         </div>
     );
 };
 
-const App: React.FC = () => (
-    <Router>
-        <AppContent />
-    </Router>
-);
-
+const App: React.FC = () => ( <Router> <AppContent /> </Router> );
 export default App;
