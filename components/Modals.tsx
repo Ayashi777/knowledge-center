@@ -22,7 +22,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [reqPasswordConfirm, setReqPasswordConfirm] = useState('');
     const [reqPhone, setReqPhone] = useState('');
     const [reqActivity, setReqActivity] = useState('');
-    const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); // New field for role selection
+    const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); 
     
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -72,12 +72,9 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
         }
 
         try {
-            // 1. Create Authentication User
             const userCredential = await createUserWithEmailAndPassword(auth, reqEmail, reqPassword);
             const user = userCredential.user;
 
-            // 2. Create User Profile in Firestore (Role: Guest initially)
-            // Even though they requested a role, we set them as 'guest' until approved.
             await setDoc(doc(db, "users", user.uid), {
                 email: reqEmail,
                 role: 'guest', 
@@ -85,18 +82,17 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                 company: reqCompany,
                 phone: reqPhone,
                 activity: reqActivity,
-                requestedRole: reqRoleType, // Store what they asked for
+                requestedRole: reqRoleType,
                 createdAt: new Date().toISOString()
             });
 
-            // 3. Create Admin Request
             await addDoc(collection(db, "requests"), {
                 uid: user.uid, 
                 name: reqName,
                 company: reqCompany,
                 email: reqEmail,
                 phone: reqPhone,
-                requestedRole: reqRoleType, // Admin sees this preference
+                requestedRole: reqRoleType,
                 status: 'pending',
                 date: new Date().toISOString()
             });
@@ -122,13 +118,14 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
         { role: 'admin', title: t('loginModal.roles.admin'), desc: t('loginModal.roles.adminDesc'), icon: 'cog' },
     ];
 
-    const selectableRoles: UserRole[] = ['foreman', 'designer']; // Roles user can request
+    const selectableRoles: UserRole[] = ['foreman', 'designer'];
+
+    const inputClasses = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:ring-inset outline-none dark:text-white text-sm font-semibold transition-all";
 
     return (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-white/10" onClick={e => e.stopPropagation()}>
                 
-                {/* Left Side: Dynamic Content */}
                 <div className="flex-1 p-8 md:p-12 bg-white dark:bg-gray-800 flex flex-col justify-center min-h-[500px]">
                     {view === 'login' && (
                         <div className="animate-fade-in">
@@ -141,14 +138,14 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label>
                                     <input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                                        className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-all font-semibold"
+                                        className={inputClasses}
                                         placeholder="name@company.com"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label>
                                     <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                                        className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-all font-semibold"
+                                        className={inputClasses}
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -169,7 +166,7 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                     )}
 
                     {view === 'request' && (
-                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto">
+                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto px-1 py-1">
                             <div className="mb-8">
                                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
                                 <p className="text-gray-500 text-xs leading-relaxed">{t('registrationModal.description')}</p>
@@ -192,38 +189,39 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label>
                                     <input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderName')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label>
                                     <input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderCompany')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label>
                                     <input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderPhone')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label>
                                     <input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderEmail')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
                                 </div>
                                 
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
                                     <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderPassword')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
+                                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Мінімум 8 символів</p>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
                                     <input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} 
                                         placeholder={t('registrationModal.placeholderPasswordConfirm')}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                        className={inputClasses} />
                                 </div>
                                 
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
@@ -250,7 +248,6 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                     )}
                 </div>
 
-                {/* Right Side: Role Info */}
                 <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-900/50 p-8 border-l border-gray-100 dark:border-gray-800 flex flex-col justify-center">
                     <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">{t('loginModal.accessLevelsTitle')}</h3>
                     <div className="space-y-6">
@@ -292,7 +289,6 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 };
 
 export const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    // This is now redundant but kept as backup or for direct triggers
     return null; 
 };
 

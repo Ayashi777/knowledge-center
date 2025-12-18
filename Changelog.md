@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.5] - 2025-12-19
+### Fixed
+- **UI Polishing**: Added `focus:ring-inset` to input fields to prevent focus outlines from being clipped by containers.
+- **Registration UX**: Added a password requirement hint ("Minimum 8 characters") under the password field.
+- **Form Layout**: Improved spacing and padding within the registration modal for a cleaner look.
+
 ## [2.4.4] - 2025-12-19
 ### Fixed
 - **Cache Invalidation**: Bumped package version to `1.2.1` to force cache clearing and ensure users see the latest registration form updates.
