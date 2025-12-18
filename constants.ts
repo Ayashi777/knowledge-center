@@ -2,9 +2,9 @@ import { Category, Document } from './types';
 
 export const CATEGORIES: Category[] = [
     { id: 'cat1', nameKey: 'categories.armoplit', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
-    { id: 'cat2', nameKey: 'categories.edilmodulo', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat2', nameKey: 'categories.edilmodulo', iconName: 'construction', viewPermissions: ['foreman', 'designer', 'admin'] },
     { id: 'cat3', nameKey: 'categories.fixit', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
-    { id: 'cat4', nameKey: 'categories.freudenberg', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
+    { id: 'cat4', nameKey: 'categories.freudenberg', iconName: 'construction', viewPermissions: ['designer', 'admin'] },
     { id: 'cat5', nameKey: 'categories.typar', iconName: 'construction', viewPermissions: ['guest', 'foreman', 'designer', 'admin'] },
 ];
 

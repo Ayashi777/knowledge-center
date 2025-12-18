@@ -117,6 +117,12 @@ export const translations = {
       labelTags: 'Tags (comma-separated)',
       placeholderTags: 'e.g., safety, update, report',
     },
+    categoryEditorModal: {
+      editTitle: 'Edit Category Permissions',
+      labelName: 'Category Name Key',
+      labelIcon: 'Icon',
+      labelPermissions: 'View Permissions',
+    },
     footer: {
       copyright: '© {year} ACME Corporation. For internal use only.',
     },
@@ -249,6 +255,12 @@ export const translations = {
       labelCategory: 'Категорія',
       labelTags: 'Теги (через кому)',
       placeholderTags: 'наприклад, безпека, оновлення, звіт',
+    },
+    categoryEditorModal: {
+      editTitle: 'Редагувати дозволи категорії',
+      labelName: 'Ключ назви категорії',
+      labelIcon: 'Іконка',
+      labelPermissions: 'Дозволи на перегляд',
     },
     footer: {
       copyright: '© {year} ACME Corporation. Лише для внутрішнього використання.',
