@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { UserRole, Document, Category, IconName } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 
 export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'download' | 'login' }> = ({ onClose, context }) => {
     const { t } = useI18n();
@@ -18,7 +18,10 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
     const [reqName, setReqName] = useState('');
     const [reqCompany, setReqCompany] = useState('');
     const [reqEmail, setReqEmail] = useState('');
+    const [reqPassword, setReqPassword] = useState('');
     const [reqPhone, setReqPhone] = useState('');
+    const [reqActivity, setReqActivity] = useState('');
+    const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); // New field for role selection
     
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -46,19 +49,55 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
     const handleRequestSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         setIsLoading(true);
+
+        if (!reqRoleType) {
+            setError("Будь ласка, оберіть бажаний тип доступу.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
+            // 1. Create Authentication User
+            const userCredential = await createUserWithEmailAndPassword(auth, reqEmail, reqPassword);
+            const user = userCredential.user;
+
+            // 2. Create User Profile in Firestore (Role: Guest initially)
+            // Even though they requested a role, we set them as 'guest' until approved.
+            await setDoc(doc(db, "users", user.uid), {
+                email: reqEmail,
+                role: 'guest', 
+                name: reqName,
+                company: reqCompany,
+                phone: reqPhone,
+                activity: reqActivity,
+                requestedRole: reqRoleType, // Store what they asked for
+                createdAt: new Date().toISOString()
+            });
+
+            // 3. Create Admin Request
             await addDoc(collection(db, "requests"), {
+                uid: user.uid, 
                 name: reqName,
                 company: reqCompany,
                 email: reqEmail,
                 phone: reqPhone,
+                requestedRole: reqRoleType, // Admin sees this preference
                 status: 'pending',
                 date: new Date().toISOString()
             });
+
             setView('success');
-        } catch (error) {
-            alert("Помилка відправки. Спробуйте пізніше.");
+        } catch (error: any) {
+            console.error(error);
+            if (error.code === 'auth/email-already-in-use') {
+                setError("Цей email вже зареєстрований.");
+            } else if (error.code === 'auth/weak-password') {
+                setError("Пароль повинен містити мінімум 6 символів.");
+            } else {
+                setError("Помилка реєстрації. Спробуйте пізніше.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -69,6 +108,8 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
         { role: 'designer', title: t('loginModal.roles.designer'), desc: t('loginModal.roles.designerDesc'), icon: 'it' },
         { role: 'admin', title: t('loginModal.roles.admin'), desc: t('loginModal.roles.adminDesc'), icon: 'cog' },
     ];
+
+    const selectableRoles: UserRole[] = ['foreman', 'designer']; // Roles user can request
 
     return (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
@@ -115,13 +156,25 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                     )}
 
                     {view === 'request' && (
-                        <div className="animate-fade-in">
+                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto">
                             <div className="mb-8">
                                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
                                 <p className="text-gray-500 text-xs leading-relaxed">{t('registrationModal.description')}</p>
                             </div>
 
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldRoleType')}</label>
+                                    <div className="flex gap-4">
+                                        {selectableRoles.map(role => (
+                                            <label key={role} className={`flex-1 p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                                                <input type="radio" name="roleType" value={role} checked={reqRoleType === role} onChange={() => setReqRoleType(role)} className="hidden" />
+                                                <span className={`text-xs font-black uppercase ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`loginModal.roles.${role}`)}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label>
                                     <input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} 
@@ -146,7 +199,15 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
                                         placeholder={t('registrationModal.placeholderEmail')}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
                                 </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
+                                    <input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} 
+                                        placeholder={t('registrationModal.placeholderPassword')}
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm font-semibold" />
+                                </div>
                                 
+                                {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
+
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
                                     <button type="button" onClick={() => setView('login')} className="flex-1 py-4 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700">{t('common.cancel')}</button>
                                     <button type="submit" disabled={isLoading} className={`flex-1 py-4 bg-blue-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50' : ''}`}>

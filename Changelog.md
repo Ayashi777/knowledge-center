@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2025-12-19
+### Added
+- **Full Registration Workflow**: Users can now create accounts directly with Email/Password.
+- **Role Request System**: During registration, users must select their desired role (Foreman/Designer) and provide company details.
+- **Admin Approval Process**: Administrators can now approve requests and assign roles directly from the Admin Panel.
+- **Database Integration**: User profiles are automatically created in Firestore upon registration with `guest` status until approved.
+
+### Changed
+- **Auth Flow**: Switched from "Request Only" to "Register & Wait" model. Users get immediate account access but with limited permissions until approved.
+- **Admin Interface**: Added role selection dropdowns to the "Requests" tab for streamlined user onboarding.
+- **Security**: Enhanced validation in registration forms to require role selection and strong passwords.
+
 ## [2.3.0] - 2025-12-18
 ### Added
 - **Bootstrap Admin Logic**: The very first user to sign in now automatically receives the `admin` role if the database is empty.
