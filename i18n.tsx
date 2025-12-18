@@ -5,22 +5,29 @@ export type Language = 'uk'; // Locked to Ukrainian for now
 
 type I18nContextType = {
   lang: Language;
-  t: (key: string, options?: Record<string, string | number>) => string;
+  t: (key: string | undefined | null, options?: Record<string, string | number>) => string;
 };
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 const resolveKey = (obj: any, key: string): string => {
-  return key.split('.').reduce((acc, part) => {
-    if (acc && typeof acc === 'object') return acc[part];
-    return undefined;
-  }, obj);
+  if (!key) return '';
+  try {
+    return key.split('.').reduce((acc, part) => {
+        if (acc && typeof acc === 'object') return acc[part];
+        return undefined;
+    }, obj);
+  } catch (e) {
+    return key;
+  }
 };
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [lang] = useState<Language>('uk');
 
-  const t = useCallback((key: string, options?: Record<string, string | number>): string => {
+  const t = useCallback((key: string | undefined | null, options?: Record<string, string | number>): string => {
+    if (!key) return '';
+    
     let text = resolveKey(translations[lang], key);
 
     if (!text) {

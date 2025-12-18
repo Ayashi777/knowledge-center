@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2025-12-19
+### Fixed
+- **App Crash Protection**: Added robust safety checks in the i18n translation engine to prevent application crashes during hard refreshes (`Ctrl+Shift+R`) or when data is partially loaded.
+- **Null Reference Safety**: Improved `resolveKey` logic to handle `undefined` or `null` translation keys gracefully.
+
 ## [2.4.0] - 2025-12-19
 ### Added
 - **Full Registration Workflow**: Users can now create accounts directly with Email/Password.
