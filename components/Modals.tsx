@@ -223,21 +223,108 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
 export const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ onClose }) => null;
 
-export const DocumentEditorModal: React.FC<{ doc: Partial<Document> | null, onSave: (doc: Partial<Document>) => void, onClose: () => void, availableCategories: Category[] }> = ({ doc, onSave, onClose, availableCategories }) => {
+export const DocumentEditorModal: React.FC<{
+    doc: Partial<Document> | null,
+    onSave: (doc: Partial<Document>) => void,
+    onClose: () => void,
+    availableCategories: Category[]
+}> = ({ doc, onSave, onClose, availableCategories }) => {
     const { t } = useI18n();
     const [title, setTitle] = useState((doc?.titleKey ? t(doc.titleKey) : doc?.title) || '');
     const [category, setCategory] = useState(doc?.categoryKey || availableCategories[0]?.nameKey || '');
     const [tags, setTags] = useState(doc?.tags?.join(', ') || '');
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave({ id: doc?.id, title: title, categoryKey: category, tags: tags.split(',').map(t => t.trim()).filter(Boolean) }); };
+    const [thumbnailUrl, setThumbnailUrl] = useState((doc as any)?.thumbnailUrl || '');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({
+            id: doc?.id,
+            title: title,
+            categoryKey: category,
+            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+            thumbnailUrl: thumbnailUrl
+        });
+    };
+
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-w-lg p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">{doc?.id ? t('editorModal.editTitle') : t('editorModal.createTitle')}</h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">
+                    {doc?.id ? t('editorModal.editTitle') : t('editorModal.createTitle')}
+                </h2>
+
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <div><label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('editorModal.labelTitle')}</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" required /></div>
-                    <div><label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('editorModal.labelCategory')}</label><select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold">{availableCategories.map(cat => <option key={cat.id} value={cat.nameKey}>{t(cat.nameKey)}</option>)}</select></div>
-                    <div><label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('editorModal.labelTags')}</label><input type="text" value={tags} onChange={e => setTags(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" placeholder={t('editorModal.placeholderTags')}/></div>
-                    <div className="flex justify-end gap-3 pt-6"><button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-colors">Скасувати</button><button type="submit" className="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-widest text-xs">Зберегти</button></div>
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                            {t('editorModal.labelTitle')}
+                        </label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                            URL Обкладинки (прев'ю)
+                        </label>
+                        <input
+                            type="text"
+                            value={thumbnailUrl}
+                            onChange={e => setThumbnailUrl(e.target.value)}
+                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            placeholder="https://..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                            {t('editorModal.labelCategory')}
+                        </label>
+                        <select
+                            value={category}
+                            onChange={e => setCategory(e.target.value)}
+                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                        >
+                            {availableCategories.map(cat => (
+                                <option key={cat.id} value={cat.nameKey}>
+                                    {t(cat.nameKey) || cat.nameKey}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                            {t('editorModal.labelTags')}
+                        </label>
+                        <input
+                            type="text"
+                            value={tags}
+                            onChange={e => setTags(e.target.value)}
+                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            placeholder={t('editorModal.placeholderTags')}
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-6">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-8 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-colors"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-widest text-xs"
+                        >
+                            {t('common.save')}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -247,20 +334,111 @@ export const DocumentEditorModal: React.FC<{ doc: Partial<Document> | null, onSa
 export const CategoryEditorModal: React.FC<{ category: Category, onSave: (cat: Category) => void, onClose: () => void }> = ({ category, onSave, onClose }) => {
     const { t } = useI18n();
     const [nameKey, setNameKey] = useState(category.nameKey);
-    const [iconName, setIconName] = useState<IconName>(category.iconName);
-    const [permissions, setPermissions] = useState<UserRole[]>(category.viewPermissions);
+    const [iconName, setIconName] = useState<IconName>(category.iconName || 'construction');
+    const [permissions, setPermissions] = useState<UserRole[]>(category.viewPermissions || ['admin']);
+
     const roles: UserRole[] = ['guest', 'foreman', 'designer', 'architect', 'admin'];
-    const togglePermission = (role: UserRole) => { setPermissions(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]); };
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave({ ...category, nameKey, iconName, viewPermissions: permissions }); };
+    const availableIcons: IconName[] = ['construction', 'electrical', 'safety', 'logistics', 'it', 'hr', 'finance', 'legal', 'view-boards'];
+
+    const togglePermission = (role: UserRole) => {
+        if (role === 'admin') return;
+        setPermissions(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({ ...category, nameKey, iconName, viewPermissions: permissions });
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-lg p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">{t('categoryEditorModal.editTitle')}</h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div><label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('categoryEditorModal.labelName')}</label><input type="text" value={nameKey} onChange={e => setNameKey(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" required /></div>
-                    <div><label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('categoryEditorModal.labelPermissions')}</label><div className="grid grid-cols-2 gap-3 mt-2">{roles.map(role => (<label key={role} className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl cursor-pointer border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 transition-all"><input type="checkbox" checked={permissions.includes(role)} onChange={() => togglePermission(role)} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="text-sm font-bold text-gray-700 dark:text-gray-300 capitalize">{t(`roles.${role}`)}</span></label>))}</div></div>
-                    <div className="flex justify-end gap-3 pt-6"><button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-colors">Скасувати</button><button type="submit" className="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-widest text-xs">Зберегти</button></div>
-                </form>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+                <div className="p-8">
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">
+                        {t('categoryEditorModal.editTitle')}
+                    </h2>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                {t('categoryEditorModal.labelName')}
+                            </label>
+                            <input
+                                type="text"
+                                value={nameKey}
+                                onChange={e => setNameKey(e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                placeholder="Наприклад: Fixit"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                                {t('categoryEditorModal.labelIcon')}
+                            </label>
+                            <div className="grid grid-cols-5 sm:grid-cols-9 gap-2">
+                                {availableIcons.map(icon => (
+                                    <button
+                                        key={icon}
+                                        type="button"
+                                        onClick={() => setIconName(icon)}
+                                        className={`p-3 rounded-xl border transition-all flex items-center justify-center ${iconName === icon
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 ring-2 ring-blue-500/20'
+                                            : 'border-gray-100 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        <Icon name={icon} className="w-5 h-5" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                                {t('categoryEditorModal.labelPermissions')}
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {roles.map(role => (
+                                    <label
+                                        key={role}
+                                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${permissions.includes(role)
+                                            ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+                                            : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-60'
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={permissions.includes(role)}
+                                            onChange={() => togglePermission(role)}
+                                            disabled={role === 'admin'}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                            {t(`roles.${role}`)}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-6 py-3 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-10 py-4 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest text-xs"
+                            >
+                                {t('common.save')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );

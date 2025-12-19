@@ -18,37 +18,38 @@ const UserAccessControl: React.FC<{ user: User | null; role: UserRole; onLoginCl
     const { t } = useI18n();
     const navigate = useNavigate();
     return (
-    <div className="flex items-center gap-3">
-        <div className="flex flex-col text-right">
-            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">{user ? user.email : t('roles.guest')}</span>
-            <div className="flex items-center justify-end gap-2">
-                <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
-                    {t(`roles.${role}`)}
-                </span>
-                {user && (
-                    <button onClick={() => logoutUser()} className="text-[10px] text-red-500 hover:underline font-black uppercase tracking-tighter">
-                        {t('header.logout')}
-                    </button>
-                )}
+        <div className="flex items-center gap-3">
+            <div className="flex flex-col text-right">
+                <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">{user ? user.email : t('roles.guest')}</span>
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
+                        {t(`roles.${role}`)}
+                    </span>
+                    {user && (
+                        <button onClick={() => logoutUser()} className="text-[10px] text-red-500 hover:underline font-black uppercase tracking-tighter">
+                            {t('header.logout')}
+                        </button>
+                    )}
+                </div>
             </div>
+            {role === 'admin' && (
+                <button onClick={() => navigate('/admin')} className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30" title={t('header.adminPanel')}>
+                    <Icon name="cog" className="w-5 h-5" />
+                </button>
+            )}
+            {!user && (
+                <button onClick={onLoginClick} className="px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest">
+                    {t('header.login')}
+                </button>
+            )}
         </div>
-        {role === 'admin' && (
-            <button onClick={() => navigate('/admin')} className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30" title={t('header.adminPanel')}>
-                <Icon name="cog" className="w-5 h-5" />
-            </button>
-        )}
-        {!user && (
-            <button onClick={onLoginClick} className="px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest">
-                {t('header.login')}
-            </button>
-        )}
-    </div>
-)};
+    )
+};
 
 const AppContent: React.FC = () => {
     const { t, lang } = useI18n();
     const navigate = useNavigate();
-    
+
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<UserRole>('guest');
     const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -91,7 +92,11 @@ const AppContent: React.FC = () => {
 
     const handleSaveDocument = async (docToSave: Partial<Document>) => {
         const id = docToSave.id || `doc${Date.now()}`;
-        await setDoc(doc(db, "documents", id), { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { uk: {} } }, { merge: true });
+        await setDoc(
+            doc(db, "documents", id),
+            { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { uk: {} } },
+            { merge: true }
+        );
         setEditingDoc(null);
     };
 
@@ -113,22 +118,73 @@ const AppContent: React.FC = () => {
     const DocPageRoute = () => {
         const { id } = useParams();
         const docItem = documents.find(d => d.id === id);
-        if (isAuthLoading || isDocsLoading) return <div className="flex items-center justify-center h-[80vh]"><Icon name="loading" className="w-10 h-10 text-blue-600" /></div>;
+
+        if (isAuthLoading || isDocsLoading) {
+            return (
+                <div className="flex items-center justify-center h-[80vh]">
+                    <Icon name="loading" className="w-10 h-10 text-blue-600" />
+                </div>
+            );
+        }
+
         if (!docItem) return <Navigate to="/" />;
+
+        const cat = categories.find(c => c.nameKey === docItem.categoryKey);
+        const isPublic = cat?.viewPermissions?.includes('guest');
+
+        // Якщо категорія публічна (дозволена гостям) - показуємо документ відразу
+        if (isPublic) {
+            return (
+                <DocumentView
+                    doc={docItem}
+                    onClose={() => navigate('/')}
+                    onRequireLogin={() => setIsLoginModalOpen(true)}
+                    currentUserRole={currentUserRole}
+                    onUpdateContent={handleUpdateContent}
+                    onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }}
+                />
+            );
+        }
+
+        // Якщо не публічна і користувач не залогінений - просимо авторизацію
         if (!currentUser) {
             return (
                 <div className="pt-32 text-center animate-fade-in">
                     <Icon name="lock-closed" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{t('loginModal.accessRequired')}</h2>
-                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">Цей ресурс обмежений. Будь ласка, увійдіть, щоб підтвердити свій рівень доступу.</p>
-                    <button onClick={() => { setLoginContext('view'); setIsLoginModalOpen(true); }} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Увійти зараз</button>
+                    <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+                        Цей ресурс обмежений. Будь ласка, увійдіть, щоб підтвердити свій рівень доступу.
+                    </p>
+                    <button
+                        onClick={() => { setLoginContext('view'); setIsLoginModalOpen(true); }}
+                        className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs"
+                    >
+                        Увійти зараз
+                    </button>
                 </div>
             );
         }
-        const cat = categories.find(c => c.nameKey === docItem.categoryKey);
-        if (!cat?.viewPermissions?.includes(currentUserRole)) return <div className="pt-40 text-center text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 p-20 rounded-3xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto"><Icon name="lock-closed" className="mx-auto mb-4 w-12 h-12" />{t('docView.accessDenied')}</div>;
 
-        return <DocumentView doc={docItem} onClose={() => navigate('/')} onRequireLogin={() => setIsLoginModalOpen(true)} currentUserRole={currentUserRole} onUpdateContent={handleUpdateContent} onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }} />;
+        // Якщо залогінений, але роль не має доступу
+        if (!cat?.viewPermissions?.includes(currentUserRole)) {
+            return (
+                <div className="pt-40 text-center text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 p-20 rounded-3xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto">
+                    <Icon name="lock-closed" className="mx-auto mb-4 w-12 h-12" />
+                    {t('docView.accessDenied')}
+                </div>
+            );
+        }
+
+        return (
+            <DocumentView
+                doc={docItem}
+                onClose={() => navigate('/')}
+                onRequireLogin={() => setIsLoginModalOpen(true)}
+                currentUserRole={currentUserRole}
+                onUpdateContent={handleUpdateContent}
+                onCategoryClick={(key) => { setSelectedCategory(key); navigate('/'); }}
+            />
+        );
     };
 
     const AdminPageRoute = () => {
@@ -146,7 +202,7 @@ const AppContent: React.FC = () => {
         return (
             <AdminPanel categories={categories} documents={documents} onUpdateCategory={setEditingCategory} onDeleteCategory={handleDeleteCategory}
                 onAddCategory={() => setEditingCategory({ id: `cat${Date.now()}`, nameKey: '', iconName: 'construction', viewPermissions: ['admin'] } as any)}
-                onDeleteDocument={handleDeleteDocument} onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')} 
+                onDeleteDocument={handleDeleteDocument} onEditDocument={setEditingDoc} onAddDocument={() => setEditingDoc({})} onClose={() => navigate('/')}
             />
         );
     };
@@ -169,26 +225,26 @@ const AppContent: React.FC = () => {
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen">
                 <Routes>
                     <Route path="/" element={
-                        <DashboardView 
-                            onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)} 
-                            searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length} 
-                            showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={handleDeleteDocument} 
-                            onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} 
-                            visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect} 
-                            onRequireLogin={() => setIsLoginModalOpen(true)} isGuest={currentUserRole==='guest'} viewMode={viewMode} setViewMode={setViewMode} 
-                            sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onEditCategory={setEditingCategory} 
+                        <DashboardView
+                            onSelectDoc={(doc) => navigate(`/doc/${doc.id}`)}
+                            searchTerm={searchTerm} onSearchChange={setSearchTerm} docs={paginatedDocs} totalDocsCount={sortedAndFilteredDocs.length}
+                            showAdminControls={showAdminControls} onEditDoc={setEditingDoc} onDeleteDoc={handleDeleteDocument}
+                            onAddNewDoc={() => setEditingDoc({})} selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory}
+                            visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories} allTags={allTags} selectedTags={selectedTags} onTagSelect={handleTagSelect}
+                            onRequireLogin={() => setIsLoginModalOpen(true)} isGuest={currentUserRole === 'guest'} viewMode={viewMode} setViewMode={setViewMode}
+                            sortBy={sortBy} setSortBy={setSortBy} onClearFilters={clearFilters} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onEditCategory={setEditingCategory}
                         />
                     } />
                     <Route path="/doc/:id" element={<DocPageRoute />} />
                     <Route path="/admin" element={<AdminPageRoute />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
-                
+
                 <footer className="mt-20 text-center text-gray-400 dark:text-gray-600 font-mono text-[9px] uppercase tracking-widest pb-12">
                     <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
                 </footer>
             </div>
-            
+
             {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} context={loginContext} />}
             {editingDoc !== null && <DocumentEditorModal doc={editingDoc} onSave={handleSaveDocument} onClose={() => setEditingDoc(null)} availableCategories={categories} />}
             {editingCategory !== null && <CategoryEditorModal category={editingCategory} onSave={handleSaveCategory} onClose={() => setEditingCategory(null)} />}

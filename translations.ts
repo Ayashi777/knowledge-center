@@ -16,6 +16,8 @@ export const translations = {
       back: 'Назад',
       share: 'Поділитися',
       justNow: 'щойно',
+      resetFilters: 'Скинути фільтри',
+      add: 'Додати',
     },
     header: {
       login: 'Увійти',
@@ -49,6 +51,8 @@ export const translations = {
       sortByName: 'За назвою',
       filterByTag: 'Фільтр за тегами',
       clearFilters: 'Очистити',
+      noResults: 'Документів не знайдено',
+      noResultsDescription: 'Спробуйте змінити параметри пошуку або скинути фільтри.',
     },
     docView: {
       preview: 'Попередній перегляд',
@@ -150,7 +154,7 @@ export const translations = {
     },
     categoryEditorModal: {
       editTitle: 'Редагувати дозволи категорії',
-      labelName: 'Ключ назви категорії',
+      labelName: 'Назва категорії (код або ключ)',
       labelIcon: 'Іконка',
       labelPermissions: 'Дозволи на перегляд',
     },
@@ -191,6 +195,8 @@ export const translations = {
       back: 'Back',
       share: 'Share',
       justNow: 'just now',
+      resetFilters: 'Reset filters',
+      add: 'Add',
     },
     header: {
       login: 'Login',
@@ -224,6 +230,8 @@ export const translations = {
         sortByName: 'By Name',
         filterByTag: 'Filter by tags',
         clearFilters: 'Clear',
+        noResults: 'No documents found',
+        noResultsDescription: 'Try changing your search terms or resetting filters.',
     },
     docView: {
         preview: 'Preview',
@@ -325,7 +333,7 @@ export const translations = {
     },
     categoryEditorModal: {
         editTitle: 'Edit Category',
-        labelName: 'Name Key',
+        labelName: 'Category Name (key)',
         labelIcon: 'Icon',
         labelPermissions: 'Permissions',
     },
