@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.0] - 2025-12-19
+### Fixed
+- **Content Persistence**: Resolved a critical issue where saving document metadata (title/tags) in the admin panel would accidentally overwrite and delete the document's HTML content.
+- **Firestore Synchronization**: Rewrote the content saving logic to use a "Read-Modify-Write" strategy (`getDoc` -> `setDoc`), eliminating `invalid nested entity` errors caused by Firestore dot-notation conflicts.
+- **Metadata Isolation**: Decoupled the metadata saving function from the content saving function, ensuring that edits to titles or categories never impact the document body.
+
+### Added
+- **Visual Feedback**: Added real-time status indicators ("Saving...", "Saved ✓") to the document editor for better user confidence.
+- **Robust Error Handling**: Improved error logging and user alerts during save operations to help diagnose connectivity or permission issues (e.g., AdBlock interference).
+
 ## [2.8.0] - 2025-12-19
 ### Added
 - **Visual Content Editor (WYSIWYG)**: Replaced the rigid multi-field document editor with a modern, WordPress-like visual editor powered by `React Quill`.

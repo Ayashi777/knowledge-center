@@ -276,7 +276,7 @@ export const DocumentView: React.FC<{
     onClose: () => void;
     onRequireLogin: () => void;
     currentUserRole: UserRole;
-    onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => void;
+    onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => Promise<void>;
     onCategoryClick: (categoryKey: string) => void;
 }> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick }) => {
     const { t, lang } = useI18n();
@@ -285,8 +285,12 @@ export const DocumentView: React.FC<{
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
 
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+
     useEffect(() => {
         setEditableContent(doc.content[lang] || emptyContentTemplate);
+        setSaveStatus('idle');
     }, [doc, lang]);
 
     useEffect(() => {
@@ -299,9 +303,20 @@ export const DocumentView: React.FC<{
         loadFiles();
     }, [doc.id]);
 
-    const handleSaveContent = () => {
-        onUpdateContent(doc.id, lang, editableContent);
-        setIsEditingContent(false);
+    const handleSaveContent = async () => {
+        setIsSaving(true);
+        setSaveStatus('idle');
+        try {
+            await onUpdateContent(doc.id, lang, editableContent);
+            setSaveStatus('saved');
+            setIsEditingContent(false);
+        } catch (e) {
+            console.error(e);
+            setSaveStatus('error');
+        } finally {
+            setIsSaving(false);
+            setTimeout(() => setSaveStatus('idle'), 2000);
+        }
     };
 
     const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
@@ -336,7 +351,15 @@ export const DocumentView: React.FC<{
                     <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">{t(doc.categoryKey)}</button>
                     <span className="mx-2 text-gray-400">/</span>
                     <span className="text-gray-800 dark:text-gray-200 font-semibold">{docTitle}</span>
+
+                    {saveStatus === 'saved' && (
+                        <span className="ml-3 text-[10px] font-black uppercase tracking-widest text-green-600">Saved ✓</span>
+                    )}
+                    {saveStatus === 'error' && (
+                        <span className="ml-3 text-[10px] font-black uppercase tracking-widest text-red-600">Save error</span>
+                    )}
                 </nav>
+
                 <button onClick={onClose} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-bold mb-6 transition-colors">
                     <Icon name="chevron-left" className="w-4 h-4" />
                     {t('docView.backToList')}
@@ -389,8 +412,20 @@ export const DocumentView: React.FC<{
                                     <button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest">{t('docView.editContent')}</button>
                                 ) : (
                                     <div className="flex flex-col gap-2">
-                                        <button onClick={handleSaveContent} className="w-full px-6 py-4 rounded-2xl bg-green-600 text-white hover:bg-green-700 transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest">{t('common.save')}</button>
-                                        <button onClick={() => setIsEditingContent(false)} className="w-full px-6 py-4 rounded-2xl text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-black uppercase tracking-widest">{t('common.cancel')}</button>
+                                        <button
+                                            onClick={handleSaveContent}
+                                            disabled={isSaving}
+                                            className="w-full px-6 py-4 rounded-2xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest"
+                                        >
+                                            {isSaving ? 'Saving...' : t('common.save')}
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingContent(false)}
+                                            disabled={isSaving}
+                                            className="w-full px-6 py-4 rounded-2xl text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-xs font-black uppercase tracking-widest"
+                                        >
+                                            {t('common.cancel')}
+                                        </button>
                                     </div>
                                 )}
                             </div>

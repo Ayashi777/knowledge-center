@@ -14,7 +14,51 @@ export interface UserProfile {
 }
 
 export interface Category {
-...
+  id: string;
+  nameKey: string;
+  iconName: IconName;
+  viewPermissions: UserRole[];
+}
+
+export interface DocumentContent {
+  html: string; // Відформатований текст у HTML (WYSIWYG)
+}
+
+export interface Document {
+  id: string;
+  titleKey?: string;
+  title?: string;
+  thumbnailUrl?: string;
+  updatedAt: any; // Firestore Timestamp or Date
+  categoryKey: string;
+  tags: string[];
+  content: {
+    [key in Language]?: DocumentContent;
+  };
+  viewPermissions?: UserRole[];
+  downloadPermissions?: UserRole[];
+}
+
+export type SortBy = 'recent' | 'alpha';
+export type ViewMode = 'grid' | 'list';
+export type DownloadStatus = 'idle' | 'loading' | 'success';
+export type UploadStatus = 'idle' | 'loading' | 'success';
+
+export type IconName =
+  | 'construction'
+  | 'electrical'
+  | 'safety'
+  | 'logistics'
+  | 'it'
+  | 'hr'
+  | 'finance'
+  | 'legal'
+  | 'pdf'
+  | 'dwg'
+  | 'lock-closed'
+  | 'sun'
+  | 'moon'
+  | 'loading'
   | 'check-circle'
   | 'tag'
   | 'upload'
@@ -29,7 +73,3 @@ export interface Category {
   | 'cog'
   | 'users'
   | 'view-boards';
-
-interface DocumentContent {
-  html: string; // Відформатований текст у HTML (WYSIWYG)
-}

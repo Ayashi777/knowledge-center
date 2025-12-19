@@ -10,7 +10,7 @@ import { useDocuments } from './hooks/useDocuments';
 import { Icon } from './components/icons';
 import { subscribeToAuthChanges, logoutUser } from './utils/auth';
 import { User } from 'firebase/auth';
-import { doc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, collection, getDocs, serverTimestamp, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 // --- User Control Component ---
@@ -90,18 +90,78 @@ const AppContent: React.FC = () => {
         document.title = t('title');
     }, [lang, t]);
 
+    /**
+     * ✅ Збереження метаданих документа (з Адмін-панелі)
+     */
     const handleSaveDocument = async (docToSave: Partial<Document>) => {
         const id = docToSave.id || `doc${Date.now()}`;
-        await setDoc(
-            doc(db, "documents", id),
-            { ...docToSave, id, updatedAt: new Date(), categoryKey: docToSave.categoryKey!, tags: docToSave.tags || [], content: docToSave.content || { uk: {} } },
-            { merge: true }
-        );
-        setEditingDoc(null);
+        const docRef = doc(db, "documents", id);
+        
+        const cleanData: any = {
+            id,
+            title: docToSave.title || '',
+            categoryKey: docToSave.categoryKey || '',
+            tags: docToSave.tags || [],
+            thumbnailUrl: (docToSave as any).thumbnailUrl || '',
+            updatedAt: serverTimestamp(),
+        };
+
+        try {
+            // Отримуємо поточний документ, щоб перевірити, чи є там контент
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                // Документ існує, оновлюємо тільки метадані
+                await updateDoc(docRef, cleanData);
+            } else {
+                // Новий документ: ініціалізуємо порожній контент
+                await setDoc(docRef, { ...cleanData, content: {} });
+            }
+            setEditingDoc(null);
+        } catch (e) {
+            console.error("Metadata save failed:", e);
+            alert("Помилка збереження метаданих");
+        }
     };
 
+    /**
+     * ✅ Збереження HTML-вмісту (з редактора Quill)
+     * "Read-Modify-Write" підхід - найнадійніший
+     */
     const handleUpdateContent = async (docId: string, lang: Language, newContent: DocumentContent) => {
-        await setDoc(doc(db, "documents", docId), { content: { [lang]: newContent }, updatedAt: new Date() }, { merge: true });
+        const docRef = doc(db, "documents", docId);
+        const html = newContent.html || '';
+
+        try {
+            // 1. Читаємо документ
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) {
+                throw new Error("Document does not exist!");
+            }
+
+            // 2. Отримуємо існуючий контент
+            const currentData = docSnap.data();
+            const currentContent = currentData.content || {};
+
+            // 3. Формуємо НОВИЙ об'єкт контенту в пам'яті
+            const updatedContent = {
+                ...currentContent,
+                [lang]: { html: html }
+            };
+
+            // 4. Перезаписуємо поле content цілком
+            // Це "лікує" будь-які проблеми зі структурою в базі
+            await updateDoc(docRef, {
+                content: updatedContent,
+                updatedAt: serverTimestamp()
+            });
+            
+            console.log("Content saved successfully via full rewrite");
+        } catch (error: any) {
+            console.error("CRITICAL: Update failed", error);
+            alert("Помилка збереження. Перевірте з'єднання або вимкніть AdBlock.");
+            throw error;
+        }
     };
 
     const handleSaveCategory = async (catToSave: Category) => {
@@ -132,7 +192,6 @@ const AppContent: React.FC = () => {
         const cat = categories.find(c => c.nameKey === docItem.categoryKey);
         const isPublic = cat?.viewPermissions?.includes('guest');
 
-        // Якщо категорія публічна (дозволена гостям) - показуємо документ відразу
         if (isPublic) {
             return (
                 <DocumentView
@@ -146,7 +205,6 @@ const AppContent: React.FC = () => {
             );
         }
 
-        // Якщо не публічна і користувач не залогінений - просимо авторизацію
         if (!currentUser) {
             return (
                 <div className="pt-32 text-center animate-fade-in">
@@ -165,7 +223,6 @@ const AppContent: React.FC = () => {
             );
         }
 
-        // Якщо залогінений, але роль не має доступу
         if (!cat?.viewPermissions?.includes(currentUserRole)) {
             return (
                 <div className="pt-40 text-center text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 p-20 rounded-3xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto">
