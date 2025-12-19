@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Document, Category, UserRole, ViewMode, SortBy, DocumentContent } from '../types';
@@ -8,6 +8,75 @@ import { Sidebar } from './Sidebar';
 import { DocumentGridItem, DocumentListItem } from './DocumentComponents';
 import { formatRelativeTime } from '../utils/format';
 import { listDocumentFiles } from '../utils/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';
+
+/**
+ * Compress / resize images before uploading to Storage
+ * - Converts to WEBP by default (much smaller)
+ * - Resizes to max 1920px by default
+ */
+const compressImage = async (
+    file: File,
+    opts: { maxW?: number; maxH?: number; quality?: number; mime?: string } = {}
+): Promise<File> => {
+    const maxW = opts.maxW ?? 1920;
+    const maxH = opts.maxH ?? 1920;
+    const quality = opts.quality ?? 0.82;
+    const mime = opts.mime ?? 'image/webp';
+
+    // If browser doesn't support createImageBitmap for this file, just return original
+    let bitmap: ImageBitmap | null = null;
+    try {
+        bitmap = await createImageBitmap(file);
+    } catch {
+        return file;
+    }
+
+    let { width, height } = bitmap;
+
+    // keep aspect ratio, only downscale
+    const ratio = Math.min(maxW / width, maxH / height, 1);
+    const targetW = Math.max(1, Math.round(width * ratio));
+    const targetH = Math.max(1, Math.round(height * ratio));
+
+    // If no resize and already webp/jpg/png is small enough, skip heavy work
+    // (Still useful to convert to webp, but we keep it simple)
+    const canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+
+    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+
+    const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
+            mime,
+            quality
+        );
+    });
+
+    const safeBase = file.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '_');
+    const ext =
+        mime === 'image/webp' ? 'webp' :
+        mime === 'image/jpeg' ? 'jpg' :
+        mime === 'image/png' ? 'png' :
+        (file.name.split('.').pop() || 'img');
+
+    return new File([blob], `${safeBase}.${ext}`, { type: mime });
+};
+
+const uploadImageToStorage = async (file: File, docId: string): Promise<string> => {
+    // Keep paths safe and predictable
+    const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    const path = `documents/${docId}/images/${Date.now()}-${safeName}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+};
 
 export const Pagination: React.FC<{
     currentPage: number;
@@ -288,6 +357,8 @@ export const DocumentView: React.FC<{
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
+    const quillRef = useRef<ReactQuill | null>(null);
+
     useEffect(() => {
         setEditableContent(doc.content[lang] || emptyContentTemplate);
         setSaveStatus('idle');
@@ -307,6 +378,12 @@ export const DocumentView: React.FC<{
         setIsSaving(true);
         setSaveStatus('idle');
         try {
+            const hasBase64Images = /<img[^>]+src=["']data:image\//i.test(editableContent.html || '');
+            if (hasBase64Images) {
+                alert('Base64-зображення не підтримуються. Використай кнопку Image — файл буде завантажено в Storage, а в текст вставиться URL.');
+                return;
+            }
+
             await onUpdateContent(doc.id, lang, editableContent);
             setSaveStatus('saved');
             setIsEditingContent(false);
@@ -325,6 +402,7 @@ export const DocumentView: React.FC<{
     return (
         <div className="pt-24 pb-20 animate-fade-in">
             <style>{`
+                /* Typography */
                 .quill-content h1 { font-size: 2.25rem; font-weight: 900; margin: 2rem 0 1.5rem; color: #111827; }
                 .quill-content h2 { font-size: 1.5rem; font-weight: 800; margin: 2.5rem 0 1rem; text-transform: uppercase; color: #111827; }
                 .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #111827; }
@@ -332,16 +410,50 @@ export const DocumentView: React.FC<{
                 .quill-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
                 .quill-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.5rem; }
                 .quill-content li { margin-bottom: 0.5rem; }
-                .quill-content img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; }
+
+                /* Media */
+                .quill-content img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
+
+                /* Dark theme */
                 .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
                 .dark .quill-content p { color: #d1d5db; }
-                .ql-container { font-family: inherit !important; font-size: 1rem !important; }
-                .ql-editor { min-height: 400px; }
+
+                /* Quill base */
+                .ql-container { font-family: inherit !important; font-size: 1rem !important; max-width: 100%; }
+                .ql-editor { min-height: 400px; max-width: 100%; }
+
                 .dark .ql-toolbar { background: #1f2937; border-color: #374151 !important; }
                 .dark .ql-container { background: #111827; border-color: #374151 !important; color: white; }
                 .dark .ql-stroke { stroke: #d1d5db !important; }
                 .dark .ql-fill { fill: #d1d5db !important; }
                 .dark .ql-picker { color: #d1d5db !important; }
+
+                /* ✅ FIX: prevent horizontal scroll / layout break from rich content */
+                .quill-content {
+                    overflow-x: hidden;
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
+                    max-width: 100%;
+                }
+                .quill-content img,
+                .quill-content video,
+                .quill-content iframe,
+                .quill-content embed,
+                .quill-content object {
+                    max-width: 100% !important;
+                    height: auto !important;
+                }
+                .quill-content table {
+                    display: block;
+                    max-width: 100%;
+                    overflow-x: auto;
+                    border-collapse: collapse;
+                }
+                .quill-content pre,
+                .quill-content code {
+                    max-width: 100%;
+                    overflow-x: auto;
+                }
             `}</style>
 
             <header className="mb-10">
@@ -445,12 +557,60 @@ export const DocumentView: React.FC<{
                     { isEditingContent ? (
                         <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-blue-500/30 shadow-2xl overflow-hidden min-h-[500px]">
                             <ReactQuill
+                                ref={quillRef}
                                 theme="snow"
                                 value={editableContent.html || ''}
                                 onChange={(content) => setEditableContent({ html: content })}
                                 className="h-[400px] dark:text-white"
                                 modules={{
-                                    toolbar: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image', 'video'], ['clean'], [{ color: [] }, { background: [] }]],
+                                    toolbar: {
+                                        container: [
+                                            [{ header: [1, 2, 3, false] }],
+                                            ['bold', 'italic', 'underline', 'strike'],
+                                            [{ list: 'ordered' }, { list: 'bullet' }],
+                                            ['link', 'image'],
+                                            ['clean'],
+                                        ],
+                                        handlers: {
+                                            image: () => {
+                                                const input = document.createElement('input');
+                                                input.type = 'file';
+                                                input.accept = 'image/*';
+                                                input.click();
+
+                                                input.onchange = async () => {
+                                                    const original = input.files?.[0];
+                                                    if (!original) return;
+
+                                                    try {
+                                                        // ✅ compress/resize before upload (removes 2MB pain)
+                                                        const compressed = await compressImage(original, {
+                                                            maxW: 1920,
+                                                            maxH: 1920,
+                                                            quality: 0.82,
+                                                            mime: 'image/webp',
+                                                        });
+
+                                                        // Optional: if still huge after compression
+                                                        if (compressed.size > 10 * 1024 * 1024) {
+                                                            alert('Зображення все ще дуже велике навіть після стиску (10MB+). Спробуй інше/менше.');
+                                                            return;
+                                                        }
+
+                                                        const url = await uploadImageToStorage(compressed, doc.id);
+
+                                                        const editor = quillRef.current?.getEditor();
+                                                        const range = editor?.getSelection(true);
+
+                                                        editor?.insertEmbed(range?.index ?? 0, 'image', url, 'user');
+                                                    } catch (e) {
+                                                        console.error('Image upload failed', e);
+                                                        alert('Помилка завантаження зображення в Storage. Перевір правила Storage та авторизацію.');
+                                                    }
+                                                };
+                                            },
+                                        },
+                                    },
                                 }}
                             />
                         </div>
