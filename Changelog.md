@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.1] - 2025-12-20
+### Fixed
+- **Image Embedding (React Quill)**: Fixed an issue where images successfully uploaded to Firebase Storage but did not appear in the document body (stuck on “Uploading image…”).
+- **Editor Reinitialization**: Stabilized the ReactQuill configuration by memoizing `modules` (`useMemo`), preventing unintended Quill re-creation during state updates (e.g., `isUploadingImage`), which previously broke placeholder replacement.
+- **Selection/Range Warnings**: Reduced occurrences of `addRange(): The given range isn't in document` by avoiding unnecessary content resets and relying on Quill’s native `onChange` updates instead of manual HTML state syncing.
+- **Placeholder Robustness**: Made the upload placeholder non-editable (`contentEditable=false`) to prevent cursor interaction from corrupting the embed DOM/blot mapping during uploads.
+
 ## [2.9.0] - 2025-12-19
 ### Fixed
 - **Content Persistence**: Resolved a critical issue where saving document metadata (title/tags) in the admin panel would accidentally overwrite and delete the document's HTML content.

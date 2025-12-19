@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Document, Category, UserRole, ViewMode, SortBy, DocumentContent } from '../types';
@@ -13,9 +13,6 @@ import { storage } from '../firebase';
 
 /**
  * Compress / resize images before uploading to Storage
- * - Converts to WEBP by default (much smaller)
- * - Resizes to max 1920px by default
- * - Never throws "undefined" promise rejections; falls back to original file on failure.
  */
 const compressImage = async (
     file: File,
@@ -68,14 +65,12 @@ const compressImage = async (
 
         return new File([blob], `${safeBase}.${ext}`, { type: mime });
     } catch (err) {
-        // Fallback: huge image / memory pressure / unsupported format
         console.warn('compressImage failed, fallback to original file:', err);
         return file;
     }
 };
 
 const uploadImageToStorage = async (file: File, docId: string): Promise<string> => {
-    // Keep paths safe and predictable
     const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
     const path = `documents/${docId}/images/${Date.now()}-${safeName}`;
     const storageRef = ref(storage, path);
@@ -83,12 +78,10 @@ const uploadImageToStorage = async (file: File, docId: string): Promise<string> 
     return await getDownloadURL(storageRef);
 };
 
-// Helper: simple unique id
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 /**
  * ✅ Quill placeholder blot (embed)
- * Важно: регистрируем один раз, чтобы не было повторной регистрации при ререндерах.
  */
 const registerUploadingImageBlot = () => {
     const Quill = (ReactQuill as any).Quill;
@@ -106,6 +99,7 @@ const registerUploadingImageBlot = () => {
         static create(value: any) {
             const node = super.create() as HTMLDivElement;
             node.setAttribute('data-upload-id', value?.id || '');
+            node.contentEditable = 'false'; // Важливо: забороняє редагування всередині блоку
             node.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px;opacity:.85;font-style:italic;">
           <span>⏳</span>
@@ -457,6 +451,112 @@ export const DocumentView: React.FC<{
         }
     };
 
+    /**
+     * 🔥 КРИТИЧНЕ ВИПРАВЛЕННЯ:
+     * modules обгорнуто в useMemo.
+     * Це запобігає перестворенню редактора при оновленні стейту (наприклад, setIsUploadingImage),
+     * що і викликало помилку addRange().
+     */
+    const modules = useMemo(() => ({
+        toolbar: {
+            container: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean'],
+            ],
+            handlers: {
+                image: () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.click();
+
+                    input.onchange = async () => {
+                        const original = input.files?.[0];
+                        if (!original) return;
+
+                        const editor = quillRef.current?.getEditor();
+                        if (!editor) return;
+
+                        const uploadId = makeId();
+
+                        // 1. Запам'ятовуємо позицію
+                        const range = editor.getSelection(true);
+                        const insertAt = range?.index ?? editor.getLength();
+
+                        // 2. Вставляємо плейсхолдер
+                        editor.insertEmbed(insertAt, 'uploadingImage', { id: uploadId }, 'user');
+                        editor.insertText(insertAt + 1, '\n', 'user');
+
+                        // ✅ ВАЖЛИВО: Не викликаємо setEditableContent вручну!
+                        // insertEmbed викличе onChange компонента автоматично.
+
+                        setIsUploadingImage(true);
+
+                        try {
+                            const compressed = await compressImage(original, {
+                                maxW: 1920,
+                                maxH: 1920,
+                                quality: 0.82,
+                                mime: 'image/webp',
+                            });
+
+                            if (compressed.size > 10 * 1024 * 1024) {
+                                alert('Зображення все ще дуже велике навіть після стиску (10MB+). Спробуй інше/менше.');
+                                return;
+                            }
+
+                            const url = await uploadImageToStorage(compressed, doc.id);
+
+                            // 3. Знаходимо плейсхолдер і замінюємо його
+                            // Використовуємо DOM редактора, бо він стабільний завдяки useMemo
+                            const root = editor.root;
+                            const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`);
+
+                            if (el) {
+                                const Quill = (ReactQuill as any).Quill;
+                                const blot = Quill?.find(el);
+                                const idx = blot ? editor.getIndex(blot) : null;
+
+                                if (idx !== null) {
+                                    editor.deleteText(idx, 1, 'user');
+                                    editor.insertEmbed(idx, 'image', url, 'user');
+                                    editor.insertText(idx + 1, '\n', 'user');
+                                } else {
+                                    // fallback: вставка в кінець
+                                    const len = editor.getLength();
+                                    editor.insertEmbed(len, 'image', url, 'user');
+                                }
+                            } else {
+                                // fallback
+                                const len = editor.getLength();
+                                editor.insertEmbed(len, 'image', url, 'user');
+                            }
+
+                        } catch (e) {
+                            console.error('Image upload failed', e);
+                            alert('Помилка завантаження зображення.');
+                            // Спробуємо видалити плейсхолдер, якщо він лишився
+                             const root = editor.root;
+                             const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`);
+                             if(el) {
+                                 const Quill = (ReactQuill as any).Quill;
+                                 const blot = Quill?.find(el);
+                                 const idx = blot ? editor.getIndex(blot) : null;
+                                 if (idx !== null) editor.deleteText(idx, 1, 'user');
+                             }
+
+                        } finally {
+                            setIsUploadingImage(false);
+                        }
+                    };
+                },
+            },
+        },
+    }), [doc.id]); // Залежність лише від doc.id, щоб не перебудовуватись дарма
+
     const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
     const currentContent = doc.content[lang] || emptyContentTemplate;
 
@@ -704,98 +804,7 @@ export const DocumentView: React.FC<{
                                 value={editableContent.html || ''}
                                 onChange={(content) => setEditableContent({ html: content })}
                                 className="h-[400px] dark:text-white"
-                                modules={{
-                                    toolbar: {
-                                        container: [
-                                            [{ header: [1, 2, 3, false] }],
-                                            ['bold', 'italic', 'underline', 'strike'],
-                                            [{ list: 'ordered' }, { list: 'bullet' }],
-                                            ['link', 'image'],
-                                            ['clean'],
-                                        ],
-                                        handlers: {
-                                            image: () => {
-                                                const input = document.createElement('input');
-                                                input.type = 'file';
-                                                input.accept = 'image/*';
-                                                input.click();
-
-                                                input.onchange = async () => {
-                                                    const original = input.files?.[0];
-                                                    if (!original) return;
-
-                                                    const editor = quillRef.current?.getEditor();
-                                                    if (!editor) return;
-
-                                                    const uploadId = makeId();
-
-                                                    const range = editor.getSelection(true);
-                                                    const insertAt = range?.index ?? editor.getLength();
-
-                                                    // ✅ insert blot placeholder (length = 1)
-                                                    editor.insertEmbed(insertAt, 'uploadingImage', { id: uploadId }, 'user');
-                                                    editor.insertText(insertAt + 1, '\n', 'user');
-
-                                                    // ❌ FIX: Removed setEditableContent here to avoid Race Condition
-
-                                                    setIsUploadingImage(true);
-
-                                                    try {
-                                                        const compressed = await compressImage(original, {
-                                                            maxW: 1920,
-                                                            maxH: 1920,
-                                                            quality: 0.82,
-                                                            mime: 'image/webp',
-                                                        });
-
-                                                        if (compressed.size > 10 * 1024 * 1024) {
-                                                            alert('Зображення все ще дуже велике навіть після стиску (10MB+). Спробуй інше/менше.');
-                                                            return;
-                                                        }
-
-                                                        const url = await uploadImageToStorage(compressed, doc.id);
-
-                                                        // ✅ find placeholder by DOM attribute (stable)
-                                                        const root: HTMLElement = editor.root;
-                                                        const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`) as HTMLElement | null;
-
-                                                        if (el) {
-                                                            const Quill = (ReactQuill as any).Quill;
-                                                            const blot = Quill?.find(el);
-                                                            const idx = blot ? editor.getIndex(blot) : null;
-
-                                                            if (idx !== null) {
-                                                                editor.deleteText(idx, 1, 'user'); // remove placeholder blot
-                                                                editor.insertEmbed(idx, 'image', url, 'user');
-                                                                editor.insertText(idx + 1, '\n', 'user');
-                                                            } else {
-                                                                // fallback: insert at cursor
-                                                                const r = editor.getSelection(true);
-                                                                const fallbackIdx = r?.index ?? editor.getLength();
-                                                                editor.insertEmbed(fallbackIdx, 'image', url, 'user');
-                                                                editor.insertText(fallbackIdx + 1, '\n', 'user');
-                                                            }
-                                                        } else {
-                                                            // placeholder was removed/edited – insert at cursor
-                                                            const r = editor.getSelection(true);
-                                                            const fallbackIdx = r?.index ?? editor.getLength();
-                                                            editor.insertEmbed(fallbackIdx, 'image', url, 'user');
-                                                            editor.insertText(fallbackIdx + 1, '\n', 'user');
-                                                        }
-
-                                                        // ❌ FIX: Removed setEditableContent here as well.
-                                                        // insertEmbed/insertText triggers 'text-change' -> ReactQuill onChange -> state update.
-                                                    } catch (e) {
-                                                        console.error('Image upload failed', e);
-                                                        alert('Помилка завантаження зображення в Storage. Перевір правила Storage та авторизацію.');
-                                                    } finally {
-                                                        setIsUploadingImage(false);
-                                                    }
-                                                };
-                                            },
-                                        },
-                                    },
-                                }}
+                                modules={modules} // 🔥 Використовуємо мемоізовані модулі
                             />
                         </div>
                     ) : (
