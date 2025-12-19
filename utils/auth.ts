@@ -1,11 +1,9 @@
 import { 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
     signOut, 
     onAuthStateChanged,
     User
 } from "firebase/auth";
-import { doc, getDoc, setDoc, collection, getDocs, limit, query } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { UserRole } from "../types";
 
@@ -21,12 +19,8 @@ export const getUserRole = async (user: User): Promise<UserRole> => {
             return userDoc.data().role as UserRole;
         }
 
-        // Emergency Bootstrap: If no users exist at all, make the first one an ADMIN
-        const usersQuery = query(collection(db, "users"), limit(1));
-        const usersSnapshot = await getDocs(usersQuery);
-        
-        const isFirstUser = usersSnapshot.empty;
-        const assignedRole: UserRole = isFirstUser ? "admin" : "guest";
+        // Default role for any new authenticated user who doesn't have a record yet
+        const assignedRole: UserRole = "guest";
 
         // Create the user profile in Firestore
         await setDoc(userRef, {

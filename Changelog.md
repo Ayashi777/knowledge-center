@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2025-12-19
+### Removed
+- **Bootstrap Logic**: Removed "Emergency Initialize Database" feature to ensure a clean slate for production.
+- **Auto-Admin Promotion**: Disabled the logic that automatically assigned the `admin` role to the first user. All roles must now be assigned manually via Firestore for enhanced security.
+- **Demo Data**: Cleared all hardcoded categories and documents from `constants.ts`.
+
+### Changed
+- **System Initialization**: The application now relies entirely on dynamic data from Firestore rather than local constants for its initial state.
+
 ## [2.6.0] - 2025-12-19
 ### Added
 - **User Email Synchronization**: Implemented full synchronization between Firestore user profiles and Firebase Authentication.
@@ -24,5 +33,3 @@ All notable changes to this project will be documented in this file.
 - **Admin Panel Restoration**: Fixed a regression where some admin tabs (Roles, Categories, Documents) were not rendering correctly.
 - **Translation Keys**: Resolved missing translation keys for dashboard sorting, sidebar filters, and role descriptions (`roles.guest`, `sidebar.*`, `dashboard.*`).
 - **Request Metadata**: Access requests now display full contact details (Phone, Email, Company) and the user's requested role for better vetting.
-
-... [rest of changelog]

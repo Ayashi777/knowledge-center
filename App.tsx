@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Navigate, useLocation } from 'react-router-dom';
 import { Category, Document, DocumentContent, UserRole } from './types';
-import { CATEGORIES as initialCategories, RECENT_DOCUMENTS as initialDocuments } from './constants';
 import { useI18n, Language } from './i18n';
 import { ThemeSwitcher } from './components/UI';
 import { LoginModal, RegistrationRequestModal, DocumentEditorModal, CategoryEditorModal } from './components/Modals';
@@ -55,7 +54,7 @@ const AppContent: React.FC = () => {
     const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     const {
-        documents, setDocuments, categories, setCategories, isLoading: isDocsLoading,
+        documents, categories, isLoading: isDocsLoading,
         searchTerm, setSearchTerm, selectedCategory, setSelectedCategory,
         selectedTags, handleTagSelect, sortBy, setSortBy, viewMode, setViewMode, currentPage, setCurrentPage,
         totalPages, paginatedDocs, visibleCategories, allTags, sortedAndFilteredDocs, clearFilters
@@ -89,17 +88,6 @@ const AppContent: React.FC = () => {
         document.documentElement.lang = lang;
         document.title = t('title');
     }, [lang, t]);
-
-    const initDatabase = async () => {
-        if (!window.confirm("Наповнити базу даних початковими даними?")) return;
-        try {
-            for (const cat of initialCategories) await setDoc(doc(db, "categories", cat.id), cat);
-            for (const d of initialDocuments) await setDoc(doc(db, "documents", d.id), { ...d, updatedAt: new Date(d.updatedAt) });
-            alert("Успішно! Оновіть сторінку.");
-        } catch (e) {
-            alert("Помилка доступу. Можливо, ви ще не адмін у Firestore Rules.");
-        }
-    };
 
     const handleSaveDocument = async (docToSave: Partial<Document>) => {
         const id = docToSave.id || `doc${Date.now()}`;
@@ -179,20 +167,6 @@ const AppContent: React.FC = () => {
             </header>
 
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen">
-                {/* Emergency Initialization Button for first-time setup */}
-                {currentUser && categories.length === 0 && !isDocsLoading && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 z-50 p-6 text-center">
-                        <div className="max-w-md">
-                            <Icon name="loading" className="w-16 h-16 text-blue-600 mx-auto mb-6" />
-                            <h2 className="text-2xl font-black mb-4">База даних порожня</h2>
-                            <p className="text-gray-500 mb-8 font-semibold">Схоже, ви вперше запускаєте систему. Натисніть кнопку нижче, щоб завантажити початкові категорії та документи.</p>
-                            <button onClick={initDatabase} className="bg-red-600 text-white px-10 py-5 rounded-2xl font-black shadow-2xl hover:bg-red-700 transition-all uppercase tracking-widest animate-pulse">
-                                🚨 Initialize Database
-                            </button>
-                        </div>
-                    </div>
-                )}
-
                 <Routes>
                     <Route path="/" element={
                         <DashboardView 
