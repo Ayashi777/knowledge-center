@@ -15,6 +15,7 @@ import { storage } from '../firebase';
  * Compress / resize images before uploading to Storage
  * - Converts to WEBP by default (much smaller)
  * - Resizes to max 1920px by default
+ * - Never throws "undefined" promise rejections; falls back to original file on failure.
  */
 const compressImage = async (
     file: File,
@@ -25,48 +26,52 @@ const compressImage = async (
     const quality = opts.quality ?? 0.82;
     const mime = opts.mime ?? 'image/webp';
 
-    // If browser doesn't support createImageBitmap for this file, just return original
-    let bitmap: ImageBitmap | null = null;
     try {
-        bitmap = await createImageBitmap(file);
-    } catch {
+        const bitmap = await createImageBitmap(file);
+
+        let { width, height } = bitmap;
+
+        // keep aspect ratio, only downscale
+        const ratio = Math.min(maxW / width, maxH / height, 1);
+        const targetW = Math.max(1, Math.round(width * ratio));
+        const targetH = Math.max(1, Math.round(height * ratio));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return file;
+
+        ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (b) => {
+                    if (!b) return reject(new Error('Image compression failed: toBlob returned null'));
+                    resolve(b);
+                },
+                mime,
+                quality
+            );
+        });
+
+        const safeBase = file.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '_');
+        const ext =
+            mime === 'image/webp'
+                ? 'webp'
+                : mime === 'image/jpeg'
+                ? 'jpg'
+                : mime === 'image/png'
+                ? 'png'
+                : file.name.split('.').pop() || 'img';
+
+        return new File([blob], `${safeBase}.${ext}`, { type: mime });
+    } catch (err) {
+        // Fallback: huge image / memory pressure / unsupported format
+        console.warn('compressImage failed, fallback to original file:', err);
         return file;
     }
-
-    let { width, height } = bitmap;
-
-    // keep aspect ratio, only downscale
-    const ratio = Math.min(maxW / width, maxH / height, 1);
-    const targetW = Math.max(1, Math.round(width * ratio));
-    const targetH = Math.max(1, Math.round(height * ratio));
-
-    // If no resize and already webp/jpg/png is small enough, skip heavy work
-    // (Still useful to convert to webp, but we keep it simple)
-    const canvas = document.createElement('canvas');
-    canvas.width = targetW;
-    canvas.height = targetH;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return file;
-
-    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
-
-    const blob: Blob = await new Promise((resolve, reject) => {
-        canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
-            mime,
-            quality
-        );
-    });
-
-    const safeBase = file.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '_');
-    const ext =
-        mime === 'image/webp' ? 'webp' :
-        mime === 'image/jpeg' ? 'jpg' :
-        mime === 'image/png' ? 'png' :
-        (file.name.split('.').pop() || 'img');
-
-    return new File([blob], `${safeBase}.${ext}`, { type: mime });
 };
 
 const uploadImageToStorage = async (file: File, docId: string): Promise<string> => {
@@ -76,6 +81,47 @@ const uploadImageToStorage = async (file: File, docId: string): Promise<string> 
     const storageRef = ref(storage, path);
     await uploadBytes(storageRef, file);
     return await getDownloadURL(storageRef);
+};
+
+// Helper: simple unique id
+const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+/**
+ * ✅ Quill placeholder blot (embed)
+ * Важно: регистрируем один раз, чтобы не было повторной регистрации при ререндерах.
+ */
+const registerUploadingImageBlot = () => {
+    const Quill = (ReactQuill as any).Quill;
+    if (!Quill) return;
+
+    if ((Quill as any).__uploadingImageRegistered) return;
+
+    const BlockEmbed = Quill.import('blots/block/embed');
+
+    class UploadingImageBlot extends BlockEmbed {
+        static blotName = 'uploadingImage';
+        static tagName = 'div';
+        static className = 'quill-uploading-image';
+
+        static create(value: any) {
+            const node = super.create() as HTMLDivElement;
+            node.setAttribute('data-upload-id', value?.id || '');
+            node.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;opacity:.85;font-style:italic;">
+          <span>⏳</span>
+          <span>Uploading image…</span>
+        </div>
+      `;
+            return node;
+        }
+
+        static value(node: any) {
+            return { id: node.getAttribute('data-upload-id') || '' };
+        }
+    }
+
+    Quill.register(UploadingImageBlot);
+    (Quill as any).__uploadingImageRegistered = true;
 };
 
 export const Pagination: React.FC<{
@@ -357,7 +403,14 @@ export const DocumentView: React.FC<{
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
+    // status for image uploads
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
     const quillRef = useRef<ReactQuill | null>(null);
+
+    useEffect(() => {
+        registerUploadingImageBlot();
+    }, []);
 
     useEffect(() => {
         setEditableContent(doc.content[lang] || emptyContentTemplate);
@@ -378,13 +431,21 @@ export const DocumentView: React.FC<{
         setIsSaving(true);
         setSaveStatus('idle');
         try {
-            const hasBase64Images = /<img[^>]+src=["']data:image\//i.test(editableContent.html || '');
+            const html = editableContent.html || '';
+
+            // Disallow base64 images (Firestore 2MB limit / huge payload)
+            const hasBase64Images = /<img[^>]+src=["']data:image\//i.test(html);
             if (hasBase64Images) {
                 alert('Base64-зображення не підтримуються. Використай кнопку Image — файл буде завантажено в Storage, а в текст вставиться URL.');
                 return;
             }
 
-            await onUpdateContent(doc.id, lang, editableContent);
+            // ✅ Safety cleanup: remove any leftover placeholders before saving
+            const cleanedHtml = html
+                .replace(/<div class="quill-uploading-image"[^>]*>[\s\S]*?<\/div>/gi, '')
+                .replace(/\[\[uploading-image:[^\]]+\]\]\s*⏳\s*Uploading image…/gi, '');
+
+            await onUpdateContent(doc.id, lang, { html: cleanedHtml });
             setSaveStatus('saved');
             setIsEditingContent(false);
         } catch (e) {
@@ -428,7 +489,7 @@ export const DocumentView: React.FC<{
                 .dark .ql-fill { fill: #d1d5db !important; }
                 .dark .ql-picker { color: #d1d5db !important; }
 
-                /* ✅ FIX: prevent horizontal scroll / layout break from rich content */
+                /* prevent horizontal scroll / layout break from rich content */
                 .quill-content {
                     overflow-x: hidden;
                     overflow-wrap: anywhere;
@@ -454,13 +515,30 @@ export const DocumentView: React.FC<{
                     max-width: 100%;
                     overflow-x: auto;
                 }
+
+                /* ✅ styling for our uploading blot */
+                .quill-uploading-image {
+                    padding: 10px 12px;
+                    border-radius: 12px;
+                    border: 1px dashed rgba(59,130,246,.35);
+                    background: rgba(59,130,246,.06);
+                    margin: 12px 0;
+                }
+                .dark .quill-uploading-image {
+                    border-color: rgba(59,130,246,.35);
+                    background: rgba(59,130,246,.10);
+                }
             `}</style>
 
             <header className="mb-10">
                 <nav className="text-xs text-gray-400 font-black uppercase tracking-widest mb-4 flex flex-wrap items-center">
-                    <button onClick={onClose} className="hover:text-blue-600 transition-colors">{t('dashboard.title')}</button>
+                    <button onClick={onClose} className="hover:text-blue-600 transition-colors">
+                        {t('dashboard.title')}
+                    </button>
                     <span className="mx-2 text-gray-400">/</span>
-                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">{t(doc.categoryKey)}</button>
+                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">
+                        {t(doc.categoryKey)}
+                    </button>
                     <span className="mx-2 text-gray-400">/</span>
                     <span className="text-gray-800 dark:text-gray-200 font-semibold">{docTitle}</span>
 
@@ -482,62 +560,109 @@ export const DocumentView: React.FC<{
                 <aside className="lg:w-1/4 order-2 lg:order-1">
                     <div className="sticky top-24 space-y-10">
                         <div>
-                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">{t('docView.content.toc.title')}</h4>
+                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">
+                                {t('docView.content.toc.title')}
+                            </h4>
                             <nav className="flex flex-col gap-3">
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.intro')}</button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s1')}</button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s2')}</button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s3')}</button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.appendices')}</button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    {t('docView.content.toc.intro')}
+                                </button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    {t('docView.content.toc.s1')}
+                                </button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    {t('docView.content.toc.s2')}
+                                </button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    {t('docView.content.toc.s3')}
+                                </button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    {t('docView.content.toc.appendices')}
+                                </button>
                             </nav>
                         </div>
 
                         <div>
-                           <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">{t('docView.downloadFiles')}</h4>
-                           <div className="space-y-3">
+                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">
+                                {t('docView.downloadFiles')}
+                            </h4>
+                            <div className="space-y-3">
                                 {isLoadingFiles ? (
-                                    <div className="flex items-center gap-2 text-gray-400 text-sm"><Icon name="loading" className="w-4 h-4" /> Loading files...</div>
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                                        <Icon name="loading" className="w-4 h-4" /> Loading files...
+                                    </div>
                                 ) : (
-                                    files.map(file => (
-                                        <div key={file.name} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-500/30 transition-all group">
+                                    files.map((file) => (
+                                        <div
+                                            key={file.name}
+                                            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-500/30 transition-all group"
+                                        >
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm"><Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" /></div>
+                                                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm">
+                                                    <Icon
+                                                        name={file.extension === 'pdf' ? 'pdf' : 'hr'}
+                                                        className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors"
+                                                    />
+                                                </div>
                                                 <div className="min-w-0">
-                                                    <p className="font-black text-[11px] truncate dark:text-white uppercase tracking-tight" title={file.name}>{file.name}</p>
+                                                    <p className="font-black text-[11px] truncate dark:text-white uppercase tracking-tight" title={file.name}>
+                                                        {file.name}
+                                                    </p>
                                                     <p className="text-[9px] text-gray-500 uppercase font-black opacity-60">1.2 MB</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-1">
-                                              <a href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-black text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap"><span>{t('common.download')}</span></a>
-                                              {currentUserRole === 'admin' && <span className="text-[10px] text-gray-400 font-bold cursor-pointer hover:text-blue-500">{t('docView.uploadNew')}</span>}
+                                                <a
+                                                    href={file.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-2 text-xs font-black text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap"
+                                                >
+                                                    <span>{t('common.download')}</span>
+                                                </a>
+                                                {currentUserRole === 'admin' && (
+                                                    <span className="text-[10px] text-gray-400 font-bold cursor-pointer hover:text-blue-500">
+                                                        {t('docView.uploadNew')}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     ))
                                 )}
                                 {!isLoadingFiles && files.length === 0 && <p className="text-xs text-gray-400 italic">No files available.</p>}
-                           </div>
+                            </div>
                         </div>
 
                         {currentUserRole === 'admin' && (
                             <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
                                 {!isEditingContent ? (
-                                    <button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest">{t('docView.editContent')}</button>
+                                    <button
+                                        onClick={() => setIsEditingContent(true)}
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest"
+                                    >
+                                        {t('docView.editContent')}
+                                    </button>
                                 ) : (
                                     <div className="flex flex-col gap-2">
                                         <button
                                             onClick={handleSaveContent}
-                                            disabled={isSaving}
+                                            disabled={isSaving || isUploadingImage}
                                             className="w-full px-6 py-4 rounded-2xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest"
                                         >
                                             {isSaving ? 'Saving...' : t('common.save')}
                                         </button>
                                         <button
                                             onClick={() => setIsEditingContent(false)}
-                                            disabled={isSaving}
+                                            disabled={isSaving || isUploadingImage}
                                             className="w-full px-6 py-4 rounded-2xl text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-xs font-black uppercase tracking-widest"
                                         >
                                             {t('common.cancel')}
                                         </button>
+                                        {isUploadingImage && (
+                                            <div className="text-[10px] text-amber-600 font-black uppercase tracking-widest mt-2 text-center">
+                                                Uploading image…
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -549,13 +674,30 @@ export const DocumentView: React.FC<{
                     <div className="mb-10">
                         <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 dark:text-white mb-4 leading-[1.1]">{docTitle}</h1>
                         <div className="flex flex-wrap items-center gap-4">
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}</p>
-                            <div className="flex flex-wrap gap-2">{doc.tags?.map(tag => (<div key={tag} className="flex items-center gap-1 text-[9px] uppercase font-black text-gray-400 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full"><Icon name="tag" className="w-2.5 h-2.5 opacity-50"/> {tag}</div>))}</div>
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                                {t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {doc.tags?.map((tag) => (
+                                    <div
+                                        key={tag}
+                                        className="flex items-center gap-1 text-[9px] uppercase font-black text-gray-400 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full"
+                                    >
+                                        <Icon name="tag" className="w-2.5 h-2.5 opacity-50" /> {tag}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    { isEditingContent ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-blue-500/30 shadow-2xl overflow-hidden min-h-[500px]">
+                    {isEditingContent ? (
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-blue-500/30 shadow-2xl overflow-hidden min-h-[500px] relative">
+                            {isUploadingImage && (
+                                <div className="absolute top-3 right-3 z-10 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-[10px] font-black uppercase tracking-widest">
+                                    Uploading image…
+                                </div>
+                            )}
+
                             <ReactQuill
                                 ref={quillRef}
                                 theme="snow"
@@ -582,8 +724,23 @@ export const DocumentView: React.FC<{
                                                     const original = input.files?.[0];
                                                     if (!original) return;
 
+                                                    const editor = quillRef.current?.getEditor();
+                                                    if (!editor) return;
+
+                                                    const uploadId = makeId();
+
+                                                    const range = editor.getSelection(true);
+                                                    const insertAt = range?.index ?? editor.getLength();
+
+                                                    // ✅ insert blot placeholder (length = 1)
+                                                    editor.insertEmbed(insertAt, 'uploadingImage', { id: uploadId }, 'user');
+                                                    editor.insertText(insertAt + 1, '\n', 'user');
+
+                                                    // ❌ FIX: Removed setEditableContent here to avoid Race Condition
+
+                                                    setIsUploadingImage(true);
+
                                                     try {
-                                                        // ✅ compress/resize before upload (removes 2MB pain)
                                                         const compressed = await compressImage(original, {
                                                             maxW: 1920,
                                                             maxH: 1920,
@@ -591,7 +748,6 @@ export const DocumentView: React.FC<{
                                                             mime: 'image/webp',
                                                         });
 
-                                                        // Optional: if still huge after compression
                                                         if (compressed.size > 10 * 1024 * 1024) {
                                                             alert('Зображення все ще дуже велике навіть після стиску (10MB+). Спробуй інше/менше.');
                                                             return;
@@ -599,13 +755,41 @@ export const DocumentView: React.FC<{
 
                                                         const url = await uploadImageToStorage(compressed, doc.id);
 
-                                                        const editor = quillRef.current?.getEditor();
-                                                        const range = editor?.getSelection(true);
+                                                        // ✅ find placeholder by DOM attribute (stable)
+                                                        const root: HTMLElement = editor.root;
+                                                        const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`) as HTMLElement | null;
 
-                                                        editor?.insertEmbed(range?.index ?? 0, 'image', url, 'user');
+                                                        if (el) {
+                                                            const Quill = (ReactQuill as any).Quill;
+                                                            const blot = Quill?.find(el);
+                                                            const idx = blot ? editor.getIndex(blot) : null;
+
+                                                            if (idx !== null) {
+                                                                editor.deleteText(idx, 1, 'user'); // remove placeholder blot
+                                                                editor.insertEmbed(idx, 'image', url, 'user');
+                                                                editor.insertText(idx + 1, '\n', 'user');
+                                                            } else {
+                                                                // fallback: insert at cursor
+                                                                const r = editor.getSelection(true);
+                                                                const fallbackIdx = r?.index ?? editor.getLength();
+                                                                editor.insertEmbed(fallbackIdx, 'image', url, 'user');
+                                                                editor.insertText(fallbackIdx + 1, '\n', 'user');
+                                                            }
+                                                        } else {
+                                                            // placeholder was removed/edited – insert at cursor
+                                                            const r = editor.getSelection(true);
+                                                            const fallbackIdx = r?.index ?? editor.getLength();
+                                                            editor.insertEmbed(fallbackIdx, 'image', url, 'user');
+                                                            editor.insertText(fallbackIdx + 1, '\n', 'user');
+                                                        }
+
+                                                        // ❌ FIX: Removed setEditableContent here as well.
+                                                        // insertEmbed/insertText triggers 'text-change' -> ReactQuill onChange -> state update.
                                                     } catch (e) {
                                                         console.error('Image upload failed', e);
                                                         alert('Помилка завантаження зображення в Storage. Перевір правила Storage та авторизацію.');
+                                                    } finally {
+                                                        setIsUploadingImage(false);
                                                     }
                                                 };
                                             },
