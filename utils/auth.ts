@@ -12,23 +12,19 @@ import { UserRole } from "../types";
  */
 export const getUserRole = async (user: User): Promise<UserRole> => {
     try {
-        console.log("Checking role for UID:", user.uid);
         const userRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userRef);
         
         if (userDoc.exists()) {
             const data = userDoc.data();
-            console.log("User data found in Firestore:", data);
             
             // Спроба знайти поле role, ігноруючи пробіли в назві ключа
             let rawRole = data.role;
             if (rawRole === undefined) {
-                // Якщо точного збігу немає, шукаємо ключ, який після trim() стає "role"
                 const keys = Object.keys(data);
                 const roleKey = keys.find(k => k.trim() === "role");
                 if (roleKey) {
                     rawRole = data[roleKey];
-                    console.log(`Found role in a field with non-standard name: "${roleKey}"`);
                 }
             }
 
@@ -50,7 +46,8 @@ export const getUserRole = async (user: User): Promise<UserRole> => {
 
         return assignedRole;
     } catch (error) {
-        console.error("CRITICAL: Error fetching user role:", error);
+        // Залишаємо лише критичну помилку без деталей користувача
+        console.error("Error fetching user role");
         return "guest";
     }
 };
