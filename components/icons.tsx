@@ -2,7 +2,7 @@ import React from 'react';
 import { IconName } from '../types';
 
 interface IconProps {
-  name: IconName;
+  name: IconName | 'chevron-left';
   className?: string;
 }
 
@@ -145,6 +145,11 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-10 h-10' }) => 
     users: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-3.833-6.247 4.125 4.125 0 00-3.833 6.247 9.38 9.38 0 002.625-.372zm-8.25 0a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-3.833-6.247 4.125 4.125 0 00-3.833 6.247 9.38 9.38 0 002.625-.372zM6 7.5a3 3 0 11-6 0 3 3 0 016 0zm12 0a3 3 0 11-6 0 3 3 0 016 0zm-6 0a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    'chevron-left': (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
       </svg>
     ),
   };

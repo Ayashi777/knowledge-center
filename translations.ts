@@ -15,6 +15,7 @@ export const translations = {
       notFound: 'Нічого не знайдено',
       back: 'Назад',
       share: 'Поділитися',
+      justNow: 'щойно',
     },
     header: {
       login: 'Увійти',
@@ -55,6 +56,23 @@ export const translations = {
       info: 'Інформація',
       category: 'Категорія',
       canView: 'Може бачити',
+      lastUpdated: 'Останнє оновлення',
+      downloadFiles: 'Файли для завантаження',
+      editContent: 'Редагувати вміст',
+      accessDenied: 'Доступ обмежено',
+      backToList: 'Повернутися до списку',
+      uploadNew: 'Завантажити новий',
+      content: {
+        toc: {
+          title: 'Зміст документу',
+          intro: 'Вступ',
+          s1: 'Розділ 1',
+          s2: 'Розділ 2',
+          s3: 'Розділ 3',
+          appendices: 'Додатки',
+        },
+        importantNoteLabel: 'Важливо',
+      }
     },
     loginModal: {
       title: 'Вхід у систему',
@@ -114,6 +132,8 @@ export const translations = {
     userEditorModal: {
       title: 'Редагування користувача',
       labelName: 'ПІБ',
+      labelEmail: 'Email',
+      emailChangeWarning: 'Зміна email оновить логін користувача. Потрібна обережність.',
       labelCompany: 'Компанія',
       labelPhone: 'Телефон',
       labelRole: 'Роль',
@@ -170,6 +190,7 @@ export const translations = {
       notFound: 'No results found',
       back: 'Back',
       share: 'Share',
+      justNow: 'just now',
     },
     header: {
       login: 'Login',
@@ -210,6 +231,23 @@ export const translations = {
         info: 'Info',
         category: 'Category',
         canView: 'Can View',
+        lastUpdated: 'Last Updated',
+        downloadFiles: 'Files for Download',
+        editContent: 'Edit Content',
+        accessDenied: 'Access Denied',
+        backToList: 'Back to List',
+        uploadNew: 'Upload New',
+        content: {
+          toc: {
+            title: 'Table of Contents',
+            intro: 'Introduction',
+            s1: 'Section 1',
+            s2: 'Section 2',
+            s3: 'Section 3',
+            appendices: 'Appendices',
+          },
+          importantNoteLabel: 'Important',
+        }
     },
     loginModal: {
         title: 'Login',
@@ -269,6 +307,8 @@ export const translations = {
     userEditorModal: {
       title: 'Edit User',
       labelName: 'Full Name',
+      labelEmail: 'Email',
+      emailChangeWarning: 'Changing the email will update the user\'s login. Caution is advised.',
       labelCompany: 'Company',
       labelPhone: 'Phone',
       labelRole: 'Role',

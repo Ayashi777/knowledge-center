@@ -76,25 +76,91 @@ export const DocumentView: React.FC<{ doc: Document, onClose: () => void, onRequ
             <header className="mb-4">
                 <nav className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex flex-wrap items-center">
                     <button onClick={onClose} className="hover:text-blue-600">{t('dashboard.title')}</button>
-                    <span className="mx-2">/</span>
-                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600">{t(doc.categoryKey)}</button>
-                    <span className="mx-2">/</span>
-                    <span className="text-gray-800 dark:text-gray-200">{docTitle}</span>
+                    <span className="mx-2 text-gray-400">/</span>
+                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">{t(doc.categoryKey)}</button>
+                    <span className="mx-2 text-gray-400">/</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-semibold">{docTitle}</span>
                 </nav>
+                <button onClick={onClose} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-bold mb-6 transition-colors">
+                    <Icon name="chevron-left" className="w-4 h-4" />
+                    {t('docView.backToList')}
+                </button>
             </header>
 
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                <main className="lg:w-2/3 order-1">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">{docTitle}</h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
-                        <p className="text-xs text-gray-500 font-mono">{t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}</p>
-                        <div className="flex flex-wrap gap-2">{doc.tags?.map(tag => (<div key={tag} className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md"><Icon name="tag" className="w-3 h-3"/> {tag}</div>))}</div>
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+                <aside className="lg:w-1/4 order-2 lg:order-1">
+                    <div className="sticky top-24 space-y-10">
+                        {/* TOC */}
+                        <div>
+                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">{t('docView.content.toc.title')}</h4>
+                            <nav className="flex flex-col gap-3">
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.intro')}</button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s1')}</button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s2')}</button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.s3')}</button>
+                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">{t('docView.content.toc.appendices')}</button>
+                            </nav>
+                        </div>
+
+                        {/* Files */}
+                        <div>
+                           <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">{t('docView.downloadFiles')}</h4>
+                           <div className="space-y-3">
+                                {isLoadingFiles ? (
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm"><Icon name="loading" className="w-4 h-4" /> Loading files...</div>
+                                ) : (
+                                    files.map(file => (
+                                        <div key={file.name} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-500/30 transition-all group">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm">
+                                                    <Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-black text-[11px] truncate dark:text-white uppercase tracking-tight" title={file.name}>{file.name}</p>
+                                                    <p className="text-[9px] text-gray-500 uppercase font-black opacity-60">1.2 MB</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                              <a href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-black text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap">
+                                                  <span>{t('common.download')}</span>
+                                              </a>
+                                              {currentUserRole === 'admin' && <span className="text-[10px] text-gray-400 font-bold cursor-pointer hover:text-blue-500">{t('docView.uploadNew')}</span>}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                                {!isLoadingFiles && files.length === 0 && <p className="text-xs text-gray-400 italic">No files available for this document.</p>}
+                           </div>
+                        </div>
+
+                        {currentUserRole === 'admin' && (
+                            <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+                                {!isEditingContent ? (
+                                    <button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all text-xs font-black shadow-xl shadow-blue-500/20 uppercase tracking-widest">{t('docView.editContent')}</button>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={handleSaveContent} className="w-full px-6 py-4 rounded-2xl bg-green-600 text-white hover:bg-green-700 transition-all text-xs font-black shadow-xl shadow-green-500/20 uppercase tracking-widest">{t('common.save')}</button>
+                                        <button onClick={() => setIsEditingContent(false)} className="w-full px-6 py-4 rounded-2xl text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-black uppercase tracking-widest">{t('common.cancel')}</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </aside>
+
+                <main className="lg:w-3/4 order-1 lg:order-2">
+                    <div className="mb-10">
+                        <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 dark:text-white mb-4 leading-[1.1]">{docTitle}</h1>
+                        <div className="flex flex-wrap items-center gap-4">
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}</p>
+                            <div className="flex flex-wrap gap-2">{doc.tags?.map(tag => (<div key={tag} className="flex items-center gap-1 text-[9px] uppercase font-black text-gray-400 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full"><Icon name="tag" className="w-2.5 h-2.5 opacity-50"/> {tag}</div>))}</div>
+                        </div>
                     </div>
 
                     { isEditingContent ? (
-                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-500/50">
+                        <div className="bg-white dark:bg-gray-800/50 p-6 rounded-3xl border-2 border-blue-500/30 shadow-2xl space-y-6">
                             <EditableField label={t('docView.content.toc.intro')} value={editableContent.intro || ''} onChange={val => setEditableContent(p => ({...p, intro: val}))} multiline />
-                            <EditableField label={t('docView.content.toc.s1')} value={editableContent.section1Title || ''} onChange={val => setEditingContent && setEditableContent(p => ({...p, section1Title: val}))} />
+                            <EditableField label={t('docView.content.toc.s1')} value={editableContent.section1Title || ''} onChange={val => setEditableContent(p => ({...p, section1Title: val}))} />
                             <EditableField label="Body" value={editableContent.section1Body || ''} onChange={val => setEditableContent(p => ({...p, section1Body: val}))} multiline />
                             <EditableField label="List" value={editableContent.section1List || ''} onChange={val => setEditableContent(p => ({...p, section1List: val}))} multiline rows={3} />
                              <EditableField label={t('docView.content.toc.s2')} value={editableContent.section2Title || ''} onChange={val => setEditableContent(p => ({...p, section2Title: val}))} />
@@ -104,48 +170,42 @@ export const DocumentView: React.FC<{ doc: Document, onClose: () => void, onRequ
                             <EditableField label="Body" value={editableContent.section3Body || ''} onChange={val => setEditableContent(p => ({...p, section3Body: val}))} multiline />
                         </div>
                     ) : (
-                        <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
-                            <p>{currentContent.intro}</p>
-                            <h3>{currentContent.section1Title}</h3>
-                            <p>{currentContent.section1Body}</p>
-                            <ul className="list-disc pl-5 space-y-1">{(currentContent.section1List || '').split('\n').map((item, i) => item && <li key={i}>{item}</li>)}</ul>
-                            <h3>{currentContent.section2Title}</h3>
-                            <p>{currentContent.section2Body}</p>
-                            {currentContent.importantNote && (<blockquote className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-md my-6"><div className="flex items-start gap-3"><Icon name="information-circle" className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" /><p className="m-0 text-blue-800 dark:text-blue-200 font-bold">{currentContent.importantNote}</p></div></blockquote>)}
-                            <h3>{currentContent.section3Title}</h3>
-                            <p>{currentContent.section3Body}</p>
+                        <div className="max-w-none text-gray-600 dark:text-gray-400 space-y-12">
+                            <div className="text-lg leading-relaxed font-medium">{currentContent.intro}</div>
+                            
+                            <section>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tight">{currentContent.section1Title}</h3>
+                                <p className="leading-relaxed mb-6">{currentContent.section1Body}</p>
+                                <ul className="grid grid-cols-1 gap-3">{(currentContent.section1List || '').split('\n').map((item, i) => item && <li key={i} className="flex items-start gap-3 bg-gray-50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 font-medium text-sm"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />{item}</li>)}</ul>
+                            </section>
+
+                            <section>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tight">{currentContent.section2Title}</h3>
+                                <p className="leading-relaxed">{currentContent.section2Body}</p>
+                            </section>
+
+                            {currentContent.importantNote && (
+                                <div className="p-8 bg-blue-600/5 dark:bg-blue-500/10 border-2 border-blue-500/20 rounded-3xl my-10 relative overflow-hidden group">
+                                    <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
+                                    <div className="flex items-start gap-5 relative z-10">
+                                        <div className="p-3 bg-blue-500 rounded-2xl text-white shadow-lg shadow-blue-500/30">
+                                            <Icon name="information-circle" className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h5 className="font-black text-blue-600 dark:text-blue-400 text-xs uppercase tracking-widest mb-2">{t('docView.content.importantNoteLabel')}:</h5>
+                                            <p className="m-0 text-gray-900 dark:text-white font-bold text-lg leading-snug">{currentContent.importantNote}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <section>
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tight">{currentContent.section3Title}</h3>
+                                <p className="leading-relaxed">{currentContent.section3Body}</p>
+                            </section>
                         </div>
                     )}
                 </main>
-                <aside className="lg:w-1/3 order-2 lg:order-none">
-                     <div className="sticky top-24 space-y-8">
-                        <div>
-                           <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-3 text-sm uppercase tracking-wider">{t('docView.downloadFiles')}</h4>
-                           <div className="space-y-3">
-                                {isLoadingFiles ? (
-                                    <div className="flex items-center gap-2 text-gray-400 text-sm"><Icon name="loading" className="w-4 h-4" /> Loading files...</div>
-                                ) : (
-                                    files.map(file => (
-                                        <div key={file.name} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/80 hover:shadow-md transition-all">
-                                            <div className="flex items-center gap-3">
-                                                <Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-7 h-7 text-gray-400" />
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-xs truncate max-w-[120px] dark:text-white" title={file.name}>{file.name}</p>
-                                                    <p className="text-[9px] text-gray-500 uppercase font-black">{file.extension}</p>
-                                                </div>
-                                            </div>
-                                            <a href={file.url} target="_blank" rel="noreferrer" className="flex items-center justify-center p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-colors">
-                                                <Icon name="download" className="w-4 h-4" />
-                                            </a>
-                                        </div>
-                                    ))
-                                )}
-                                {!isLoadingFiles && files.length === 0 && <p className="text-xs text-gray-400 italic">No files available for this document.</p>}
-                           </div>
-                        </div>
-                        {currentUserRole === 'admin' && (<div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700/50">{!isEditingContent ? (<button onClick={() => setIsEditingContent(true)} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all text-sm font-bold shadow-lg shadow-blue-500/20">{t('docView.editContent')}</button>) : (<div className="flex gap-2"><button onClick={() => setIsEditingContent(false)} className="w-full px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-sm font-bold">{t('common.cancel')}</button><button onClick={handleSaveContent} className="w-full px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-bold shadow-lg shadow-green-500/20">{t('common.save')}</button></div>)}</div>)}
-                    </div>
-                </aside>
             </div>
         </div>
     );
