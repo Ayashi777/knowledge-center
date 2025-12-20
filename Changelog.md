@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] - 2025-12-21
+### Added
+- **Cover Aspect Ratio Hint**: Added an informational hint in the admin panel recommending a 3:4 aspect ratio for document cover images.
+
+### Fixed
+- **System File Isolation**: Document cover images are now saved to a separate, hidden `/.system/` folder within the document's storage directory. This prevents them from appearing in the user-facing list of downloadable files.
+- **Backward Compatibility for Covers**: The file listing logic is improved to also filter out legacy cover images by name (`thumbnail_*`, `cover_*`), ensuring they do not appear in user-facing file lists.
+
 ## [3.0.0] - 2025-12-21
 ### Added
 - **Revamped Admin Document Management**: Completely redesigned the document management interface in the admin panel for enhanced usability and functionality.
