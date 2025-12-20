@@ -337,68 +337,108 @@ const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
 
     // --- Access Denied / Login/Registration Suggestion ---
     return (
-        <div className="pt-32 text-center animate-fade-in px-4">
-          <div className="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-8 text-amber-600 border border-amber-100 dark:border-amber-900/50">
-             <Icon name="lock-closed" className="w-10 h-10" />
-          </div>
-          
-          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
-            {t('loginModal.accessRequired')}
-          </h2>
-          
-          <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-lg mx-auto leading-relaxed text-sm">
-             {displayRoles.length > 0 ? (
-               <>Цей документ призначений для ролі <span className="font-bold text-blue-600">{displayRoles.map(r => t(`roles.${r}`)).join(', ')}</span>.</>
-             ) : (
-               <>Цей документ має обмежений рівень доступу.</>
-             )}
-             <br/>
-             Будь ласка, увійдіть у свій акаунт або зареєструйтесь, щоб отримати доступ.
-          </p>
+      <div className="pt-32 text-center animate-fade-in px-4">
+        <div className="text-center w-full max-w-lg mx-auto">
+          {(() => {
+            const isGuest = !!currentUser && currentUserRole === 'guest';
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-                onClick={() => {
-                setLoginContext('view');
-                setLoginModalView('login');
-                setIsLoginModalOpen(true);
-                }}
-                className="w-full sm:w-auto bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs"
-            >
-                Увійти в систему
-            </button>
-            <button
-                onClick={() => {
-                    // Trigger login modal which has "No account? Register"
-                    setLoginContext('view');
-                    setLoginModalView('request');
-                    setIsLoginModalOpen(true);
-                }}
-                className="w-full sm:w-auto bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-10 py-5 rounded-2xl font-black hover:bg-gray-200 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
-            >
-                Подати заявку
-            </button>
-          </div>
+            const handleLoginClick = () => {
+              setLoginContext('view');
+              setLoginModalView('login');
+              setIsLoginModalOpen(true);
+            };
 
-          <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 max-w-sm mx-auto">
-             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Документ містить:</p>
-             <div className="flex justify-center gap-6">
-                <div className="flex flex-col items-center gap-2 opacity-50">
-                    <Icon name="view-boards" className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Схеми</span>
+            const handleRegisterClick = () => {
+              setLoginContext('view');
+              setLoginModalView('request');
+              setIsLoginModalOpen(true);
+            };
+
+            return (
+              <>
+                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                  <Icon
+                    name={isGuest ? 'clock' : 'lock-closed'}
+                    className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2 opacity-50">
-                    <Icon name="pdf" className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">PDF Файли</span>
-                </div>
-                <div className="flex flex-col items-center gap-2 opacity-50">
-                    <Icon name="construction" className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Протоколи</span>
-                </div>
-             </div>
-          </div>
+
+                {isGuest ? (
+                  <>
+                    {/* === Стан для Гостя (заявка надіслана) === */}
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      {t('docView.accessPendingTitle')}
+                    </h1>
+
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                      {t('docView.accessPendingDescription')}
+                    </p>
+
+                    <div className="mt-8">
+                      <button
+                        onClick={() => navigate('/')}
+                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        {t('docView.backToList')}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* === Стан для незалогіненого користувача === */}
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      {t('docView.accessDenied')}
+                    </h1>
+
+                    {displayRoles.length > 0 ? (
+                      <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                        Цей документ призначений для ролі{' '}
+                        <strong className="text-gray-900 dark:text-white">
+                          {displayRoles.map((r) => t(`roles.${r}`)).join(', ')}
+                        </strong>
+                        .
+                        <br />
+                        Будь ласка, увійдіть або зареєструйтесь, щоб отримати доступ.
+                      </p>
+                    ) : (
+                      <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                        Цей документ має обмежений рівень доступу.
+                        <br />
+                        Будь ласка, увійдіть або зареєструйтесь, щоб отримати доступ.
+                      </p>
+                    )}
+
+                    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                      <button
+                        onClick={handleLoginClick}
+                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        {t('header.login')}
+                      </button>
+
+                      <button
+                        onClick={handleRegisterClick}
+                        className="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        {t('registrationModal.title')}
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => navigate('/')}
+                      className="mt-10 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      ...або повернутись до списку
+                    </button>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </div>
+      </div>
     );
+
   };
 
   const AdminPageRoute = () => {

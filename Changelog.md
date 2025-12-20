@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2025-12-22
+### Added
+- **Contextual Access Screen**: Implemented a new "Pending Access" state on the document view. Logged-in users with the 'Guest' role now see a specific message confirming that their access request is under review, which prevents confusion and improves user feedback.
+
+### Fixed
+- **UI Obstruction on Access-Denied Page**: Corrected a layout issue where the access-denied screen was a modal overlay that obscured the site's header and footer. It has been refactored into an inline page component, ensuring consistent site navigation and visual coherence.
+
 ## [3.2.2] - 2025-12-22
 ### Added
 - **Informative Dashboard Hero**: The main dashboard now features a prominent hero section with a clear title, a subtitle explaining the application's purpose, and a description detailing the available resources. This improves user onboarding and immediately communicates the value of the platform.

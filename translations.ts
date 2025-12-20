@@ -1,4 +1,3 @@
-
 export type Language = 'uk' | 'en';
 
 export const translations = {
@@ -91,28 +90,30 @@ export const translations = {
       noResultsDescription: 'Спробуйте змінити параметри пошуку або скинути фільтри.',
     },
     docView: {
-      preview: 'Попередній перегляд',
-      download: 'Завантажити файл',
-      info: 'Інформація',
-      category: 'Категорія',
-      canView: 'Може бачити',
-      lastUpdated: 'Останнє оновлення',
-      downloadFiles: 'Файли для завантаження',
-      editContent: 'Редагувати вміст',
-      accessDenied: 'Доступ обмежено',
-      backToList: 'Повернутися до списку',
-      uploadNew: 'Завантажити новий',
-      content: {
-        toc: {
-          title: 'Зміст документу',
-          intro: 'Вступ',
-          s1: 'Розділ 1',
-          s2: 'Розділ 2',
-          s3: 'Розділ 3',
-          appendices: 'Додатки',
-        },
-        importantNoteLabel: 'Важливо',
-      }
+        preview: 'Попередній перегляд',
+        download: 'Завантажити файл',
+        info: 'Інформація',
+        category: 'Категорія',
+        canView: 'Може бачити',
+        lastUpdated: 'Останнє оновлення',
+        downloadFiles: 'Файли для завантаження',
+        editContent: 'Редагувати вміст',
+        accessDenied: 'Доступ обмежено',
+        accessPendingTitle: 'Заявку надіслано',
+        accessPendingDescription: 'Ваш запит на доступ до цього документа розглядається. Адміністратор незабаром його перевірить. Дякуємо за терпіння!',
+        backToList: 'Повернутися до списку',
+        uploadNew: 'Завантажити новий',
+        content: {
+            toc: {
+                title: 'Зміст документу',
+                intro: 'Вступ',
+                s1: 'Розділ 1',
+                s2: 'Розділ 2',
+                s3: 'Розділ 3',
+                appendices: 'Додатки',
+            },
+            importantNoteLabel: 'Важливо',
+        }
     },
     loginModal: {
       title: 'Вхід у систему',
@@ -315,18 +316,20 @@ export const translations = {
         downloadFiles: 'Files for Download',
         editContent: 'Edit Content',
         accessDenied: 'Access Denied',
+        accessPendingTitle: 'Request Sent',
+        accessPendingDescription: 'Your request to access this document is under review. The administrator will check it shortly. Thank you for your patience!',
         backToList: 'Back to List',
         uploadNew: 'Upload New',
         content: {
-          toc: {
-            title: 'Table of Contents',
-            intro: 'Introduction',
-            s1: 'Section 1',
-            s2: 'Section 2',
-            s3: 'Section 3',
-            appendices: 'Appendices',
-          },
-          importantNoteLabel: 'Important',
+            toc: {
+                title: 'Table of Contents',
+                intro: 'Introduction',
+                s1: 'Section 1',
+                s2: 'Section 2',
+                s3: 'Section 3',
+                appendices: 'Appendices',
+            },
+            importantNoteLabel: 'Important',
         }
     },
     loginModal: {
