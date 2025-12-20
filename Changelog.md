@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2025-12-21
+### Added
+- **Revamped Admin Document Management**: Completely redesigned the document management interface in the admin panel for enhanced usability and functionality.
+- **Grid & List View Modes**: Introduced toggleable "Grid" and "List" views, allowing administrators to choose their preferred layout for browsing documents.
+- **Direct Cover Upload**: Administrators can now directly upload cover images for documents from their computer, replacing the previous URL-only method. The grid view prominently displays these covers.
+- **Advanced Filtering & Search**: Added a quick search bar and a category filter to instantly find specific documents.
+- **URL-Based Navigation**: Implemented hash-based routing (`#documents`, `#users`, etc.) for admin panel tabs, enabling deep linking and preventing the active tab from resetting after data updates.
+
+### Fixed
+- **State Persistence**: Resolved a major UX issue where the admin panel would reset to the default tab after an action (like uploading a cover), by making the active tab dependent on the URL hash instead of local component state.
+
 ## [2.9.1] - 2025-12-20
 ### Fixed
 - **Image Embedding (React Quill)**: Fixed an issue where images successfully uploaded to Firebase Storage but did not appear in the document body (stuck on “Uploading image…”).

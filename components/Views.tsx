@@ -118,6 +118,43 @@ const registerUploadingImageBlot = () => {
     (Quill as any).__uploadingImageRegistered = true;
 };
 
+/**
+ * 🔥 Helper function: Парсинг HTML для створення Змісту (Table of Contents)
+ * Додає ID до заголовків та повертає структуру меню.
+ */
+const processContentForTOC = (htmlContent: string) => {
+    if (!htmlContent) return { modifiedHtml: '', toc: [] };
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    
+    // Шукаємо всі заголовки H1, H2, H3
+    const headers = doc.querySelectorAll('h1, h2, h3');
+    const toc: { id: string; text: string; level: number }[] = [];
+
+    headers.forEach((header, index) => {
+        const text = header.textContent || '';
+        // Створюємо безпечний ID (транслітерація або очистка не обов'язкова, але бажана для гарних URL)
+        // Тут просто беремо перші 20 символів і індекс для унікальності
+        const safeText = text.slice(0, 30).replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '-');
+        const id = `heading-${index}-${safeText}`;
+        
+        // Присвоюємо ID заголовку в DOM (щоб якір працював)
+        header.id = id;
+        
+        toc.push({ 
+            id, 
+            text, 
+            level: parseInt(header.tagName.substring(1)) // 1, 2 або 3
+        });
+    });
+
+    return { 
+        modifiedHtml: doc.body.innerHTML, 
+        toc 
+    };
+};
+
 export const Pagination: React.FC<{
     currentPage: number;
     totalPages: number;
@@ -400,16 +437,29 @@ export const DocumentView: React.FC<{
     // status for image uploads
     const [isUploadingImage, setIsUploadingImage] = useState(false);
 
+    // 🔥 NEW: State for TOC and View HTML
+    const [viewHtml, setViewHtml] = useState('');
+    const [tocItems, setTocItems] = useState<{ id: string; text: string; level: number }[]>([]);
+
     const quillRef = useRef<ReactQuill | null>(null);
 
     useEffect(() => {
         registerUploadingImageBlot();
     }, []);
 
+    // 🔥 UPDATED: Effect to process content when entering view mode or changing language
     useEffect(() => {
-        setEditableContent(doc.content[lang] || emptyContentTemplate);
+        const rawContent = doc.content[lang] || emptyContentTemplate;
+        setEditableContent(rawContent);
         setSaveStatus('idle');
-    }, [doc, lang]);
+
+        // Генеруємо TOC тільки для режиму перегляду (не редагування)
+        if (!isEditingContent) {
+            const { modifiedHtml, toc } = processContentForTOC(rawContent.html || '');
+            setViewHtml(modifiedHtml);
+            setTocItems(toc);
+        }
+    }, [doc, lang, isEditingContent]); // Перераховуємо, коли виходимо з редагування
 
     useEffect(() => {
         const loadFiles = async () => {
@@ -452,10 +502,7 @@ export const DocumentView: React.FC<{
     };
 
     /**
-     * 🔥 КРИТИЧНЕ ВИПРАВЛЕННЯ:
-     * modules обгорнуто в useMemo.
-     * Це запобігає перестворенню редактора при оновленні стейту (наприклад, setIsUploadingImage),
-     * що і викликало помилку addRange().
+     * ✅ modules обгорнуто в useMemo для стабільності
      */
     const modules = useMemo(() => ({
         toolbar: {
@@ -481,37 +528,23 @@ export const DocumentView: React.FC<{
                         if (!editor) return;
 
                         const uploadId = makeId();
-
-                        // 1. Запам'ятовуємо позицію
                         const range = editor.getSelection(true);
                         const insertAt = range?.index ?? editor.getLength();
 
-                        // 2. Вставляємо плейсхолдер
                         editor.insertEmbed(insertAt, 'uploadingImage', { id: uploadId }, 'user');
                         editor.insertText(insertAt + 1, '\n', 'user');
-
-                        // ✅ ВАЖЛИВО: Не викликаємо setEditableContent вручну!
-                        // insertEmbed викличе onChange компонента автоматично.
 
                         setIsUploadingImage(true);
 
                         try {
-                            const compressed = await compressImage(original, {
-                                maxW: 1920,
-                                maxH: 1920,
-                                quality: 0.82,
-                                mime: 'image/webp',
-                            });
-
+                            const compressed = await compressImage(original, { maxW: 1920, maxH: 1920, quality: 0.82, mime: 'image/webp' });
+                            
                             if (compressed.size > 10 * 1024 * 1024) {
                                 alert('Зображення все ще дуже велике навіть після стиску (10MB+). Спробуй інше/менше.');
                                 return;
                             }
 
                             const url = await uploadImageToStorage(compressed, doc.id);
-
-                            // 3. Знаходимо плейсхолдер і замінюємо його
-                            // Використовуємо DOM редактора, бо він стабільний завдяки useMemo
                             const root = editor.root;
                             const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`);
 
@@ -525,12 +558,10 @@ export const DocumentView: React.FC<{
                                     editor.insertEmbed(idx, 'image', url, 'user');
                                     editor.insertText(idx + 1, '\n', 'user');
                                 } else {
-                                    // fallback: вставка в кінець
                                     const len = editor.getLength();
                                     editor.insertEmbed(len, 'image', url, 'user');
                                 }
                             } else {
-                                // fallback
                                 const len = editor.getLength();
                                 editor.insertEmbed(len, 'image', url, 'user');
                             }
@@ -538,8 +569,7 @@ export const DocumentView: React.FC<{
                         } catch (e) {
                             console.error('Image upload failed', e);
                             alert('Помилка завантаження зображення.');
-                            // Спробуємо видалити плейсхолдер, якщо він лишився
-                             const root = editor.root;
+                            const root = editor.root;
                              const el = root.querySelector(`.quill-uploading-image[data-upload-id="${uploadId}"]`);
                              if(el) {
                                  const Quill = (ReactQuill as any).Quill;
@@ -547,7 +577,6 @@ export const DocumentView: React.FC<{
                                  const idx = blot ? editor.getIndex(blot) : null;
                                  if (idx !== null) editor.deleteText(idx, 1, 'user');
                              }
-
                         } finally {
                             setIsUploadingImage(false);
                         }
@@ -555,10 +584,17 @@ export const DocumentView: React.FC<{
                 },
             },
         },
-    }), [doc.id]); // Залежність лише від doc.id, щоб не перебудовуватись дарма
+    }), [doc.id]);
+
+    // 🔥 Функція для скролу до заголовка
+    const scrollToHeading = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
-    const currentContent = doc.content[lang] || emptyContentTemplate;
 
     return (
         <div className="pt-24 pb-20 animate-fade-in">
@@ -659,28 +695,31 @@ export const DocumentView: React.FC<{
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
                 <aside className="lg:w-1/4 order-2 lg:order-1">
                     <div className="sticky top-24 space-y-10">
-                        <div>
-                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">
-                                {t('docView.content.toc.title')}
-                            </h4>
-                            <nav className="flex flex-col gap-3">
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
-                                    {t('docView.content.toc.intro')}
-                                </button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
-                                    {t('docView.content.toc.s1')}
-                                </button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
-                                    {t('docView.content.toc.s2')}
-                                </button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
-                                    {t('docView.content.toc.s3')}
-                                </button>
-                                <button className="text-left text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
-                                    {t('docView.content.toc.appendices')}
-                                </button>
-                            </nav>
-                        </div>
+                        {/* 🔥 DYNAMIC TABLE OF CONTENTS */}
+                        {tocItems.length > 0 && (
+                            <div className="animate-fade-in">
+                                <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">
+                                    {t('docView.content.toc.title')}
+                                </h4>
+                                <nav className="flex flex-col gap-2 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
+                                    {tocItems.map((item) => (
+                                        <button 
+                                            key={item.id}
+                                            onClick={() => scrollToHeading(item.id)}
+                                            className={`
+                                                text-left text-sm transition-colors duration-200
+                                                ${item.level === 1 ? 'font-bold text-gray-800 dark:text-gray-200 mt-2' : ''}
+                                                ${item.level === 2 ? 'font-medium text-gray-600 dark:text-gray-400 ml-2' : ''}
+                                                ${item.level === 3 ? 'text-xs text-gray-500 dark:text-gray-500 ml-4' : ''}
+                                                hover:text-blue-600 dark:hover:text-blue-400
+                                            `}
+                                        >
+                                            {item.text}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+                        )}
 
                         <div>
                             <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-[0.2em]">
@@ -804,11 +843,12 @@ export const DocumentView: React.FC<{
                                 value={editableContent.html || ''}
                                 onChange={(content) => setEditableContent({ html: content })}
                                 className="h-[400px] dark:text-white"
-                                modules={modules} // 🔥 Використовуємо мемоізовані модулі
+                                modules={modules}
                             />
                         </div>
                     ) : (
-                        <div className="quill-content max-w-none" dangerouslySetInnerHTML={{ __html: currentContent.html || '' }} />
+                        // 🔥 ВИКОРИСТОВУЄМО viewHtml (з ID для якорів) замість currentContent.html
+                        <div className="quill-content max-w-none" dangerouslySetInnerHTML={{ __html: viewHtml }} />
                     )}
                 </main>
             </div>

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Category, Document, UserRole, IconName, UserProfile } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
 import { UserEditorModal } from './Modals';
 import { uploadDocumentFile, listDocumentFiles, deleteDocumentFile, isFileTypeAllowed } from '../utils/storage';
 import { collection, doc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from "../firebase";
 
 interface AccessRequest {
     id: string;
@@ -34,7 +35,18 @@ export const AdminPanel: React.FC<{
     onDeleteDocument, onEditDocument, onAddDocument, onClose 
 }) => {
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<'roles' | 'categories' | 'documents' | 'requests' | 'users'>('roles');
+    type AdminTab = 'roles' | 'categories' | 'documents' | 'requests' | 'users';
+
+const parseTab = (value: string | null | undefined): AdminTab => {
+    const v = (value || '').replace('#', '').trim() as AdminTab;
+    const allowed: AdminTab[] = ['roles', 'categories', 'documents', 'requests', 'users'];
+    return (allowed as string[]).includes(v) ? (v as AdminTab) : 'roles';
+};
+
+const getTabFromHash = (): AdminTab => parseTab(window.location.hash?.substring(1));
+
+const [activeTab, setActiveTab] = useState<AdminTab>(() => getTabFromHash());
+
     const [requests, setRequests] = useState<AccessRequest[]>([]);
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [selectedDocForFiles, setSelectedDocForFiles] = useState<Document | null>(null);
@@ -43,9 +55,32 @@ export const AdminPanel: React.FC<{
     const [isUploading, setIsUploading] = useState(false);
     const [pendingRoles, setPendingRoles] = useState<Record<string, UserRole>>({});
 
+    // Documents tab UI state
+    const [docViewMode, setDocViewMode] = useState<'list' | 'grid'>('grid');
+    const [docSearchTerm, setDocSearchTerm] = useState('');
+    const [docCategoryFilter, setDocCategoryFilter] = useState<string>('all');
+
     const roles: UserRole[] = ['guest', 'foreman', 'designer', 'architect', 'admin'];
 
-    useEffect(() => {
+    
+// ✅ Keep active tab stable even if AdminPanel re-mounts after Firestore updates
+useEffect(() => {
+    const handleHashChange = () => {
+        setActiveTab(getTabFromHash());
+    };
+
+    // Set default hash on first mount
+    if (!window.location.hash) {
+        window.location.replace('#roles');
+    } else {
+        // Ensure state matches current hash
+        setActiveTab(getTabFromHash());
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+}, []);
+useEffect(() => {
         const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
             setUsers(snap.docs.map(d => ({ uid: d.id, ...d.data() })) as UserProfile[]);
         });
@@ -126,6 +161,39 @@ export const AdminPanel: React.FC<{
         await loadFiles(selectedDocForFiles);
     };
 
+    const handleThumbnailUpload = async (docId: string, file: File) => {
+        if (!file) return;
+        try {
+            // Create a unique path for the thumbnail (cover)
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const filePath = `documents/${docId}/thumbnail_${Date.now()}_${safeName}`;
+            const storageRef = ref(storage, filePath);
+
+            // Upload and get URL
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+
+            // Update Firestore document
+            await updateDoc(doc(db, "documents", docId), { thumbnailUrl: url });
+        } catch (error) {
+            console.error("Thumbnail upload error:", error);
+            alert("Помилка завантаження обкладинки.");
+        }
+    };
+
+    const filteredDocuments = useMemo(() => {
+        const s = docSearchTerm.trim().toLowerCase();
+        return documents
+            .filter(docItem => {
+                const title = (docItem.titleKey ? t(docItem.titleKey) : docItem.title) || '';
+                return title.toLowerCase().includes(s);
+            })
+            .filter(docItem => {
+                if (docCategoryFilter === 'all') return true;
+                return docItem.categoryKey === docCategoryFilter;
+            });
+    }, [documents, docSearchTerm, docCategoryFilter, t]);
+
     const navItems = [
         { id: 'roles', label: 'Доступи', icon: 'users' as IconName },
         { id: 'users', label: 'Користувачі', icon: 'users' as IconName },
@@ -141,7 +209,7 @@ export const AdminPanel: React.FC<{
                 <aside className="w-full lg:w-64 flex-shrink-0">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50"><h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><Icon name="cog" className="w-5 h-5" />Адмін-центр</h2></div>
-                        <nav className="p-2">{navItems.map(item => (<button key={item.id} onClick={() => { setActiveTab(item.id as any); setSelectedDocForFiles(null); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${activeTab === item.id && !selectedDocForFiles ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Icon name={item.icon} className="w-5 h-5" />{item.label}{item.id === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (<span className="ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{requests.filter(r => r.status === 'pending').length}</span>)}</button>))}</nav>
+                        <nav className="p-2">{navItems.map(item => (<button key={item.id} onClick={() => { window.location.hash = item.id; setSelectedDocForFiles(null); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${activeTab === item.id && !selectedDocForFiles ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Icon name={item.icon} className="w-5 h-5" />{item.label}{item.id === 'requests' && requests.filter(r => r.status === 'pending').length > 0 && (<span className="ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{requests.filter(r => r.status === 'pending').length}</span>)}</button>))}</nav>
                     </div>
                 </aside>
 
@@ -149,7 +217,7 @@ export const AdminPanel: React.FC<{
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-full p-6">
                         {selectedDocForFiles ? (
                             <div className="animate-fade-in">
-                                <button onClick={() => setSelectedDocForFiles(null)} className="flex items-center gap-2 text-sm font-bold text-blue-600 mb-6 hover:underline"><Icon name="plus" className="w-4 h-4 rotate-45" /> Назад до списку</button>
+                                <button onClick={() => { setSelectedDocForFiles(null); window.location.hash = 'documents'; }} className="flex items-center gap-2 text-sm font-bold text-blue-600 mb-6 hover:underline"><Icon name="plus" className="w-4 h-4 rotate-45" /> Назад до списку</button>
                                 <h3 className="text-xl font-black mb-1">{selectedDocForFiles.title || t(selectedDocForFiles.titleKey!)}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                                     <div className="space-y-4"><h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center sm:text-left">Файли у сховищі</h4>{docFiles.map(file => (<div key={file.name} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700"><div className="flex items-center gap-3 min-w-0"><Icon name={file.extension === 'pdf' ? 'pdf' : 'hr'} className="w-6 h-6 text-gray-400" /><span className="text-sm font-bold truncate">{file.name}</span></div><div className="flex gap-2 shrink-0"><a href={file.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Icon name="download" className="w-4 h-4" /></a><button onClick={() => handleFileDelete(file.name)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Icon name="plus" className="w-4 h-4 rotate-45" /></button></div></div>))}{docFiles.length === 0 && <p className="text-sm text-gray-400 italic text-center sm:text-left">Файли відсутні.</p>}</div>
@@ -186,8 +254,197 @@ export const AdminPanel: React.FC<{
 
                                 {activeTab === 'documents' && (
                                     <div className="animate-fade-in">
-                                        <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4"><div><h3 className="text-2xl font-black text-gray-900 dark:text-white">Документація</h3><p className="text-sm text-gray-500 uppercase tracking-widest font-bold">Керування файлами та описами.</p></div><button onClick={onAddDocument} className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest"><Icon name="plus" className="w-5 h-5" /> Додати документ</button></header>
-                                        <div className="space-y-3">{documents.map(docItem => (<div key={docItem.id} className="p-5 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4 group transition-all hover:bg-white dark:hover:bg-gray-900"><div className="flex-grow min-w-0 pr-4 text-center sm:text-left"><p className="font-black text-gray-900 dark:text-white text-base truncate">{docItem.titleKey ? t(docItem.titleKey) : docItem.title}</p><p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mt-1">{t(docItem.categoryKey)}</p></div><div className="flex items-center gap-2"><button onClick={() => setSelectedDocForFiles(docItem)} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-all shadow-sm"><Icon name="upload" className="w-4 h-4" /> Файли</button><button onClick={() => onEditDocument(docItem)} className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded-xl transition-all"><Icon name="cog" className="w-5 h-5" /></button><button onClick={() => onDeleteDocument(docItem.id)} className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-xl transition-all"><Icon name="plus" className="w-5 h-5 rotate-45" /></button></div></div>))}</div>
+                                        <header className="mb-8">
+                                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                                <div>
+                                                    <h3 className="text-2xl font-black text-gray-900 dark:text-white">{t('adminDocs.title')}</h3>
+                                                    <p className="text-sm text-gray-500 uppercase tracking-widest font-bold">{t('adminDocs.description')}</p>
+                                                </div>
+                                                <button
+                                                    onClick={onAddDocument}
+                                                    className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest"
+                                                >
+                                                    <Icon name="plus" className="w-5 h-5" /> {t('adminDocs.addDocument')}
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                <input
+                                                    type="search"
+                                                    placeholder={t('adminDocs.searchPlaceholder')}
+                                                    value={docSearchTerm}
+                                                    onChange={e => setDocSearchTerm(e.target.value)}
+                                                    className="col-span-1 block w-full rounded-md border-0 bg-gray-100 dark:bg-gray-900/50 py-2.5 pl-4 pr-3 text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm"
+                                                />
+
+                                                <select
+                                                    value={docCategoryFilter}
+                                                    onChange={e => setDocCategoryFilter(e.target.value)}
+                                                    className="col-span-1 block w-full rounded-md border-0 bg-gray-100 dark:bg-gray-900/50 py-2.5 pl-4 pr-8 text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm"
+                                                >
+                                                    <option value="all">{t('adminDocs.allCategories')}</option>
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.nameKey}>{t(cat.nameKey)}</option>
+                                                    ))}
+                                                </select>
+
+                                                <div className="col-span-1 flex items-center justify-self-start sm:justify-self-end p-1 bg-gray-200 dark:bg-gray-700 rounded-md">
+                                                    <button
+                                                        onClick={() => setDocViewMode('grid')}
+                                                        className={`p-2 rounded ${docViewMode === 'grid' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}
+                                                        title={t('adminDocs.viewAsGrid')}
+                                                    >
+                                                        <Icon name="view-grid" className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDocViewMode('list')}
+                                                        className={`p-2 rounded ${docViewMode === 'list' ? 'bg-white dark:bg-gray-900 text-blue-600' : 'text-gray-600 dark:text-gray-300'}`}
+                                                        title={t('adminDocs.viewAsList')}
+                                                    >
+                                                        <Icon name="view-list" className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </header>
+
+                                        {docViewMode === 'grid' ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                                {filteredDocuments.map(docItem => (
+                                                    <div
+                                                        key={docItem.id}
+                                                        className="bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col group transition-all"
+                                                    >
+                                                        <div className="relative aspect-video">
+                                                            {docItem.thumbnailUrl ? (
+                                                                <img
+                                                                    src={docItem.thumbnailUrl}
+                                                                    alt={t('adminDocs.cover')}
+                                                                    className="w-full h-full object-cover rounded-t-2xl"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-gray-100 dark:bg-gray-800 rounded-t-2xl flex items-center justify-center text-center p-4">
+                                                                    <p className="text-xs font-bold text-gray-400">{t('adminDocs.noCover')}</p>
+                                                                </div>
+                                                            )}
+
+                                                            <label className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xs uppercase cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                {docItem.thumbnailUrl ? t('adminDocs.changeCover') : t('adminDocs.uploadCover')}
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="hidden"
+                                                                    onChange={e => e.target.files && handleThumbnailUpload(docItem.id, e.target.files[0])}
+                                                                />
+                                                            </label>
+                                                        </div>
+
+                                                        <div className="p-4 flex-grow flex flex-col">
+                                                            <p className="font-black text-gray-900 dark:text-white text-base truncate flex-grow">
+                                                                {docItem.titleKey ? t(docItem.titleKey) : docItem.title}
+                                                            </p>
+                                                            <p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mt-1">
+                                                                {t(docItem.categoryKey)}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-2">
+                                                            <button
+                                                                onClick={() => setSelectedDocForFiles(docItem)}
+                                                                className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-all shadow-sm"
+                                                            >
+                                                                <Icon name="upload" className="w-4 h-4" /> {t('adminDocs.files')}
+                                                            </button>
+
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => onEditDocument(docItem)}
+                                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-all"
+                                                                    title={t('adminDocs.edit')}
+                                                                >
+                                                                    <Icon name="cog" className="w-5 h-5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => onDeleteDocument(docItem.id)}
+                                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                                                                    title={t('adminDocs.delete')}
+                                                                >
+                                                                    <Icon name="plus" className="w-5 h-5 rotate-45" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {filteredDocuments.map(docItem => (
+                                                    <div
+                                                        key={docItem.id}
+                                                        className="p-5 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4 group transition-all hover:bg-white dark:hover:bg-gray-900"
+                                                    >
+                                                        <div className="flex items-center gap-4 min-w-0">
+                                                            {docItem.thumbnailUrl && (
+                                                                <img
+                                                                    src={docItem.thumbnailUrl}
+                                                                    className="h-10 w-16 object-cover rounded-md hidden sm:block"
+                                                                    alt={t('adminDocs.cover')}
+                                                                />
+                                                            )}
+
+                                                            <div className="flex-grow min-w-0 text-center sm:text-left">
+                                                                <p className="font-black text-gray-900 dark:text-white text-base truncate">
+                                                                    {docItem.titleKey ? t(docItem.titleKey) : docItem.title}
+                                                                </p>
+                                                                <p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mt-1">
+                                                                    {t(docItem.categoryKey)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-all shadow-sm cursor-pointer">
+                                                                <Icon name="upload" className="w-4 h-4" /> {docItem.thumbnailUrl ? t('adminDocs.changeCover') : t('adminDocs.uploadCover')}
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="hidden"
+                                                                    onChange={e => e.target.files && handleThumbnailUpload(docItem.id, e.target.files[0])}
+                                                                />
+                                                            </label>
+
+                                                            <button
+                                                                onClick={() => setSelectedDocForFiles(docItem)}
+                                                                className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-all shadow-sm"
+                                                            >
+                                                                <Icon name="upload" className="w-4 h-4" /> {t('adminDocs.files')}
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => onEditDocument(docItem)}
+                                                                className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded-xl transition-all"
+                                                                title={t('adminDocs.edit')}
+                                                            >
+                                                                <Icon name="cog" className="w-5 h-5" />
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => onDeleteDocument(docItem.id)}
+                                                                className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-xl transition-all"
+                                                                title={t('adminDocs.delete')}
+                                                            >
+                                                                <Icon name="plus" className="w-5 h-5 rotate-45" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {filteredDocuments.length === 0 && (
+                                            <p className="text-sm text-gray-400 italic text-center mt-10">
+                                                {docSearchTerm || docCategoryFilter !== 'all' ? 'Нічого не знайдено.' : 'Документи відсутні.'}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
