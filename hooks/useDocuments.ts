@@ -15,8 +15,9 @@ export const useDocuments = (
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | null>(null); // ✅ NEW
   const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -83,7 +84,15 @@ export const useDocuments = (
       );
     }
 
-    if (selectedCategory !== 'all') {
+    // ✅ Role filter logic
+    if (selectedRoleFilter) {
+      result = result.filter(doc => {
+        const cat = categories.find(c => c.nameKey === doc.categoryKey);
+        return cat?.viewPermissions?.includes(selectedRoleFilter);
+      });
+    }
+
+    if (selectedCategory !== null) {
       result = result.filter((doc) => doc.categoryKey === selectedCategory);
     }
     
@@ -109,6 +118,7 @@ export const useDocuments = (
     searchTerm,
     selectedCategory,
     selectedTags,
+    selectedRoleFilter, // ✅ NEW
     sortBy,
     t,
     categories
@@ -130,8 +140,9 @@ export const useDocuments = (
   
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('all');
+    setSelectedCategory(null);
     setSelectedTags([]);
+    setSelectedRoleFilter(null); // ✅ NEW
     setCurrentPage(1);
   };
 
@@ -154,6 +165,8 @@ export const useDocuments = (
     setSelectedCategory,
     selectedTags,
     handleTagSelect,
+    selectedRoleFilter, // ✅ NEW
+    setSelectedRoleFilter, // ✅ NEW
     sortBy,
     setSortBy,
     viewMode,

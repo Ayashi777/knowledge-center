@@ -136,6 +136,8 @@ const AppContent: React.FC = () => {
     visibleCategories,
     allTags,
     sortedAndFilteredDocs,
+    selectedRoleFilter,
+    setSelectedRoleFilter,
     clearFilters,
   } = useDocuments(currentUserRole, t, lang);
 
@@ -489,6 +491,8 @@ const AppContent: React.FC = () => {
                 setViewMode={setViewMode}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
+                selectedRole={selectedRoleFilter}
+                onRoleSelect={setSelectedRoleFilter}
                 onClearFilters={clearFilters}
                 currentPage={currentPage}
                 totalPages={totalPages}

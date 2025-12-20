@@ -19,6 +19,7 @@ export const translations = {
       justNow: 'щойно',
       resetFilters: 'Скинути фільтри',
       add: 'Додати',
+      activeFilters: 'Активні фільтри',
     },
     adminDocs: {
       title: 'Документація',
@@ -64,6 +65,7 @@ export const translations = {
       resourceType: 'Тип ресурсу',
       allTypes: 'Всі типи',
       tags: 'Теги',
+      forWhom: 'Для кого',
     },
     dashboard: {
       title: 'База знань',
@@ -185,6 +187,7 @@ export const translations = {
       labelTags: 'Теги',
       placeholderTags: 'наприклад, безпека, оновлення, звіт',
       labelDownloadPermissions: 'Хто може завантажувати?',
+      noTagsHint: 'Теги ще не створені. Додайте їх в Адмін-панелі.',
     },
     categoryEditorModal: {
       editTitle: 'Редагувати дозволи категорії',
@@ -231,6 +234,7 @@ export const translations = {
       justNow: 'just now',
       resetFilters: 'Reset filters',
       add: 'Add',
+      activeFilters: 'Active Filters',
     },
     adminDocs: {
       title: 'Documentation',
@@ -276,6 +280,7 @@ export const translations = {
       resourceType: 'Resource Type',
       allTypes: 'All Types',
       tags: 'Tags',
+      forWhom: 'For whom',
     },
     dashboard: {
         title: 'Knowledge Base',
@@ -397,6 +402,7 @@ export const translations = {
         labelTags: 'Tags',
         placeholderTags: 'safety, update',
         labelDownloadPermissions: 'Download Permissions',
+        noTagsHint: 'No tags created yet. Add them in the Admin Panel.',
     },
     categoryEditorModal: {
         editTitle: 'Edit Category',

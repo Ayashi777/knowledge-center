@@ -231,6 +231,8 @@ export const DashboardView: React.FC<{
     setViewMode: (mode: ViewMode) => void;
     sortBy: SortBy;
     setSortBy: (sort: SortBy) => void;
+    selectedRole: UserRole | null;
+    onRoleSelect: (role: UserRole | null) => void;
     onClearFilters: () => void;
     currentPage: number;
     totalPages: number;
@@ -258,6 +260,8 @@ export const DashboardView: React.FC<{
     setViewMode,
     sortBy,
     setSortBy,
+    selectedRole,
+    onRoleSelect,
     onClearFilters,
     currentPage,
     totalPages,
@@ -283,6 +287,9 @@ export const DashboardView: React.FC<{
                     onTagSelect={onTagSelect}
                     showAdminControls={showAdminControls}
                     onEditCategory={onEditCategory}
+                    onClearFilters={onClearFilters}
+                    selectedRole={selectedRole}
+                    onRoleSelect={onRoleSelect}
                 />
 
                 <main className="flex-grow">
@@ -359,54 +366,49 @@ export const DashboardView: React.FC<{
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-baseline mb-4">
-                        <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: totalDocsCount })}</p>
-                        {(selectedCategory || selectedTags.length > 0) && (
-                            <button onClick={onClearFilters} className="text-sm text-red-500 hover:underline">
-                                {t('common.resetFilters')}
-                            </button>
-                        )}
-                    </div>
+					<div className="flex justify-between items-baseline mb-4">
+						<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: totalDocsCount })}</p>
+					</div>
 
-                    {showAdminControls && (
-                        <div className="mb-4 text-right">
-                            <button
-                                onClick={onAddNewDoc}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap"
-                            >
-                                <Icon name="plus" className="h-5 w-5" />
-                                <span>{t('common.add')}</span>
-                            </button>
-                        </div>
-                    )}
+					{showAdminControls && (
+						<div className="mb-4 text-right">
+							<button
+								onClick={onAddNewDoc}
+								className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap"
+							>
+								<Icon name="plus" className="h-5 w-5" />
+								<span>{t('common.add')}</span>
+							</button>
+						</div>
+					)}
 
-                    {docs.length > 0 ? (
-                        viewMode === 'grid' ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
-                                {docs.map((doc) => (
-                                    <DocumentGridItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} onRequireLogin={onRequireLogin} isGuest={isGuest} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {docs.map((doc) => (
-                                    <DocumentListItem
-                                        key={doc.id}
-                                        doc={doc}
-                                        onClick={() => onSelectDoc(doc)}
-                                        onEdit={() => onEditDoc(doc)}
-                                        onDelete={() => onDeleteDoc(doc.id)}
-                                        showAdminControls={showAdminControls}
-                                    />
-                                ))}
-                            </div>
-                        )
-                    ) : (
-                        <div className="text-center py-10 px-4 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg">
-                            <p className="text-gray-500 dark:text-gray-400">{t('dashboard.noResults')}</p>
-                            <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
-                        </div>
-                    )}
+					{docs.length > 0 ? (
+						viewMode === 'grid' ? (
+							<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+								{docs.map((doc) => (
+									<DocumentGridItem key={doc.id} doc={doc} onClick={() => onSelectDoc(doc)} onRequireLogin={onRequireLogin} isGuest={isGuest} />
+								))}
+							</div>
+						) : (
+							<div className="space-y-3">
+								{docs.map((doc) => (
+									<DocumentListItem
+										key={doc.id}
+										doc={doc}
+										onClick={() => onSelectDoc(doc)}
+										onEdit={() => onEditDoc(doc)}
+										onDelete={() => onDeleteDoc(doc.id)}
+										showAdminControls={showAdminControls}
+									/>
+								))}
+							</div>
+						)
+					) : (
+						<div className="text-center py-10 px-4 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg">
+							<p className="text-gray-500 dark:text-gray-400">{t('dashboard.noResults')}</p>
+							<p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
+						</div>
+					)}
 
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
                 </main>
