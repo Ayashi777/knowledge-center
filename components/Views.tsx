@@ -272,9 +272,24 @@ export const DashboardView: React.FC<{
 
     return (
         <>
-            <header className="mb-8 text-center pt-16 sm:pt-12">
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
-                <p className="mt-3 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t('dashboard.description')}</p>
+            <header className="mb-12 text-center pt-16 sm:pt-12 animate-fade-in">
+                {/* Головна назва веб-додатка */}
+                <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-gray-900 dark:text-white mb-4 uppercase">
+                    {t('dashboard.title')}
+                </h1>
+
+                {/* Підзаголовок: Яка роль додатка */}
+                <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-6 max-w-3xl mx-auto leading-tight">
+                    {t('dashboard.subtitle')}
+                </p>
+
+                {/* Опис: Що тут можна знайти */}
+                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed italic">
+                    {t('dashboard.description')}
+                </p>
+
+                {/* Декоративний елемент для візуального розділення */}
+                <div className="mt-10 h-px w-32 bg-gradient-to-r from-transparent via-blue-200 dark:via-blue-900 to-transparent mx-auto"></div>
             </header>
 
             <div className="flex flex-col lg:flex-row gap-8">

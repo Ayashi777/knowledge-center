@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.2] - 2025-12-22
+### Added
+- **Informative Dashboard Hero**: The main dashboard now features a prominent hero section with a clear title, a subtitle explaining the application's purpose, and a description detailing the available resources. This improves user onboarding and immediately communicates the value of the platform.
+
+### Changed
+- **`Views.tsx`**: Replaced the simple title with a more structured and visually appealing header component.
+- **`translations.ts`**: Updated the dashboard-related keys (`title`, `subtitle`, `description`) to be more descriptive and engaging.
+
 ## [3.2.1] - 2025-12-22
 ### Added
 - **Optimized Registration Flow**: The "Apply for Access" button now opens the registration form directly, streamlining the user journey for guests seeking elevated permissions.
