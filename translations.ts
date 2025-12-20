@@ -1,3 +1,4 @@
+
 export type Language = 'uk' | 'en';
 
 export const translations = {
@@ -36,6 +37,7 @@ export const translations = {
       delete: 'Видалити',
       noCover: 'Немає обкладинки',
       attachedFiles: 'Прикріплені файли',
+      coverHint: 'Рекомендована пропорція: 3:4 (портретна).',
     },
 
     header: {
@@ -234,6 +236,7 @@ export const translations = {
       delete: 'Delete',
       noCover: 'No cover',
       attachedFiles: 'Attached files',
+      coverHint: 'Recommended aspect ratio: 3:4 (portrait).',
     },
 
     header: {

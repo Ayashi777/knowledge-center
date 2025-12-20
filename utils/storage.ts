@@ -41,16 +41,21 @@ export const listDocumentFiles = async (docId: string) => {
     try {
         const folderRef = ref(storage, `documents/${docId}`);
         const result = await listAll(folderRef);
-        
-        const filePromises = result.items.map(async (item) => {
-            const url = await getDownloadURL(item);
-            const metadata = item.name.split('.');
-            return {
-                name: item.name,
-                url: url,
-                extension: metadata.pop()?.toLowerCase()
-            };
-        });
+
+        const filePromises = result.items
+            // Hide system assets (covers, thumbnails) from user-facing file list
+            .filter(item => !item.fullPath.includes('/.system/'))
+            .filter(item => !item.name.startsWith('thumbnail_'))
+            .filter(item => !item.name.startsWith('cover_'))
+            .map(async (item) => {
+                const url = await getDownloadURL(item);
+                const parts = item.name.split('.');
+                return {
+                    name: item.name,
+                    url,
+                    extension: parts.pop()?.toLowerCase()
+                };
+            });
 
         return await Promise.all(filePromises);
     } catch (error) {

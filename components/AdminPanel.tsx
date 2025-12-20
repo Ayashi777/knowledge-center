@@ -166,7 +166,7 @@ useEffect(() => {
         try {
             // Create a unique path for the thumbnail (cover)
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const filePath = `documents/${docId}/thumbnail_${Date.now()}_${safeName}`;
+            const filePath = `documents/${docId}/.system/cover_${Date.now()}_${safeName}`;
             const storageRef = ref(storage, filePath);
 
             // Upload and get URL
@@ -327,8 +327,11 @@ useEffect(() => {
                                                                 </div>
                                                             )}
 
-                                                            <label className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xs uppercase cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                {docItem.thumbnailUrl ? t('adminDocs.changeCover') : t('adminDocs.uploadCover')}
+                                                            <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white font-bold text-xs uppercase cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <span>{docItem.thumbnailUrl ? t('adminDocs.changeCover') : t('adminDocs.uploadCover')}</span>
+                                                                <span className="text-[10px] font-normal normal-case mt-1 opacity-80">
+                                                                    {t('adminDocs.coverHint')}
+                                                                </span>
                                                                 <input
                                                                     type="file"
                                                                     accept="image/*"
@@ -402,8 +405,12 @@ useEffect(() => {
                                                         </div>
 
                                                         <div className="flex items-center gap-2">
-                                                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-all shadow-sm cursor-pointer">
+                                                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-all shadow-sm cursor-pointer" title={t('adminDocs.coverHint')}>
                                                                 <Icon name="upload" className="w-4 h-4" /> {docItem.thumbnailUrl ? t('adminDocs.changeCover') : t('adminDocs.uploadCover')}
+                                                                <span className="ml-2 text-[10px] font-normal normal-case opacity-70">
+                                                                    {t('adminDocs.coverHint')}
+                                                                </span>
+                                                                
                                                                 <input
                                                                     type="file"
                                                                     accept="image/*"
