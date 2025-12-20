@@ -17,7 +17,7 @@ export const useDocuments = (
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | null>(null); // ✅ NEW
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | null>(null); 
   const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -62,17 +62,18 @@ export const useDocuments = (
     };
   }, []);
 
+  /**
+   * ✅ NEW Logic: All categories are visible to everyone in the listing.
+   * Permissions will be checked when attempting to VIEW a document.
+   */
   const visibleCategories = useMemo(() => {
-    if (currentUserRole === 'admin') return categories;
-    return categories.filter(
-      (cat) => cat.viewPermissions?.includes(currentUserRole)
-    );
-  }, [categories, currentUserRole]);
+    return categories;
+  }, [categories]);
 
   const sortedAndFilteredDocs = useMemo(() => {
+    // We show all documents that belong to existing categories
     let result = documents.filter((doc) => {
-      const category = categories.find((c) => c.nameKey === doc.categoryKey);
-      return category && visibleCategories.some((vc) => vc.id === category.id);
+      return categories.some((c) => c.nameKey === doc.categoryKey);
     });
 
     if (searchTerm) {
@@ -84,7 +85,7 @@ export const useDocuments = (
       );
     }
 
-    // ✅ Role filter logic
+    // Role filter as a UI preference, not an access restriction
     if (selectedRoleFilter) {
       result = result.filter(doc => {
         const cat = categories.find(c => c.nameKey === doc.categoryKey);
@@ -114,14 +115,13 @@ export const useDocuments = (
     return result;
   }, [
     documents,
-    visibleCategories,
+    categories,
     searchTerm,
     selectedCategory,
     selectedTags,
-    selectedRoleFilter, // ✅ NEW
+    selectedRoleFilter,
     sortBy,
-    t,
-    categories
+    t
   ]);
 
   const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
@@ -142,7 +142,7 @@ export const useDocuments = (
     setSearchTerm('');
     setSelectedCategory(null);
     setSelectedTags([]);
-    setSelectedRoleFilter(null); // ✅ NEW
+    setSelectedRoleFilter(null);
     setCurrentPage(1);
   };
 
@@ -165,8 +165,8 @@ export const useDocuments = (
     setSelectedCategory,
     selectedTags,
     handleTagSelect,
-    selectedRoleFilter, // ✅ NEW
-    setSelectedRoleFilter, // ✅ NEW
+    selectedRoleFilter,
+    setSelectedRoleFilter,
     sortBy,
     setSortBy,
     viewMode,

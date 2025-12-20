@@ -145,7 +145,9 @@ const AppContent: React.FC = () => {
   const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>(
     'login'
   );
-  const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
+    const [loginModalView, setLoginModalView] = useState<'login' | 'request'>('login');
+
+const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -303,15 +305,23 @@ const AppContent: React.FC = () => {
     if (!docItem) return <Navigate to="/" />;
 
     const cat = categories.find((c) => c.nameKey === docItem.categoryKey);
-    const isPublic = cat?.viewPermissions?.includes('guest');
+    const hasAccess = cat?.viewPermissions?.includes(currentUserRole);
 
-    if (isPublic) {
+    /**
+     * ✅ Access logic: 
+     * If user has role permission -> show content.
+     * Otherwise -> show "Access Required" / "Upgrade role" screen.
+     */
+    if (hasAccess) {
       return (
         <DocumentView
           doc={docItem}
           allTags={allTags}
           onClose={() => navigate('/')}
-          onRequireLogin={() => setIsLoginModalOpen(true)}
+          onRequireLogin={() => {
+              setLoginContext('download');
+              setIsLoginModalOpen(true);
+          }}
           currentUserRole={currentUserRole}
           onUpdateContent={handleUpdateContent}
           onCategoryClick={(key) => {
@@ -322,52 +332,72 @@ const AppContent: React.FC = () => {
       );
     }
 
-    if (!currentUser) {
-      return (
-        <div className="pt-32 text-center animate-fade-in">
-          <Icon name="lock-closed" className="mx-auto mb-6 text-gray-300 w-16 h-16" />
-          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
+    // Filter out 'admin' from public display roles
+    const displayRoles = (cat?.viewPermissions || []).filter(r => r !== 'admin' && r !== 'guest');
+
+    // --- Access Denied / Login/Registration Suggestion ---
+    return (
+        <div className="pt-32 text-center animate-fade-in px-4">
+          <div className="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-8 text-amber-600 border border-amber-100 dark:border-amber-900/50">
+             <Icon name="lock-closed" className="w-10 h-10" />
+          </div>
+          
+          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
             {t('loginModal.accessRequired')}
           </h2>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto">
-            Цей ресурс обмежений. Будь ласка, увійдіть, щоб підтвердити свій рівень
-            доступу.
+          
+          <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-lg mx-auto leading-relaxed text-sm">
+             {displayRoles.length > 0 ? (
+               <>Цей документ призначений для ролі <span className="font-bold text-blue-600">{displayRoles.map(r => t(`roles.${r}`)).join(', ')}</span>.</>
+             ) : (
+               <>Цей документ має обмежений рівень доступу.</>
+             )}
+             <br/>
+             Будь ласка, увійдіть у свій акаунт або зареєструйтесь, щоб отримати доступ.
           </p>
-          <button
-            onClick={() => {
-              setLoginContext('view');
-              setIsLoginModalOpen(true);
-            }}
-            className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs"
-          >
-            Увійти зараз
-          </button>
-        </div>
-      );
-    }
 
-    if (!cat?.viewPermissions?.includes(currentUserRole)) {
-      return (
-        <div className="pt-40 text-center text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 p-20 rounded-3xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto">
-          <Icon name="lock-closed" className="mx-auto mb-4 w-12 h-12" />
-          {t('docView.accessDenied')}
-        </div>
-      );
-    }
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+                onClick={() => {
+                setLoginContext('view');
+                setLoginModalView('login');
+                setIsLoginModalOpen(true);
+                }}
+                className="w-full sm:w-auto bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs"
+            >
+                Увійти в систему
+            </button>
+            <button
+                onClick={() => {
+                    // Trigger login modal which has "No account? Register"
+                    setLoginContext('view');
+                    setLoginModalView('request');
+                    setIsLoginModalOpen(true);
+                }}
+                className="w-full sm:w-auto bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-10 py-5 rounded-2xl font-black hover:bg-gray-200 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
+            >
+                Подати заявку
+            </button>
+          </div>
 
-    return (
-      <DocumentView
-        doc={docItem}
-        allTags={allTags}
-        onClose={() => navigate('/')}
-        onRequireLogin={() => setIsLoginModalOpen(true)}
-        currentUserRole={currentUserRole}
-        onUpdateContent={handleUpdateContent}
-        onCategoryClick={(key) => {
-          setSelectedCategory(key);
-          navigate('/');
-        }}
-      />
+          <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 max-w-sm mx-auto">
+             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Документ містить:</p>
+             <div className="flex justify-center gap-6">
+                <div className="flex flex-col items-center gap-2 opacity-50">
+                    <Icon name="view-boards" className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Схеми</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 opacity-50">
+                    <Icon name="pdf" className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">PDF Файли</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 opacity-50">
+                    <Icon name="construction" className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Протоколи</span>
+                </div>
+             </div>
+          </div>
+        </div>
     );
   };
 
@@ -481,7 +511,7 @@ const AppContent: React.FC = () => {
                 onAddNewDoc={() => setEditingDoc({})}
                 selectedCategory={selectedCategory}
                 onCategorySelect={setSelectedCategory}
-                visibleCategories={currentUserRole === 'guest' ? categories : visibleCategories}
+                visibleCategories={visibleCategories}
                 allTags={allTags}
                 selectedTags={selectedTags}
                 onTagSelect={handleTagSelect}
@@ -512,7 +542,11 @@ const AppContent: React.FC = () => {
       </div>
 
       {isLoginModalOpen && (
-        <LoginModal onClose={() => setIsLoginModalOpen(false)} context={loginContext} />
+        <LoginModal 
+          onClose={() => setIsLoginModalOpen(false)} 
+          context={loginContext} 
+          initialView={loginModalView} 
+        />
       )}
       {editingDoc !== null && (
         <DocumentEditorModal

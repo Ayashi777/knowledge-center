@@ -1,6 +1,22 @@
 import { Language } from '../i18n';
 
-export function formatRelativeTime(date: Date, lang: Language, t: (key: string) => string): string {
+export function formatRelativeTime(dateInput: any, lang: Language, t: (key: string) => string): string {
+    // 1. Convert Timestamp or string or Date to a JS Date object
+    let date: Date;
+    
+    if (!dateInput) return ''; 
+
+    if (dateInput.toDate && typeof dateInput.toDate === 'function') {
+        date = dateInput.toDate(); // Firestore Timestamp
+    } else if (dateInput instanceof Date) {
+        date = dateInput;
+    } else {
+        date = new Date(dateInput); // JS string or number
+    }
+
+    // 2. Check for invalid date
+    if (isNaN(date.getTime())) return '';
+
     const now = new Date();
     const diffSeconds = Math.round((date.getTime() - now.getTime()) / 1000);
 

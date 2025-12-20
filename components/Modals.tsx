@@ -6,9 +6,13 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "fire
 import { auth, db } from "../firebase";
 import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 
-export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'download' | 'login' }> = ({ onClose, context }) => {
+export const LoginModal: React.FC<{ 
+    onClose: () => void, 
+    context: 'view' | 'download' | 'login',
+    initialView?: 'login' | 'request' // <-- Додайте це
+}> = ({ onClose, context, initialView = 'login' }) => { // <-- Вкажіть значення за замовчуванням
     const { t } = useI18n();
-    const [view, setView] = useState<'login' | 'request' | 'success'>('login');
+    const [view, setView] = useState<'login' | 'request' | 'success'>(initialView);
     
     // Login form state
     const [email, setEmail] = useState('');

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.1] - 2025-12-22
+### Added
+- **Optimized Registration Flow**: The "Apply for Access" button now opens the registration form directly, streamlining the user journey for guests seeking elevated permissions.
+- **Enhanced Privacy on Access Denied Screen**: System roles (e.g., 'Administrator') are now automatically hidden from the list of roles shown to users on the access restricted screen.
+
+### Fixed
+- **Date Formatting Crash**: Resolved a critical error (`TypeError: a.getTime is not a function`) by implementing a robust conversion logic in `formatRelativeTime` that correctly handles Firestore Timestamps, standard JS Dates, and ISO strings.
+- **Initial Modal View Logic**: Added support for an `initialView` prop to `LoginModal`, ensuring the correct form (Login vs. Registration) is displayed based on the user's intent.
+
 ## [3.2.0] - 2025-12-22
 ### Added
 - **Role-Based Document Filtering**: Implemented a new "For whom" filter in the sidebar, allowing users to instantly view documents intended for specific roles (Foreman, Architect, Designer).
