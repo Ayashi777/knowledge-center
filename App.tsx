@@ -186,7 +186,7 @@ const AppContent: React.FC = () => {
       id,
       title: docToSave.title || '',
       categoryKey: docToSave.categoryKey || '',
-      tags: docToSave.tags || [],
+      tagIds: docToSave.tagIds || [],
       thumbnailUrl: (docToSave as any).thumbnailUrl || '',
       updatedAt: serverTimestamp(),
     };
@@ -307,6 +307,7 @@ const AppContent: React.FC = () => {
       return (
         <DocumentView
           doc={docItem}
+          allTags={allTags}
           onClose={() => navigate('/')}
           onRequireLogin={() => setIsLoginModalOpen(true)}
           currentUserRole={currentUserRole}
@@ -355,6 +356,7 @@ const AppContent: React.FC = () => {
     return (
       <DocumentView
         doc={docItem}
+        allTags={allTags}
         onClose={() => navigate('/')}
         onRequireLogin={() => setIsLoginModalOpen(true)}
         currentUserRole={currentUserRole}
@@ -404,6 +406,7 @@ const AppContent: React.FC = () => {
       <AdminPanel
         categories={categories}
         documents={documents}
+        allTags={allTags}
         onUpdateCategory={setEditingCategory}
         onDeleteCategory={handleDeleteCategory}
         onAddCategory={() =>
@@ -513,6 +516,7 @@ const AppContent: React.FC = () => {
           onSave={handleSaveDocument}
           onClose={() => setEditingDoc(null)}
           availableCategories={categories}
+          availableTags={allTags}
         />
       )}
       {editingCategory !== null && (

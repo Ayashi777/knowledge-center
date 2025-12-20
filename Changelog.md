@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2025-12-21
+### Added
+- **Centralized Tag Management System**: Replaced the error-prone manual text entry for tags with a robust, centralized system.
+- **Dedicated Tags Admin Tab**: Introduced a new tab in the admin panel (`#tags`) for managing the global tag database, allowing administrators to create, edit, and delete tags with custom colors.
+- **Interactive Tag Picker**: Updated the document editor with a visual tag selector, allowing administrators to toggle tags from the centralized list, eliminating duplicates and typos.
+- **Visual Tag Indicators**: Documents now display tags with their associated colors across the dashboard and document views for better categorization and visual scanning.
+
+### Fixed
+- **Tag Filtering Logic**: Corrected an issue where filtering by tags on the main dashboard caused a crash (`TypeError: i.has is not a function`) by migrating from `Set` to `Array.includes` for tag ID verification.
+- **Type Safety**: Fully integrated the new `Tag` interface across the application, ensuring consistent data handling between Firestore and the UI.
+
 ## [3.0.1] - 2025-12-21
 ### Added
 - **Cover Aspect Ratio Hint**: Added an informational hint in the admin panel recommending a 3:4 aspect ratio for document cover images.

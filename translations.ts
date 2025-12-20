@@ -39,7 +39,20 @@ export const translations = {
       attachedFiles: 'Прикріплені файли',
       coverHint: 'Рекомендована пропорція: 3:4 (портретна).',
     },
-
+    adminTags: {
+      title: 'Керування тегами',
+      description: 'Централізоване додавання, редагування та видалення тегів.',
+      addTag: 'Додати тег',
+      tableHeader: 'Тег',
+      noTags: 'Теги ще не створені.',
+      confirmDelete: 'Ви впевнені, що хочете видалити цей тег? Він буде видалений з усіх документів, де він використовується.',
+    },
+    tagEditor: {
+        createTitle: 'Створити новий тег',
+        editTitle: 'Редагувати тег',
+        nameLabel: 'Назва тегу',
+        colorLabel: 'Колір',
+    },
     header: {
       login: 'Увійти',
       logout: 'Вийти',
@@ -169,7 +182,7 @@ export const translations = {
       editTitle: 'Редагувати документ',
       labelTitle: 'Назва',
       labelCategory: 'Категорія',
-      labelTags: 'Теги (через кому)',
+      labelTags: 'Теги',
       placeholderTags: 'наприклад, безпека, оновлення, звіт',
       labelDownloadPermissions: 'Хто може завантажувати?',
     },
@@ -238,7 +251,20 @@ export const translations = {
       attachedFiles: 'Attached files',
       coverHint: 'Recommended aspect ratio: 3:4 (portrait).',
     },
-
+    adminTags: {
+      title: 'Tag Management',
+      description: 'Centralized adding, editing, and deleting of tags.',
+      addTag: 'Add Tag',
+      tableHeader: 'Tag',
+      noTags: 'No tags created yet.',
+      confirmDelete: 'Are you sure you want to delete this tag? It will be removed from all documents where it is used.',
+    },
+    tagEditor: {
+        createTitle: 'Create New Tag',
+        editTitle: 'Edit Tag',
+        nameLabel: 'Tag Name',
+        colorLabel: 'Color',
+    },
     header: {
       login: 'Login',
       logout: 'Logout',

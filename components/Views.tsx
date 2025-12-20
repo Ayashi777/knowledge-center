@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Document, Category, UserRole, ViewMode, SortBy, DocumentContent } from '../types';
+import { Document, Category, UserRole, ViewMode, SortBy, DocumentContent, Tag } from '../types';
 import { useI18n, Language } from '../i18n';
 import { Icon } from './icons';
 import { Sidebar } from './Sidebar';
@@ -224,8 +224,8 @@ export const DashboardView: React.FC<{
     selectedCategory: string | null;
     onCategorySelect: (categoryName: string | null) => void;
     visibleCategories: Category[];
-    allTags: string[];
-    selectedTags: Set<string>;
+    allTags: Tag[];
+    selectedTags: string[];
     onTagSelect: (tagName: string) => void;
     viewMode: ViewMode;
     setViewMode: (mode: ViewMode) => void;
@@ -361,7 +361,7 @@ export const DashboardView: React.FC<{
 
                     <div className="flex justify-between items-baseline mb-4">
                         <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t('dashboard.results', { count: totalDocsCount })}</p>
-                        {(selectedCategory || selectedTags.size > 0) && (
+                        {(selectedCategory || selectedTags.length > 0) && (
                             <button onClick={onClearFilters} className="text-sm text-red-500 hover:underline">
                                 {t('common.resetFilters')}
                             </button>
@@ -424,7 +424,8 @@ export const DocumentView: React.FC<{
     currentUserRole: UserRole;
     onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => Promise<void>;
     onCategoryClick: (categoryKey: string) => void;
-}> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick }) => {
+    allTags?: Tag[];
+}> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [] }) => {
     const { t, lang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
     const [editableContent, setEditableContent] = useState<DocumentContent>(doc.content[lang] || emptyContentTemplate);
@@ -595,6 +596,12 @@ export const DocumentView: React.FC<{
     };
 
     const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
+
+    const tagById = useMemo(() => {
+        const m = new Map<string, Tag>();
+        (allTags || []).forEach((tg) => m.set(tg.id, tg));
+        return m;
+    }, [allTags]);
 
     return (
         <div className="pt-24 pb-20 animate-fade-in">
@@ -817,14 +824,20 @@ export const DocumentView: React.FC<{
                                 {t('docView.lastUpdated')}: {formatRelativeTime(doc.updatedAt, lang, t)}
                             </p>
                             <div className="flex flex-wrap gap-2">
-                                {doc.tags?.map((tag) => (
-                                    <div
-                                        key={tag}
-                                        className="flex items-center gap-1 text-[9px] uppercase font-black text-gray-400 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full"
-                                    >
-                                        <Icon name="tag" className="w-2.5 h-2.5 opacity-50" /> {tag}
-                                    </div>
-                                ))}
+                                {(doc.tagIds || []).map((id) => {
+                                    const tg = tagById.get(id);
+                                    if (!tg) return null;
+                                    return (
+                                        <div
+                                            key={id}
+                                            className="flex items-center gap-2 text-[9px] uppercase font-black text-gray-400 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full"
+                                        >
+                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tg.color || '#cccccc' }} aria-hidden="true" />
+                                            <Icon name="tag" className="w-2.5 h-2.5 opacity-50" />
+                                            {tg.name}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>

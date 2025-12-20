@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Category, Document, UserRole, IconName, UserProfile } from '../types';
+import { Category, Document, UserRole, IconName, UserProfile, Tag } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
-import { UserEditorModal } from './Modals';
+import { UserEditorModal, TagEditorModal } from './Modals';
 import { uploadDocumentFile, listDocumentFiles, deleteDocumentFile, isFileTypeAllowed } from '../utils/storage';
-import { collection, doc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, onSnapshot, deleteDoc, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from "../firebase";
 
@@ -23,6 +23,7 @@ interface AccessRequest {
 export const AdminPanel: React.FC<{ 
     categories: Category[], 
     documents: Document[],
+    allTags: Tag[],
     onUpdateCategory: (cat: Category) => void,
     onDeleteCategory: (id: string) => void,
     onAddCategory: (cat: Partial<Category>) => void,
@@ -31,15 +32,15 @@ export const AdminPanel: React.FC<{
     onAddDocument: () => void,
     onClose: () => void 
 }> = ({ 
-    categories, documents, onUpdateCategory, onDeleteCategory, onAddCategory,
+    categories, documents, allTags, onUpdateCategory, onDeleteCategory, onAddCategory,
     onDeleteDocument, onEditDocument, onAddDocument, onClose 
 }) => {
     const { t } = useI18n();
-    type AdminTab = 'roles' | 'categories' | 'documents' | 'requests' | 'users';
+    type AdminTab = 'roles' | 'categories' | 'tags' | 'documents' | 'requests' | 'users';
 
 const parseTab = (value: string | null | undefined): AdminTab => {
     const v = (value || '').replace('#', '').trim() as AdminTab;
-    const allowed: AdminTab[] = ['roles', 'categories', 'documents', 'requests', 'users'];
+    const allowed: AdminTab[] = ['roles', 'categories', 'tags', 'documents', 'requests', 'users'];
     return (allowed as string[]).includes(v) ? (v as AdminTab) : 'roles';
 };
 
@@ -54,6 +55,9 @@ const [activeTab, setActiveTab] = useState<AdminTab>(() => getTabFromHash());
     const [docFiles, setDocFiles] = useState<{name: string, url: string, extension?: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [pendingRoles, setPendingRoles] = useState<Record<string, UserRole>>({});
+
+    // Tags tab state
+    const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
 
     // Documents tab UI state
     const [docViewMode, setDocViewMode] = useState<'list' | 'grid'>('grid');
@@ -194,10 +198,32 @@ useEffect(() => {
             });
     }, [documents, docSearchTerm, docCategoryFilter, t]);
 
+    // --- Tags CRUD ---
+    const handleSaveTag = async (tagData: Partial<Tag>) => {
+        try {
+            if (tagData.id) {
+                await updateDoc(doc(db, "tags", tagData.id), { name: tagData.name, color: tagData.color });
+            } else {
+                await addDoc(collection(db, "tags"), { name: tagData.name, color: tagData.color });
+            }
+            setEditingTag(null);
+        } catch (e) {
+            console.error(e);
+            alert(t('common.error') || 'Помилка.');
+        }
+    };
+
+    const handleDeleteTag = async (id: string) => {
+        if (window.confirm(t('adminTags.confirmDelete'))) {
+            await deleteDoc(doc(db, "tags", id));
+        }
+    };
+
     const navItems = [
         { id: 'roles', label: 'Доступи', icon: 'users' as IconName },
         { id: 'users', label: 'Користувачі', icon: 'users' as IconName },
         { id: 'categories', label: 'Категорії', icon: 'view-grid' as IconName },
+        { id: 'tags', label: 'Теги', icon: 'tag' as IconName },
         { id: 'documents', label: 'Документи', icon: 'hr' as IconName },
         { id: 'requests', label: 'Заявки', icon: 'paper-airplane' as IconName },
     ];
@@ -205,6 +231,7 @@ useEffect(() => {
     return (
         <>
             {editingUser && <UserEditorModal user={editingUser} onSave={handleUpdateUser} onClose={() => setEditingUser(null)} />}
+            {editingTag && <TagEditorModal tag={editingTag} onSave={handleSaveTag} onClose={() => setEditingTag(null)} />}
             <div className="flex flex-col lg:flex-row gap-8 pt-16 sm:pt-12 min-h-[80vh]">
                 <aside className="w-full lg:w-64 flex-shrink-0">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -249,6 +276,73 @@ useEffect(() => {
                                     <div className="animate-fade-in text-center sm:text-left">
                                         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4"><div><h3 className="text-2xl font-black text-gray-900 dark:text-white">Категорії ресурсів</h3><p className="text-sm text-gray-500">Керування розділами знань.</p></div><button onClick={() => onAddCategory({})} className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest"><Icon name="plus" className="w-5 h-5" /> Додати</button></header>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{categories.map(cat => (<div key={cat.id} className="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group shadow-sm transition-all hover:border-blue-300"><div className="flex items-center gap-4"><div className="p-4 bg-white dark:bg-gray-800 rounded-2xl text-blue-600 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700"><Icon name={cat.iconName} className="w-8 h-8" /></div><div><p className="font-black text-gray-900 dark:text-white text-lg leading-tight">{t(cat.nameKey)}</p></div></div><div className="flex gap-2"><button onClick={() => onUpdateCategory(cat)} className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><Icon name="cog" className="w-5 h-5" /></button><button onClick={() => onDeleteCategory(cat.id)} className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"><Icon name="plus" className="w-5 h-5 rotate-45" /></button></div></div>))}</div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'tags' && (
+                                    <div className="animate-fade-in text-center sm:text-left">
+                                        <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                            <div>
+                                                <h3 className="text-2xl font-black text-gray-900 dark:text-white">{t('adminTags.title')}</h3>
+                                                <p className="text-sm text-gray-500">{t('adminTags.description')}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setEditingTag({})}
+                                                className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest"
+                                            >
+                                                <Icon name="plus" className="w-5 h-5" /> {t('adminTags.add')}
+                                            </button>
+                                        </header>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {[...allTags]
+                                                .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                                                .map(tag => (
+                                                    <div
+                                                        key={tag.id}
+                                                        className="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border border-gray-200 dark:border-gray-700 flex items-center justify-between group shadow-sm transition-all hover:border-blue-300"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditingTag(tag)}
+                                                            className="flex items-center gap-4 text-left min-w-0"
+                                                            title={t('common.edit')}
+                                                        >
+                                                            <div
+                                                                className="w-12 h-12 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
+                                                                style={{ backgroundColor: tag.color || '#3b82f6' }}
+                                                            />
+                                                            <div className="min-w-0">
+                                                                <p className="font-black text-gray-900 dark:text-white text-lg leading-tight truncate">{tag.name}</p>
+                                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest truncate">{tag.id}</p>
+                                                            </div>
+                                                        </button>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setEditingTag(tag)}
+                                                                className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                                                                title={t('common.edit')}
+                                                            >
+                                                                <Icon name="cog" className="w-5 h-5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteTag(tag.id)}
+                                                                className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                                                                title={t('common.delete')}
+                                                            >
+                                                                <Icon name="plus" className="w-5 h-5 rotate-45" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+
+                                        {allTags.length === 0 && (
+                                            <p className="text-sm text-gray-400 italic text-center mt-10">
+                                                {t('adminTags.empty')}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 

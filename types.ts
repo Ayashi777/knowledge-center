@@ -20,6 +20,13 @@ export interface Category {
   viewPermissions?: UserRole[];
 }
 
+// Новий тип для тегів
+export interface Tag {
+  id: string;
+  name: string;
+  color?: string; // Колір для візуального акценту
+}
+
 export type IconName =
   | 'construction'
   | 'electrical'
@@ -69,7 +76,7 @@ export interface Document {
   thumbnailUrl?: string;
   updatedAt: any; // Firestore Timestamp or Date
   categoryKey: string;
-  tags: string[];
+  tagIds?: string[]; // <-- Оновлене поле для ID тегів
   content: {
     [key in Language]?: DocumentContent;
   };

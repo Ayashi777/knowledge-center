@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserRole, Document, Category, IconName, UserProfile } from '../types';
+import { UserRole, Document, Category, IconName, UserProfile, Tag } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from './icons';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
@@ -223,16 +223,58 @@ export const LoginModal: React.FC<{ onClose: () => void, context: 'view' | 'down
 
 export const RegistrationRequestModal: React.FC<{ onClose: () => void }> = ({ onClose }) => null;
 
+// --- Tag Editor (centralized tags collection) ---
+export const TagEditorModal: React.FC<{
+    tag: Partial<Tag>,
+    onSave: (tag: Partial<Tag>) => void,
+    onClose: () => void
+}> = ({ tag, onSave, onClose }) => {
+    const { t } = useI18n();
+    const [name, setName] = useState(tag.name || '');
+    const [color, setColor] = useState(tag.color || '#3b82f6');
+
+    const colorSwatches = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#ec4899', '#78716c'];
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-w-md p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">
+                    {tag.id ? t('tagEditor.editTitle') : t('tagEditor.createTitle')}
+                </h2>
+                <form onSubmit={(e) => { e.preventDefault(); onSave({ id: tag.id, name, color }); }} className="space-y-5">
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('tagEditor.nameLabel')}</label>
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" required autoFocus />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('tagEditor.colorLabel')}</label>
+                        <div className="grid grid-cols-6 gap-2">
+                            {colorSwatches.map(swatch => (
+                                <button key={swatch} type="button" onClick={() => setColor(swatch)} className={`h-8 rounded-lg border-2 ${color === swatch ? 'border-blue-500 scale-110' : 'border-transparent'}`} style={{ backgroundColor: swatch }} />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-6">
+                        <button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100">{t('common.cancel')}</button>
+                        <button type="submit" className="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 uppercase tracking-widest text-xs">{t('common.save')}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 export const DocumentEditorModal: React.FC<{
     doc: Partial<Document> | null,
     onSave: (doc: Partial<Document>) => void,
     onClose: () => void,
-    availableCategories: Category[]
-}> = ({ doc, onSave, onClose, availableCategories }) => {
+    availableCategories: Category[],
+    availableTags: Tag[]
+}> = ({ doc, onSave, onClose, availableCategories, availableTags }) => {
     const { t } = useI18n();
     const [title, setTitle] = useState((doc?.titleKey ? t(doc.titleKey) : doc?.title) || '');
     const [category, setCategory] = useState(doc?.categoryKey || availableCategories[0]?.nameKey || '');
-    const [tags, setTags] = useState(doc?.tags?.join(', ') || '');
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(doc?.tagIds || []);
     const [thumbnailUrl, setThumbnailUrl] = useState((doc as any)?.thumbnailUrl || '');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -241,7 +283,7 @@ export const DocumentEditorModal: React.FC<{
             id: doc?.id,
             title: title,
             categoryKey: category,
-            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+            tagIds: selectedTagIds,
             thumbnailUrl: thumbnailUrl
         });
     };
@@ -301,13 +343,24 @@ export const DocumentEditorModal: React.FC<{
                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
                             {t('editorModal.labelTags')}
                         </label>
-                        <input
-                            type="text"
-                            value={tags}
-                            onChange={e => setTags(e.target.value)}
-                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
-                            placeholder={t('editorModal.placeholderTags')}
-                        />
+                        <div className="p-3 bg-gray-100 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 min-h-[60px]">
+                            {availableTags.map(tag => (
+                                <button
+                                    key={tag.id}
+                                    type="button"
+                                    onClick={() => setSelectedTagIds(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])}
+                                    style={selectedTagIds.includes(tag.id) ? { backgroundColor: tag.color || '#3b82f6', color: 'white' } : {}}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${!selectedTagIds.includes(tag.id) ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600' : 'border-transparent'}`}
+                                >
+                                    {tag.name}
+                                </button>
+                            ))}
+                            {availableTags.length === 0 && (
+                                <p className="text-xs text-gray-400 font-bold italic">
+                                    {t('editorModal.noTagsHint')}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-6">
