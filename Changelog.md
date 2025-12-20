@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2025-12-22
+### Added
+- **Role-Based Document Filtering**: Implemented a new "For whom" filter in the sidebar, allowing users to instantly view documents intended for specific roles (Foreman, Architect, Designer).
+- **Personalized Content Preview**: The main dashboard now dynamically adjusts the document list based on the selected role filter, providing a more relevant and focused user experience.
+- **State-Aware UI**: The role filter buttons in the sidebar now have active and inactive states, and a click on an active filter will reset it. The total count of active filters is also updated accordingly.
+
+### Changed
+- **`useDocuments` Hook**: The central data hook was updated to include state management (`selectedRoleFilter`, `setSelectedRoleFilter`) and filtering logic that cross-references document categories with role permissions.
+- **Component Prop Drilling**: Updated `App.tsx` and `Views.tsx` to correctly pass the new role filter state down to the `Sidebar` component.
+
 ## [3.1.0] - 2025-12-21
 ### Added
 - **Centralized Tag Management System**: Replaced the error-prone manual text entry for tags with a robust, centralized system.
