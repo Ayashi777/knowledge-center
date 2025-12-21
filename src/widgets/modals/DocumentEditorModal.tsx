@@ -71,7 +71,7 @@ export const DocumentEditorModal: React.FC<{
                         >
                             {availableCategories.map(cat => (
                                 <option key={cat.id} value={cat.nameKey}>
-                                    {t(cat.nameKey) || cat.nameKey}
+                                    {t(`categories.${cat.nameKey}`) || cat.nameKey}
                                 </option>
                             ))}
                         </select>
@@ -90,7 +90,7 @@ export const DocumentEditorModal: React.FC<{
                                     style={selectedTagIds.includes(tag.id) ? { backgroundColor: tag.color || '#3b82f6', color: 'white' } : {}}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${!selectedTagIds.includes(tag.id) ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600' : 'border-transparent'}`}
                                 >
-                                    {tag.name}
+                                    {tag.id}
                                 </button>
                             ))}
                             {availableTags.length === 0 && (

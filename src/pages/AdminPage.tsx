@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Category, Document, Tag } from '../types';
-import { AdminPanel } from '../components/AdminPanel';
-import { Icon } from '../components/icons';
+import { Category, Document, Tag } from '../shared/types';
+import { AdminPanel } from '../widgets/AdminPanel';
+import { Icon } from '../shared/ui/icons';
+import { useAuth } from '../app/providers/AuthProvider';
 
 interface AdminPageProps {
-    isAuthLoading: boolean;
     isDocsLoading: boolean;
-    showAdminControls: boolean;
     categories: Category[];
     documents: Document[];
     allTags: Tag[];
@@ -15,15 +14,13 @@ interface AdminPageProps {
     onDeleteCategory: (id: string) => void;
     onAddCategory: () => void;
     onDeleteDocument: (id: string) => void;
-    onEditDocument: (doc: Partial<Document>) => void;
+    onEditDocument: (doc: Document) => void;
     onAddDocument: () => void;
     onLoginClick: () => void;
 }
 
 export const AdminPage: React.FC<AdminPageProps> = ({
-    isAuthLoading,
     isDocsLoading,
-    showAdminControls,
     categories,
     documents,
     allTags,
@@ -36,6 +33,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     onLoginClick
 }) => {
     const navigate = useNavigate();
+    const { role: currentUserRole, isLoading: isAuthLoading } = useAuth();
+    const showAdminControls = currentUserRole === 'admin';
 
     if (isAuthLoading || isDocsLoading) {
       return (

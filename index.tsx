@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { I18nProvider } from './i18n';
+import App from './src/app/App';
+import { I18nProvider } from './src/app/providers/i18n/i18n';
+import { AuthProvider } from './src/app/providers/AuthProvider';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,8 +12,10 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <I18nProvider>
-      <App />
-    </I18nProvider>
+    <AuthProvider>
+      <I18nProvider>
+        <App />
+      </I18nProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

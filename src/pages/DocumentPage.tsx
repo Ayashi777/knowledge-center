@@ -1,19 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
-import { Document, Category, UserRole, DocumentContent, Tag } from '../types';
-import { useI18n, Language } from '../i18n';
-import { Icon } from '../components/icons';
+import { Document, Category, DocumentContent } from '../shared/types';
+import { Language, useI18n } from '../app/providers/i18n/i18n';
+import { Icon } from '../shared/ui/icons';
 import { DocumentView } from '../widgets/DocumentView';
-import { User } from 'firebase/auth';
+import { useAuth } from '../app/providers/AuthProvider';
+import { useDocumentManagement } from '../shared/hooks/useDocumentManagement';
 
 interface DocumentPageProps {
     documents: Document[];
     categories: Category[];
-    currentUserRole: UserRole;
-    currentUser: User | null;
-    isAuthLoading: boolean;
-    isDocsLoading: boolean;
-    allTags: Tag[];
     onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => Promise<void>;
     onRequireLogin: () => void;
     onLoginClick: () => void;
@@ -24,11 +20,6 @@ interface DocumentPageProps {
 export const DocumentPage: React.FC<DocumentPageProps> = ({
     documents,
     categories,
-    currentUserRole,
-    currentUser,
-    isAuthLoading,
-    isDocsLoading,
-    allTags,
     onUpdateContent,
     onRequireLogin,
     onLoginClick,
@@ -38,6 +29,9 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useI18n();
+    const { user: currentUser, role: currentUserRole, isLoading: isAuthLoading } = useAuth();
+    
+    const { allTags, isLoading: isDocsLoading } = useDocumentManagement();
 
     const docItem = documents.find((d) => d.id === id);
 
@@ -90,7 +84,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
 
                 {isGuest ? (
                   <>
-                    {/* === Стан для Гостя (заявка надіслана) === */}
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                       {t('docView.accessPendingTitle')}
                     </h1>
@@ -110,7 +103,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
                   </>
                 ) : (
                   <>
-                    {/* === Стан для незалогіненого користувача === */}
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                       {t('docView.accessDenied')}
                     </h1>

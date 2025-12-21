@@ -1,0 +1,44 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper to get user data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper to check role
+    function hasRole(role) {
+      return request.auth != null && getUserData().role == role;
+    }
+
+    // Rules for Categories
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+
+    // Rules for Documents
+    match /documents/{docId} {
+      allow read: if true; // Listing is public, but content access is in UI (for now)
+      allow write: if hasRole('admin');
+    }
+
+    // Rules for Tags
+    match /tags/{tagId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+
+    // Rules for Users
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || hasRole('admin'));
+      allow write: if request.auth != null && (request.auth.uid == userId || hasRole('admin'));
+    }
+
+    // Rules for Requests
+    match /requests/{requestId} {
+      allow read: if hasRole('admin');
+      allow create: if request.auth != null;
+      allow update, delete: if hasRole('admin');
+    }
+  }
+}
