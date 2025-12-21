@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
-import { Document, Category, Tag, Language } from '@shared/types';
+import { Document, Category, Tag, Language, UserRole } from '@shared/types';
 import { CategoriesApi } from '@shared/api/firestore/categories.api';
 import { TagsApi } from '@shared/api/firestore/tags.api';
 
@@ -8,39 +8,36 @@ export const useDocumentManagement = () => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [tags, setTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filters state
-    const [searchQuery, setSearchQuery] = useState('');
+    // Filters & UI State
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
+    const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [currentPage, setCurrentPage] = useState(1);
+    const docsPerPage = 9;
 
     useEffect(() => {
-        setLoading(true);
+        setIsLoading(true);
         
-        // Real-time subscription for documents
         const unsubDocs = DocumentsApi.subscribeAll(
             (docs) => {
                 setDocuments(docs);
-                setLoading(false);
+                setIsLoading(false);
             },
             (err) => {
                 console.error("Error fetching documents:", err);
                 setError(err.message);
-                setLoading(false);
+                setIsLoading(false);
             }
         );
 
-        // Real-time subscription for categories
-        const unsubCats = CategoriesApi.subscribeAll((cats) => {
-            setCategories(cats);
-        });
-
-        // Real-time subscription for tags
-        const unsubTags = TagsApi.subscribeAll((ts) => {
-            setTags(ts);
-        });
+        const unsubCats = CategoriesApi.subscribeAll(setCategories);
+        const unsubTags = TagsApi.subscribeAll(setTags);
 
         return () => {
             unsubDocs();
@@ -49,75 +46,107 @@ export const useDocumentManagement = () => {
         };
     }, []);
 
-    const filteredDocuments = useMemo(() => {
-        return documents.filter(doc => {
-            const matchesSearch = doc.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           doc.description?.toLowerCase().includes(searchQuery.toLowerCase());
-            // Виправлено: використовуємо categoryKey замість categoryId
-            const matchesCategory = selectedCategory === 'all' || doc.categoryKey === selectedCategory;
-            const matchesTags = selectedTags.length === 0 || 
-                             selectedTags.every(tagId => doc.tagIds?.includes(tagId));
+    const handleTagSelect = (tagId: string) => {
+        setSelectedTags(prev => 
+            prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+        );
+        setCurrentPage(1);
+    };
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedCategory('all');
+        setSelectedTags([]);
+        setSelectedRoleFilter('all');
+        setCurrentPage(1);
+    };
+
+    const sortedAndFilteredDocs = useMemo(() => {
+        let result = documents.filter(doc => {
+            const matchesSearch = 
+                doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (doc.titleKey && doc.titleKey.toLowerCase().includes(searchTerm.toLowerCase()));
             
-            return matchesSearch && matchesCategory && matchesTags;
+            const matchesCategory = selectedCategory === 'all' || doc.categoryKey === selectedCategory;
+            
+            const matchesTags = selectedTags.length === 0 || 
+                               selectedTags.every(tagId => doc.tagIds?.includes(tagId));
+            
+            const matchesRole = selectedRoleFilter === 'all' || 
+                               doc.viewPermissions?.includes(selectedRoleFilter as UserRole);
+            
+            return matchesSearch && matchesCategory && matchesTags && matchesRole;
         });
-    }, [documents, searchQuery, selectedCategory, selectedTags]);
 
-    const handleCreateDocument = async (data: Partial<Document>) => {
-        try {
-            await DocumentsApi.create(data);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
+        // Sorting
+        result.sort((a, b) => {
+            if (sortBy === 'recent') {
+                const dateA = a.updatedAt?.toDate?.() || new Date(a.updatedAt) || 0;
+                const dateB = b.updatedAt?.toDate?.() || new Date(b.updatedAt) || 0;
+                return dateB - dateA;
+            } else {
+                const titleA = a.title || a.titleKey || '';
+                const titleB = b.title || b.titleKey || '';
+                return titleA.localeCompare(titleB);
+            }
+        });
 
-    const handleUpdateDocument = async (id: string, data: Partial<Document>) => {
-        try {
-            await DocumentsApi.updateMetadata(id, data);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
+        return result;
+    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy]);
 
-    const handleUpdateContent = async (id: string, lang: Language, content: any) => {
-        try {
-            await DocumentsApi.updateContent(id, lang, content);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
+    // Pagination
+    const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
+    const paginatedDocs = useMemo(() => {
+        const start = (currentPage - 1) * docsPerPage;
+        return sortedAndFilteredDocs.slice(start, start + docsPerPage);
+    }, [sortedAndFilteredDocs, currentPage]);
 
-    const handleDeleteDocument = async (id: string) => {
-        try {
-            await DocumentsApi.delete(id);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
+    // Categories that have documents (for filtering)
+    const visibleCategories = useMemo(() => {
+        const usedKeys = new Set(documents.map(d => d.categoryKey));
+        return categories.filter(c => usedKeys.has(c.nameKey));
+    }, [categories, documents]);
 
     return {
-        documents: filteredDocuments,
-        allDocuments: documents,
+        documents,
         categories,
-        tags,
-        loading,
+        allTags: tags,
+        isLoading,
         error,
-        filters: {
-            searchQuery,
-            setSearchQuery,
-            selectedCategory,
-            setSelectedCategory,
-            selectedTags,
-            setSelectedTags
-        },
+        
+        // Filter state & actions
+        searchTerm,
+        setSearchTerm,
+        selectedCategory,
+        setSelectedCategory,
+        selectedTags,
+        handleTagSelect,
+        selectedRoleFilter,
+        setSelectedRoleFilter,
+        clearFilters,
+        
+        // UI State
+        sortBy,
+        setSortBy,
+        viewMode,
+        setViewMode,
+        
+        // Pagination
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        
+        // Processed data
+        sortedAndFilteredDocs,
+        paginatedDocs,
+        visibleCategories,
+        
         actions: {
-            createDocument: handleCreateDocument,
-            updateDocument: handleUpdateDocument,
-            updateContent: handleUpdateContent,
-            deleteDocument: handleDeleteDocument
+            createDocument: DocumentsApi.create,
+            updateDocument: DocumentsApi.updateMetadata,
+            updateContent: DocumentsApi.updateContent,
+            deleteDocument: DocumentsApi.delete
         }
     };
 };
