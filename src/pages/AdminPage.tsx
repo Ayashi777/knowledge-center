@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Category, Document, Tag } from '@shared/types';
-import { AdminPanel } from '../widgets/AdminPanel';
-import { Icon } from '../shared/ui/icons';
-import { useAuth } from '../app/providers/AuthProvider';
+import { AdminPanel } from '@widgets/AdminPanel';
+import { Icon } from '@shared/ui/icons';
+import { useAuth } from '@app/providers/AuthProvider';
 
 interface AdminPageProps {
     isDocsLoading: boolean;

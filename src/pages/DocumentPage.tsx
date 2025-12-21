@@ -2,10 +2,10 @@ import React from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { Document, Category, DocumentContent } from '@shared/types';
 import { Language, useI18n } from '@app/providers/i18n/i18n';
-import { Icon } from '../shared/ui/icons';
-import { DocumentView } from '../widgets/DocumentView';
-import { useAuth } from '../app/providers/AuthProvider';
-import { useDocumentManagement } from '../shared/hooks/useDocumentManagement';
+import { Icon } from '@shared/ui/icons';
+import { DocumentView } from '@widgets/DocumentView';
+import { useAuth } from '@app/providers/AuthProvider';
+import { useDocumentManagement } from '@/shared/hooks/useDocumentManagement';
 
 interface DocumentPageProps {
     documents: Document[];

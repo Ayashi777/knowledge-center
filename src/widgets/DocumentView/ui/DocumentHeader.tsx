@@ -1,8 +1,8 @@
 import React from 'react';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Tag } from '@shared/types';
-import { Icon } from '../../../../shared/ui/icons';
-import { formatRelativeTime } from '../../../../shared/lib/utils/format';
+import { Icon } from '@shared/ui/icons';
+import { formatRelativeTime } from '@shared/lib/utils/format';
 
 interface DocumentHeaderProps {
     title: string;

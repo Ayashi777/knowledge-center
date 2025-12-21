@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '../../../../shared/ui/icons';
+import { Icon } from '@shared/ui/icons';
 
 interface AdminHeaderProps {
     onClose: () => void;

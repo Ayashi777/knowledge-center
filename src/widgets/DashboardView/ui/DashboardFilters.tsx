@@ -1,6 +1,6 @@
 import React from 'react';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { Icon } from '../../../../shared/ui/icons';
+import { Icon } from '@shared/ui/icons';
 import { ViewMode, SortBy } from '@shared/types';
 
 interface DashboardFiltersProps {

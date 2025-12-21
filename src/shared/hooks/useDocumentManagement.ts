@@ -3,7 +3,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@shared/api/firebase/firebase';
 import { Document, Category, Tag, UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { useAuth } from '../../app/providers/AuthProvider';
+import { useAuth } from '@app/providers/AuthProvider';
 
 export const useDocumentManagement = () => {
   const { t } = useI18n();

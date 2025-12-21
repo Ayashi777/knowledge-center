@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { compressImage } from '../../../shared/lib/image/compression';
-import { StorageApi } from '../../../shared/api/storage/storage.api';
+import { compressImage } from '@shared/lib/image/compression';
+import { StorageApi } from '@shared/api/storage/storage.api';
 
 interface DocumentEditorProps {
     quillRef: React.RefObject<ReactQuill>;

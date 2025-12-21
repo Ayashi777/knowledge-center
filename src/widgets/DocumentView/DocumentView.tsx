@@ -3,8 +3,8 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Document, UserRole, DocumentContent, Tag } from '@shared/types';
 import { useI18n, Language } from '@app/providers/i18n/i18n';
-import { Icon } from '../../shared/ui/icons';
-import { StorageApi } from '../../shared/api/storage/storage.api';
+import { Icon } from '@shared/ui/icons';
+import { StorageApi } from '@shared/api/storage/storage.api';
 
 // Sub-components
 import { DocumentHeader } from './ui/DocumentHeader';

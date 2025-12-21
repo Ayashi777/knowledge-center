@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { Icon } from '../../shared/ui/icons';
+import { Icon } from '@shared/ui/icons';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@shared/api/firebase/firebase";
 import { collection, addDoc, doc, setDoc } from "firebase/firestore";

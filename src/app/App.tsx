@@ -8,21 +8,21 @@ import {
 } from 'react-router-dom';
 
 import { useI18n } from '@app/providers/i18n/i18n';
-import { ThemeSwitcher } from '../shared/ui/ThemeSwitcher';
-import { LanguageSwitcher } from '../shared/ui/LanguageSwitcher';
-import { UserAccessControl } from '../shared/ui/UserAccessControl';
-import { LoginModal } from '../widgets/modals/LoginModal';
-import { DocumentEditorModal } from '../widgets/modals/DocumentEditorModal';
-import { CategoryEditorModal } from '../widgets/modals/CategoryEditorModal';
+import { ThemeSwitcher } from '@shared/ui/ThemeSwitcher';
+import { LanguageSwitcher } from '@shared/ui/LanguageSwitcher';
+import { UserAccessControl } from '@shared/ui/UserAccessControl';
+import { LoginModal } from '@widgets/modals/LoginModal';
+import { DocumentEditorModal } from '@widgets/modals/DocumentEditorModal';
+import { CategoryEditorModal } from '@widgets/modals/CategoryEditorModal';
 
-import { DashboardView } from '../widgets/DashboardView';
-import { DocumentPage } from '../pages/DocumentPage';
-import { AdminPage } from '../pages/AdminPage';
+import { DashboardView } from '@widgets/DashboardView';
+import { DocumentPage } from '@pages/DocumentPage';
+import { AdminPage } from '@pages/AdminPage';
 
 import { useAuth } from './providers/AuthProvider';
-import { useTheme } from '../shared/hooks/useTheme';
-import { useDocumentManagement } from '../shared/hooks/useDocumentManagement';
-import { useAdminActions } from '../shared/hooks/useAdminActions';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { useDocumentManagement } from '@/shared/hooks/useDocumentManagement';
+import { useAdminActions } from '@/shared/hooks/useAdminActions';
 
 const AppContent: React.FC = () => {
   const { t, lang } = useI18n();

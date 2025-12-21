@@ -1,10 +1,10 @@
 import React from 'react';
 import { Document, Category, UserRole, ViewMode, SortBy, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { Icon } from '../../shared/ui/icons';
-import { Sidebar } from '../Sidebar';
-import { Pagination } from '../../shared/ui/Pagination';
-import { useAuth } from '../../app/providers/AuthProvider';
+import { Icon } from '@shared/ui/icons';
+import { Sidebar } from '@widgets/Sidebar';
+import { Pagination } from '@shared/ui/Pagination';
+import { useAuth } from '@app/providers/AuthProvider';
 
 // Sub-components
 import { DashboardHeader } from './ui/DashboardHeader';

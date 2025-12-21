@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
 import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { Icon } from '../../components/icons';
-import { logoutUser } from '../../utils/auth';
+import { Icon } from '@shared/ui/icons';
+import { logout } from '@shared/api/firebase/auth';
 
 export const UserAccessControl: React.FC<{
   user: User | null;
@@ -26,7 +26,7 @@ export const UserAccessControl: React.FC<{
           </span>
           {user && (
             <button
-              onClick={() => logoutUser()}
+              onClick={() => logout()}
               className="text-[10px] text-red-500 hover:underline font-black uppercase tracking-tighter"
             >
               {t('header.logout')}
