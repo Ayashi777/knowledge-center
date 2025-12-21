@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@shared/api/firebase/firebase";
-import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { AuthApi } from "@shared/api/firebase/auth";
 
 export const LoginModal: React.FC<{ 
     onClose: () => void, 
@@ -59,7 +57,7 @@ export const LoginModal: React.FC<{
         setError('');
         setIsLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            await AuthApi.login(email, password);
             onClose();
         } catch (err: any) {
             console.error(err);
@@ -76,28 +74,13 @@ export const LoginModal: React.FC<{
         setIsLoading(true);
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, reqEmail, reqPassword);
-            const user = userCredential.user;
-
-            await setDoc(doc(db, "users", user.uid), {
+            await AuthApi.register({
                 email: reqEmail,
-                role: 'guest', 
+                password: reqPassword,
                 name: reqName,
                 company: reqCompany,
                 phone: reqPhone,
-                requestedRole: reqRoleType,
-                createdAt: new Date().toISOString()
-            });
-
-            await addDoc(collection(db, "requests"), {
-                uid: user.uid, 
-                name: reqName,
-                company: reqCompany,
-                email: reqEmail,
-                phone: reqPhone,
-                requestedRole: reqRoleType,
-                status: 'pending',
-                date: new Date().toISOString()
+                requestedRole: reqRoleType as UserRole,
             });
             setView('success');
         } catch (error: any) {

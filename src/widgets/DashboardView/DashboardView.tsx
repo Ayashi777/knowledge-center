@@ -83,7 +83,7 @@ export const DashboardView: React.FC<{
                     onCategorySelect={onCategorySelect}
                     allTags={allTags}
                     selectedTags={selectedTags}
-                    onTagSelect={handleTagSelect}
+                    onTagSelect={onTagSelect}
                     showAdminControls={showAdminControls}
                     onEditCategory={onEditCategory}
                     onClearFilters={onClearFilters}

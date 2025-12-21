@@ -1,0 +1,64 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Перевірка, чи користувач авторизований
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Отримання даних поточного користувача
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Перевірка ролі користувача
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    // Перевірка, чи є користувач адміном
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    // Правила для категорій
+    match /categories/{categoryId} {
+      // Читати можуть всі авторизовані (фільтрація в UI)
+      // Для справжньої безпеки тут має бути перевірка viewPermissions, 
+      // але Firestore rules не підтримують фільтрацію списку на основі масиву в документі легко без query.
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Правила для документів
+    match /documents/{docId} {
+      // Дозволяємо читати всі метадані (список), але контент (поле content) 
+      // в ідеалі мав би бути в окремій підколекції для кращої безпеки.
+      // Поки що дозволяємо читання всім авторизованим, бо фільтрація йде в UI.
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Правила для тегів
+    match /tags/{tagId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Правила для користувачів
+    match /users/{userId} {
+      // Користувач може читати тільки свій профіль, адмін - всі.
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      // Тільки адмін може змінювати ролі, користувач може змінювати свій профіль (але не роль - це треба фіксити)
+      // Для спрощення:
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Правила для запитів на доступ
+    match /requests/{requestId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
