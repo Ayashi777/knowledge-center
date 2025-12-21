@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Category, Document, Tag, UserData } from '@shared/types';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '@shared/api/firebase/firebase';
+import { Category, Document, Tag, UserProfile } from '@shared/types';
+import { UsersApi } from '@shared/api/firestore/users.api';
 import { TagEditorModal } from '@widgets/modals/TagEditorModal';
 import { UserEditorModal } from '@widgets/modals/UserEditorModal';
 
@@ -38,15 +37,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'users' | 'tags'>('content');
-  const [users, setUsers] = useState<UserData[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
-  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (activeTab === 'users') {
-      return onSnapshot(collection(db, 'users'), (snap) => {
-        setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as UserData)));
+      const unsub = UsersApi.subscribeUsers((updatedUsers) => {
+        setUsers(updatedUsers);
       });
+      return () => unsub();
     }
   }, [activeTab]);
 

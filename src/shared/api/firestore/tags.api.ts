@@ -5,7 +5,8 @@ import {
     addDoc,
     updateDoc, 
     deleteDoc, 
-    query
+    query,
+    onSnapshot
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { Tag } from "@shared/types";
@@ -17,6 +18,14 @@ export const TagsApi = {
         const q = query(collection(db, COLLECTION_NAME));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+    },
+
+    subscribeAll: (onUpdate: (tags: Tag[]) => void) => {
+        const q = query(collection(db, COLLECTION_NAME));
+        return onSnapshot(q, (snapshot) => {
+            const tags = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+            onUpdate(tags);
+        });
     },
 
     create: async (tag: Omit<Tag, 'id'>): Promise<string> => {

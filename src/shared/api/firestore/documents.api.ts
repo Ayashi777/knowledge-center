@@ -8,7 +8,9 @@ import {
     deleteDoc, 
     query, 
     serverTimestamp,
-    runTransaction
+    runTransaction,
+    orderBy,
+    onSnapshot
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { Document, DocumentContent, Language } from "@shared/types";
@@ -45,9 +47,17 @@ const mapDocument = (doc: any): Document => {
 
 export const DocumentsApi = {
     getAll: async (): Promise<Document[]> => {
-        const q = query(collection(db, COLLECTION_NAME));
+        const q = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(mapDocument);
+    },
+
+    subscribeAll: (onUpdate: (docs: Document[]) => void, onError?: (error: any) => void) => {
+        const q = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'));
+        return onSnapshot(q, (snapshot) => {
+            const docs = snapshot.docs.map(mapDocument);
+            onUpdate(docs);
+        }, onError);
     },
 
     getById: async (id: string): Promise<Document | null> => {

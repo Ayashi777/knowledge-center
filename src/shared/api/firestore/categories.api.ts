@@ -4,7 +4,8 @@ import {
     getDocs, 
     setDoc, 
     deleteDoc, 
-    query 
+    query,
+    onSnapshot 
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { Category } from "@shared/types";
@@ -16,6 +17,14 @@ export const CategoriesApi = {
         const q = query(collection(db, COLLECTION_NAME));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+    },
+
+    subscribeAll: (onUpdate: (categories: Category[]) => void) => {
+        const q = query(collection(db, COLLECTION_NAME));
+        return onSnapshot(q, (snapshot) => {
+            const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+            onUpdate(categories);
+        });
     },
 
     createOrUpdate: async (category: Category): Promise<void> => {

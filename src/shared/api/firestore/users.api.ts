@@ -4,12 +4,13 @@ import {
     getDocs, 
     updateDoc, 
     deleteDoc, 
-    query 
+    query,
+    onSnapshot 
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { UserProfile, UserRole } from "@shared/types";
 
-interface AccessRequest {
+export interface AccessRequest {
     id: string;
     uid?: string;
     name: string;
@@ -28,6 +29,13 @@ export const UsersApi = {
         return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
     },
 
+    subscribeUsers: (onUpdate: (users: UserProfile[]) => void) => {
+        return onSnapshot(collection(db, "users"), (snapshot) => {
+            const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
+            onUpdate(users);
+        });
+    },
+
     updateUser: async (uid: string, data: Partial<UserProfile>): Promise<void> => {
         await updateDoc(doc(db, "users", uid), data);
     },
@@ -40,6 +48,13 @@ export const UsersApi = {
     getAllRequests: async (): Promise<AccessRequest[]> => {
          const snapshot = await getDocs(collection(db, "requests"));
          return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AccessRequest));
+    },
+
+    subscribeRequests: (onUpdate: (requests: AccessRequest[]) => void) => {
+        return onSnapshot(collection(db, "requests"), (snapshot) => {
+            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AccessRequest));
+            onUpdate(requests);
+        });
     },
 
     updateRequestStatus: async (requestId: string, status: 'approved' | 'denied', assignedRole?: UserRole): Promise<void> => {
