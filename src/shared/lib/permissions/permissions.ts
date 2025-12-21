@@ -1,4 +1,4 @@
-import { UserRole, Category, Document } from '../types';
+import { UserRole, Category, Document } from '@shared/types';
 
 export const canViewCategory = (role: UserRole, category: Category): boolean => {
     if (role === 'admin') return true;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserData } from '../../../../shared/types';
+import { UserData } from '@shared/types';
 import { Icon } from '../../../../shared/ui/icons';
 
 interface UsersTabProps {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Document } from '../../../types';
-import { useI18n } from '../../../i18n';
+import { Document } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../icons';
 import { formatDistance } from '../../lib/utils/format';
 

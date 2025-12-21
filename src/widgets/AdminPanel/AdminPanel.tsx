@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Category, Document, Tag, UserData } from '../../shared/types';
+import { Category, Document, Tag, UserData } from '@shared/types';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../shared/api/firebase/firebase';
+import { db } from '@shared/api/firebase/firebase';
 import { TagEditorModal } from '../../widgets/modals/TagEditorModal';
 import { UserEditorModal } from '../../widgets/modals/UserEditorModal';
 

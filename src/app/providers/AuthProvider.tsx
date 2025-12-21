@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { UserRole } from '../../types';
-import { subscribeToAuthChanges } from '../../utils/auth';
+import { UserRole } from '@shared/types';
+import { subscribeToAuthChanges } from '../../shared/api/firebase/auth';
 
 interface AuthContextType {
     user: User | null;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tag } from '../../../../shared/types';
+import { Tag } from '@shared/types';
 import { Icon } from '../../../../shared/ui/icons';
 
 interface TagsTabProps {

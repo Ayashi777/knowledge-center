@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 export const Pagination: React.FC<{
     currentPage: number;

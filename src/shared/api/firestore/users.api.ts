@@ -4,11 +4,10 @@ import {
     getDocs, 
     updateDoc, 
     deleteDoc, 
-    query, 
-    orderBy
+    query 
 } from "firebase/firestore";
-import { db } from "../../../firebase";
-import { UserProfile, UserRole } from "../../../types";
+import { db } from "@shared/api/firebase/firebase";
+import { UserProfile, UserRole } from "@shared/types";
 
 interface AccessRequest {
     id: string;

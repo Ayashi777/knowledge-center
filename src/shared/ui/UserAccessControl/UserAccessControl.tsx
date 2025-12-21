@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
-import { UserRole } from '../../types';
-import { useI18n } from '../../i18n';
+import { UserRole } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../../components/icons';
 import { logoutUser } from '../../utils/auth';
 

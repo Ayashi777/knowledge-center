@@ -7,8 +7,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 
-import { Category, Document, DocumentContent } from '../shared/types';
-import { useI18n, Language } from './providers/i18n/i18n';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { ThemeSwitcher } from '../shared/ui/ThemeSwitcher';
 import { LanguageSwitcher } from '../shared/ui/LanguageSwitcher';
 import { UserAccessControl } from '../shared/ui/UserAccessControl';
@@ -23,14 +22,12 @@ import { AdminPage } from '../pages/AdminPage';
 import { useAuth } from './providers/AuthProvider';
 import { useTheme } from '../shared/hooks/useTheme';
 import { useDocumentManagement } from '../shared/hooks/useDocumentManagement';
-
-import { DocumentsApi } from '../shared/api/firestore/documents.api';
-import { CategoriesApi } from '../shared/api/firestore/categories.api';
+import { useAdminActions } from '../shared/hooks/useAdminActions';
 
 const AppContent: React.FC = () => {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
-  const { user: currentUser, role: currentUserRole, isLoading: isAuthLoading } = useAuth();
+  const { user: currentUser, role: currentUserRole } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const {
@@ -59,62 +56,26 @@ const AppContent: React.FC = () => {
     clearFilters,
   } = useDocumentManagement();
 
+  const {
+    editingDoc,
+    setEditingDoc,
+    editingCategory,
+    setEditingCategory,
+    handleSaveDocument,
+    handleUpdateContent,
+    handleSaveCategory,
+    handleDeleteCategory,
+    handleDeleteDocument
+  } = useAdminActions();
+
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginContext, setLoginContext] = useState<'view' | 'download' | 'login'>('login');
   const [loginModalView, setLoginModalView] = useState<'login' | 'request'>('login');
-
-  const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = lang;
     document.title = t('title');
   }, [lang, t]);
-
-  const handleSaveDocument = async (docToSave: Partial<Document>) => {
-    try {
-      if (docToSave.id) {
-          await DocumentsApi.updateMetadata(docToSave.id, docToSave);
-      } else {
-          await DocumentsApi.create(docToSave);
-      }
-      setEditingDoc(null);
-    } catch (e) {
-      console.error('Metadata save failed:', e);
-      alert('Помилка збереження метаданих.');
-    }
-  };
-
-  const handleUpdateContent = async (
-    docId: string,
-    langToUpdate: Language,
-    newContent: DocumentContent
-  ) => {
-    try {
-      await DocumentsApi.updateContent(docId, langToUpdate, newContent);
-    } catch (error: any) {
-      console.error('CRITICAL: Update failed', error);
-      alert('Помилка збереження контенту.');
-      throw error;
-    }
-  };
-
-  const handleSaveCategory = async (catToSave: Category) => {
-    await CategoriesApi.createOrUpdate(catToSave);
-    setEditingCategory(null);
-  };
-
-  const handleDeleteCategory = async (id: string) => {
-    if (window.confirm('Видалити категорію?')) {
-      await CategoriesApi.delete(id);
-    }
-  };
-
-  const handleDeleteDocument = async (id: string) => {
-    if (window.confirm(t('dashboard.confirmDelete'))) {
-      await DocumentsApi.delete(id);
-    }
-  };
 
   const showAdminControls = currentUserRole === 'admin';
 
@@ -142,6 +103,7 @@ const AppContent: React.FC = () => {
             role={currentUserRole}
             onLoginClick={() => {
               setLoginContext('login');
+              setLoginModalView('login');
               setIsLoginModalOpen(true);
             }}
           />
@@ -170,7 +132,11 @@ const AppContent: React.FC = () => {
                 allTags={allTags}
                 selectedTags={selectedTags}
                 onTagSelect={handleTagSelect}
-                onRequireLogin={() => setIsLoginModalOpen(true)}
+                onRequireLogin={() => {
+                  setLoginContext('view');
+                  setLoginModalView('login');
+                  setIsLoginModalOpen(true);
+                }}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
                 sortBy={sortBy}
@@ -194,6 +160,7 @@ const AppContent: React.FC = () => {
                  onUpdateContent={handleUpdateContent}
                  onRequireLogin={() => {
                     setLoginContext('download');
+                    setLoginModalView('login');
                     setIsLoginModalOpen(true);
                  }}
                  onLoginClick={() => {
@@ -231,6 +198,7 @@ const AppContent: React.FC = () => {
                  onAddDocument={() => setEditingDoc({})}
                  onLoginClick={() => {
                    setLoginContext('login');
+                   setLoginModalView('login');
                    setIsLoginModalOpen(true);
                  }}
               />

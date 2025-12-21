@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Document, Category, Tag } from '../../../types';
-import { useI18n } from '../../../i18n';
+import { Document, Category, Tag } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 export const DocumentEditorModal: React.FC<{
     doc: Partial<Document> | null,

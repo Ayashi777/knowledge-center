@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { Document, Category, Tag, UserRole } from '../../types';
-import { Language, useI18n } from '../../i18n';
-import { useAuth } from '../../src/app/providers/AuthProvider';
+import { db } from '@shared/api/firebase/firebase';
+import { Document, Category, Tag, UserRole } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
+import { useAuth } from '../../app/providers/AuthProvider';
 
 export const useDocumentManagement = () => {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { role: currentUserRole } = useAuth();
 
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -41,32 +41,47 @@ export const useDocumentManagement = () => {
 
   const sortedAndFilteredDocs = useMemo(() => {
     let result = documents.filter((doc) => categories.some((c) => c.nameKey === doc.categoryKey));
+    
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter((doc) =>
         ((doc.titleKey ? t(doc.titleKey) : doc.title) || '').toLowerCase().includes(lowerSearch)
       );
     }
+    
     if (selectedRoleFilter) {
       result = result.filter(doc => categories.find(c => c.nameKey === doc.categoryKey)?.viewPermissions?.includes(selectedRoleFilter));
+    } else if (currentUserRole !== 'admin') {
+      // If not admin and no specific filter, only show what user can see based on their role
+      result = result.filter(doc => {
+         const cat = categories.find(c => c.nameKey === doc.categoryKey);
+         return !cat || cat.viewPermissions?.includes(currentUserRole || 'guest');
+      });
     }
+
     if (selectedCategory !== null) {
       result = result.filter((doc) => doc.categoryKey === selectedCategory);
     }
+    
     if (selectedTags.length > 0) {
       result = result.filter((doc) => selectedTags.every((tagId) => doc.tagIds?.includes(tagId)));
     }
+    
     result.sort((a, b) => {
       if (sortBy === 'alpha') {
-        return ((a.titleKey ? t(a.titleKey) : a.title) || '').localeCompare((b.titleKey ? t(b.titleKey) : b.title) || '');
+        const titleA = (a.titleKey ? t(a.titleKey) : a.title) || '';
+        const titleB = (b.titleKey ? t(b.titleKey) : b.title) || '';
+        return titleA.localeCompare(titleB);
       }
       return (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0);
     });
     return result;
-  }, [documents, categories, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, t]);
+  }, [documents, categories, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, t, currentUserRole]);
 
   const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
-  const paginatedDocs = useMemo(() => sortedAndFilteredDocs.slice((currentPage - 1) * docsPerPage, currentPage * docsPerPage), [sortedAndFilteredDocs, currentPage]);
+  const paginatedDocs = useMemo(() => 
+    sortedAndFilteredDocs.slice((currentPage - 1) * docsPerPage, currentPage * docsPerPage), 
+  [sortedAndFilteredDocs, currentPage]);
 
   const handleTagSelect = useCallback((tagId: string) => {
     setSelectedTags((prev) => prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]);
@@ -74,19 +89,35 @@ export const useDocumentManagement = () => {
   }, []);
 
   const clearFilters = useCallback(() => {
-    setSearchTerm(''); setSelectedCategory(null); setSelectedTags([]); setSelectedRoleFilter(null); setCurrentPage(1);
+    setSearchTerm(''); 
+    setSelectedCategory(null); 
+    setSelectedTags([]); 
+    setSelectedRoleFilter(null); 
+    setCurrentPage(1);
   }, []);
 
   return {
-    documents, categories, allTags: tags, isLoading,
-    searchTerm, setSearchTerm,
-    selectedCategory, setSelectedCategory,
-    selectedTags, handleTagSelect,
-    selectedRoleFilter, setSelectedRoleFilter,
-    sortBy, setSortBy,
-    viewMode, setViewMode,
-    currentPage, setCurrentPage, totalPages,
-    paginatedDocs, sortedAndFilteredDocs,
+    documents, 
+    categories, 
+    allTags: tags, 
+    isLoading,
+    searchTerm, 
+    setSearchTerm,
+    selectedCategory, 
+    setSelectedCategory,
+    selectedTags, 
+    handleTagSelect,
+    selectedRoleFilter, 
+    setSelectedRoleFilter,
+    sortBy, 
+    setSortBy,
+    viewMode, 
+    setViewMode,
+    currentPage, 
+    setCurrentPage, 
+    totalPages,
+    paginatedDocs, 
+    sortedAndFilteredDocs,
     clearFilters,
     visibleCategories: categories
   };

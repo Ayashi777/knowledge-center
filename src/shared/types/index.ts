@@ -1,4 +1,6 @@
-import { Language } from './i18n';
+// src/shared/types/index.ts
+
+export type Language = 'uk' | 'it';
 
 export type UserRole = 'guest' | 'foreman' | 'designer' | 'architect' | 'admin';
 
@@ -13,6 +15,8 @@ export interface UserProfile {
   createdAt?: string;
 }
 
+export type UserData = UserProfile; // Compatibility alias
+
 export interface Category {
   id: string;
   nameKey: string;
@@ -20,53 +24,45 @@ export interface Category {
   viewPermissions?: UserRole[];
 }
 
-// Новий тип для тегів
 export interface Tag {
   id: string;
   name: string;
-  color?: string; // Колір для візуального акценту
+  color?: string;
 }
 
 export type IconName =
-  | 'construction'
-  | 'electrical'
-  | 'safety'
-  | 'logistics'
-  | 'it'
-  | 'hr'
-  | 'finance'
-  | 'legal'
-  | 'pdf'
-  | 'doc'
-  | 'xls'
-  | 'zip'
-  | 'image'
-  | 'link'
-  | 'loading'
+  | 'view-grid'
+  | 'view-list'
+  | 'document-text'
+  | 'download'
+  | 'external-link'
+  | 'search'
+  | 'plus'
+  | 'pencil'
+  | 'trash'
+  | 'check'
+  | 'x-mark'
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'
-  | 'search'
-  | 'filter'
-  | 'x'
+  | 'chevron-up'
   | 'lock-closed'
-  | 'check-circle'
-  | 'tag'
-  | 'upload'
-  | 'download'
-  | 'share'
-  | 'view-grid'
-  | 'view-list'
-  | 'plus'
-  | 'minus'
-  | 'information-circle'
-  | 'paper-airplane'
-  | 'cog'
+  | 'lock-open'
+  | 'user'
   | 'users'
-  | 'view-boards';
+  | 'tag'
+  | 'folder'
+  | 'clock'
+  | 'loading'
+  | 'construction'
+  | 'cog'
+  | 'eye'
+  | 'eye-off'
+  | 'warning'
+  | 'info-circle';
 
 export interface DocumentContent {
-  html: string; // Відформатований текст у HTML (WYSIWYG)
+  html: string;
 }
 
 export interface Document {
@@ -74,11 +70,11 @@ export interface Document {
   titleKey?: string;
   title?: string;
   thumbnailUrl?: string;
-  updatedAt: any; // Firestore Timestamp or Date
+  updatedAt: any;
   categoryKey: string;
-  tagIds?: string[]; // <-- Оновлене поле для ID тегів
+  tagIds?: string[];
   content: {
-    [key in Language]?: DocumentContent;
+    [key in string]?: DocumentContent;
   };
   viewPermissions?: UserRole[];
   downloadPermissions?: UserRole[];
@@ -87,11 +83,7 @@ export interface Document {
 export type SortBy = 'recent' | 'alpha';
 export type ViewMode = 'grid' | 'list';
 export type DownloadStatus = 'idle' | 'loading' | 'success';
-export type UploadStatus =
-  | 'idle'
-  | 'loading'
-  | 'success'
-  | 'error';
+export type UploadStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface FileItem {
   name: string;

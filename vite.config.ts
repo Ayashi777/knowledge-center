@@ -16,7 +16,11 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(__dirname, './src'),
+          '@shared': path.resolve(__dirname, './src/shared'),
+          '@app': path.resolve(__dirname, './src/app'),
+          '@widgets': path.resolve(__dirname, './src/widgets'),
+          '@pages': path.resolve(__dirname, './src/pages'),
         }
       },
       build: {
@@ -24,13 +28,12 @@ export default defineConfig(({ mode }) => {
           output: {
             manualChunks(id) {
               if (id.includes('node_modules')) {
-                // Split large firebase libraries and others into a vendor chunk
                 return 'vendor';
               }
             }
           }
         },
-        chunkSizeWarningLimit: 1000, // Increase limit to 1MB to avoid nagging
+        chunkSizeWarningLimit: 1000,
       }
     };
 });

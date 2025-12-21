@@ -1,5 +1,5 @@
 import { ref, listAll, getDownloadURL, uploadBytes } from 'firebase/storage';
-import { storage } from '../firebase/firebase';
+import { storage } from '@shared/api/firebase/firebase';
 
 export const StorageApi = {
     listDocumentFiles: async (docId: string) => {

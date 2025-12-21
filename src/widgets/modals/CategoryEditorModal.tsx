@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Category, IconName, UserRole } from '../../../types';
-import { useI18n } from '../../../i18n';
+import { Category, IconName, UserRole } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../../../components/icons';
 
 export const CategoryEditorModal: React.FC<{ category: Category, onSave: (cat: Category) => void, onClose: () => void }> = ({ category, onSave, onClose }) => {

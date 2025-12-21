@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { UserRole, UserProfile } from '../../../types';
-import { useI18n } from '../../../i18n';
+import { UserRole, UserProfile } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 export const UserEditorModal: React.FC<{ user: UserProfile, onSave: (user: Partial<UserProfile>) => void, onClose: () => void }> = ({ user, onSave, onClose }) => {
     const { t } = useI18n();

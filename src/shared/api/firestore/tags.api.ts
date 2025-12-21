@@ -5,11 +5,10 @@ import {
     addDoc,
     updateDoc, 
     deleteDoc, 
-    query, 
-    orderBy
+    query
 } from "firebase/firestore";
-import { db } from "../../../firebase";
-import { Tag } from "../../../types";
+import { db } from "@shared/api/firebase/firebase";
+import { Tag } from "@shared/types";
 
 const COLLECTION_NAME = "tags";
 

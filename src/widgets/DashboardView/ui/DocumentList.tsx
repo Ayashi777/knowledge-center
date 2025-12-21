@@ -1,6 +1,6 @@
 import React from 'react';
-import { Document, ViewMode } from '../../../../shared/types';
-import { useI18n } from '../../../../app/providers/i18n/i18n';
+import { Document, ViewMode } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { DocumentGridItem, DocumentListItem } from '../../../../shared/ui/DocumentComponents';
 
 interface DocumentListProps {

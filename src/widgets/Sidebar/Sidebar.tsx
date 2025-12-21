@@ -1,6 +1,6 @@
 import React from 'react';
-import { Category, UserRole, Tag } from '../../types';
-import { useI18n } from '../../i18n';
+import { Category, UserRole, Tag } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../../shared/ui/icons';
 
 interface SidebarProps {

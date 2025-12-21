@@ -8,15 +8,13 @@ import {
     deleteDoc, 
     query, 
     serverTimestamp,
-    runTransaction,
-    Timestamp
+    runTransaction
 } from "firebase/firestore";
-import { db } from "../firebase/firebase";
-import { Document, DocumentContent, Language } from "../../types";
+import { db } from "@shared/api/firebase/firebase";
+import { Document, DocumentContent, Language } from "@shared/types";
 
 const COLLECTION_NAME = "documents";
 
-// Helper to strip undefined values deep
 const stripUndefinedDeep = (value: any): any => {
     if (Array.isArray(value)) {
         return value.map(stripUndefinedDeep).filter((v) => v !== undefined);
@@ -32,9 +30,6 @@ const stripUndefinedDeep = (value: any): any => {
     return value === undefined ? undefined : value;
 };
 
-/**
- * Normalizes Firestore document data for the UI
- */
 const mapDocument = (doc: any): Document => {
     const data = doc.data ? doc.data() : doc;
     const id = doc.id || data.id;
@@ -42,9 +37,7 @@ const mapDocument = (doc: any): Document => {
     return {
         ...data,
         id,
-        // Ensure content structure exists
         content: data.content || {},
-        // Convert Firestore Timestamps to JS Dates if needed or keep as is for useDocumentManagement
         updatedAt: data.updatedAt,
         createdAt: data.createdAt
     } as Document;

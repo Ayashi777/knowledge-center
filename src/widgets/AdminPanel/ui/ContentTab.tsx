@@ -1,7 +1,7 @@
 import React from 'react';
-import { Category, Document } from '../../../../shared/types';
+import { Category, Document } from '@shared/types';
 import { Icon } from '../../../../shared/ui/icons';
-import { useI18n } from '../../../../app/providers/i18n/i18n';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 interface ContentTabProps {
     categories: Category[];

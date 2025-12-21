@@ -4,17 +4,15 @@ import {
     getDocs, 
     setDoc, 
     deleteDoc, 
-    query, 
-    orderBy
+    query 
 } from "firebase/firestore";
-import { db } from "../../../firebase";
-import { Category } from "../../../types";
+import { db } from "@shared/api/firebase/firebase";
+import { Category } from "@shared/types";
 
 const COLLECTION_NAME = "categories";
 
 export const CategoriesApi = {
     getAll: async (): Promise<Category[]> => {
-        // You might want to order by something, but currently types don't have 'order'
         const q = query(collection(db, COLLECTION_NAME));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));

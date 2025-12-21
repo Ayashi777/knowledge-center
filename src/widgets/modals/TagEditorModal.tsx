@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Tag } from '../../../types';
-import { useI18n } from '../../../i18n';
+import { Tag } from '@shared/types';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 export const TagEditorModal: React.FC<{
     tag: Partial<Tag>,
