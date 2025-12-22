@@ -32,8 +32,8 @@ export const DashboardView: React.FC<{
     setViewMode: (mode: ViewMode) => void;
     sortBy: SortBy;
     setSortBy: (sort: SortBy) => void;
-    selectedRole: UserRole | null;
-    onRoleSelect: (role: UserRole | null) => void;
+    selectedRole: UserRole | 'all';
+    onRoleSelect: (role: UserRole | 'all') => void;
     onClearFilters: () => void;
     currentPage: number;
     totalPages: number;

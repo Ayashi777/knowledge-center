@@ -3,9 +3,7 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-exports.syncUserEmail = functions.firestore
-  .document("users/{userId}")
-  .onUpdate(async (change, context) => {
+const syncUserEmailHandler = async (change, context) => {
     const before = change.before.data();
     const after = change.after.data();
     const userId = context.params.userId;
@@ -20,4 +18,10 @@ exports.syncUserEmail = functions.firestore
       console.error(`Failed to update email for user ${userId}:`, error);
       return null;
     }
-  });
+};
+
+exports.syncUserEmail = functions.firestore
+  .document("users/{userId}")
+  .onUpdate(syncUserEmailHandler);
+
+exports.syncuseremail = exports.syncUserEmail;

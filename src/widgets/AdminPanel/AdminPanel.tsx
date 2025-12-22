@@ -106,7 +106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         {activeTab === 'tags' && (
           <TagsTab 
             allTags={allTags}
-            onAddTag={() => setEditingTag({ id: '', color: '#3b82f6' })}
+            onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
             onEditTag={setEditingTag}
           />
         )}

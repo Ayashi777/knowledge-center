@@ -29,7 +29,15 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'warning'
-  | 'info-circle';
+  | 'info-circle'
+  | 'electrical'
+  | 'safety'
+  | 'logistics'
+  | 'it'
+  | 'hr'
+  | 'finance'
+  | 'legal'
+  | 'view-boards';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   name: IconName;
@@ -214,6 +222,19 @@ export const Icon: React.FC<IconProps> = ({ name, className = '', ...props }) =>
         return (
             <svg className={baseClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+    case 'electrical':
+    case 'safety':
+    case 'logistics':
+    case 'it':
+    case 'hr':
+    case 'finance':
+    case 'legal':
+    case 'view-boards':
+        return (
+            <svg className={baseClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9l-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
         );
     default:

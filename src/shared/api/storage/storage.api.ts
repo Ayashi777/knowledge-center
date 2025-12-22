@@ -93,7 +93,7 @@ export const StorageApi = {
 
 // --- Legacy Exports for 1:1 Compatibility with Main ---
 export const isFileTypeAllowed = StorageApi.isFileTypeAllowed;
-export const uploadDocumentFile = StorageApi.uploadFile;
+export const uploadDocumentFile = (docId: string, file: File) => StorageApi.uploadFile(file, docId);
 export const listDocumentFiles = StorageApi.listDocumentFiles;
 export const deleteDocumentFile = StorageApi.deleteFile;
 export const uploadImage = StorageApi.uploadImage;

@@ -6,7 +6,9 @@ export type UserRole = 'guest' | 'foreman' | 'designer' | 'architect' | 'admin';
 
 export interface UserProfile {
   uid: string;
+  id?: string; // Compatibility with some components expecting .id
   name?: string;
+  displayName?: string; // Compatibility with components expecting displayName
   email: string;
   company?: string;
   phone?: string;
@@ -59,7 +61,15 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'warning'
-  | 'info-circle';
+  | 'info-circle'
+  | 'electrical'
+  | 'safety'
+  | 'logistics'
+  | 'it'
+  | 'hr'
+  | 'finance'
+  | 'legal'
+  | 'view-boards';
 
 export interface DocumentContent {
   html: string;

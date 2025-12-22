@@ -13,8 +13,8 @@ interface SidebarProps {
   showAdminControls: boolean;
   onEditCategory: (cat: Category) => void;
   onClearFilters: () => void;
-  selectedRole: UserRole | null;
-  onRoleSelect: (role: UserRole | null) => void;
+  selectedRole: UserRole | 'all';
+  onRoleSelect: (role: UserRole | 'all') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -87,10 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {t('sidebar.forWhom')}
         </h3>
         <div className="flex flex-wrap gap-2">
-          {['employee', 'worker', 'dispatcher', 'hr'].map((role) => (
+          {['foreman', 'designer', 'architect', 'admin'].map((role) => (
             <button
               key={role}
-              onClick={() => onRoleSelect(selectedRole === role ? null : role as UserRole)}
+              onClick={() => onRoleSelect(selectedRole === role ? 'all' : role as UserRole)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 selectedRole === role
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md'

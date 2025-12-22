@@ -1,10 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { translations } from './translations';
+import { Language } from '@shared/types';
 
-export type Language = 'uk'; // Locked to Ukrainian for now
+export type { Language };
 
 type I18nContextType = {
   lang: Language;
+  setLang: (lang: Language) => void;
   t: (key: string | undefined | null, options?: Record<string, string | number>) => string;
 };
 
@@ -23,12 +25,12 @@ const resolveKey = (obj: any, key: string): string => {
 };
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [lang] = useState<Language>('uk');
+  const [lang, setLang] = useState<Language>('uk');
 
   const t = useCallback((key: string | undefined | null, options?: Record<string, string | number>): string => {
     if (!key) return '';
     
-    let text = resolveKey(translations[lang], key);
+    let text = resolveKey(translations[lang as keyof typeof translations], key);
 
     if (!text) {
         // Fallback to English only if key exists there, otherwise return key name
@@ -46,7 +48,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [lang]);
   
   return (
-    <I18nContext.Provider value={{ lang, t }}>
+    <I18nContext.Provider value={{ lang, setLang, t }}>
       {children}
     </I18nContext.Provider>
   );

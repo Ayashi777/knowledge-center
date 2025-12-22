@@ -29,13 +29,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ users, onEditUser }) => {
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {users.map((u) => (
-                            <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors">
+                            <tr key={u.uid} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                            {u.displayName?.charAt(0) || u.email?.charAt(0)}
+                                            {(u.displayName || u.name)?.charAt(0) || u.email?.charAt(0)}
                                         </div>
-                                        <span className="font-bold text-gray-900 dark:text-white">{u.displayName || '---'}</span>
+                                        <span className="font-bold text-gray-900 dark:text-white">{u.displayName || u.name || '---'}</span>
                                     </div>
                                 </td>
                                 <td className="p-4 text-sm text-gray-500">{u.email}</td>
