@@ -17,17 +17,32 @@ import { DocumentEditor } from './ui/DocumentEditor';
  * 🔥 Professional CSS Styles for Content & Table of Contents
  */
 const QUILL_CONTENT_STYLES = `
+    .quill-content {
+        background: white;
+        min-height: 297mm;
+        width: 100%;
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 60px 80px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        border-radius: 8px;
+        color: #1a1a1a;
+        line-height: 1.6;
+    }
+    .dark .quill-content {
+        background: #1e293b;
+        color: #f1f5f9;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
     .quill-content h1 { font-size: 2.5rem; font-weight: 900; margin: 3rem 0 1.5rem; color: #111827; line-height: 1.1; letter-spacing: -0.03em; }
-    .quill-content h2 { font-size: 1.75rem; font-weight: 800; margin: 2.5rem 0 1.25rem; color: #111827; letter-spacing: -0.02em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem; }
+    .quill-content h2 { font-size: 1.75rem; font-weight: 800; margin: 2.5rem 0 1.25rem; color: #111827; letter-spacing: -0.02em; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; display: inline-block; }
     .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 1rem; color: #1f2937; }
     .quill-content p { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.5rem; color: #374151; }
     .quill-content ul, .quill-content ol { padding-left: 1.5rem; margin-bottom: 1.5rem; }
     .quill-content li { margin-bottom: 0.5rem; color: #374151; }
-    .quill-content img { border-radius: 1.5rem; margin: 3rem 0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); max-width: 100%; height: auto; transition: transform 0.3s ease; }
-    .quill-content img:hover { transform: scale(1.01); }
+    .quill-content img { border-radius: 1rem; margin: 3rem 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 100%; height: auto; }
     .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
     .dark .quill-content p, .dark .quill-content li { color: #d1d5db; }
-    .dark .quill-content h2 { border-bottom-color: rgba(255,255,255,0.05); }
     .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; }
 
     /* TOC Animations */
@@ -54,7 +69,7 @@ const registerUploadingImageBlot = () => {
                 ${preview ? `<img src="${preview}" style="width:100%;height:100%;object-fit:cover;filter:blur(12px) brightness(0.6);" />` : ''}
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:8px;">
                     <div style="width:24px;height:24px;border:2px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:quill-spin 0.6s linear infinite;"></div>
-                    <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;">Uploading</span>
+                    <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;">Optimizing</span>
                 </div>
             `;
             return node;
@@ -173,12 +188,13 @@ export const DocumentView: React.FC<{
                 </button>
             </header>
 
-            <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
-                <aside className="lg:w-80 shrink-0">
-                    <div className="sticky top-28 space-y-10">
-                        {/* 🔥 Enhanced Table of Contents */}
+            <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
+                <aside className="lg:w-80 shrink-0 sticky top-28 h-auto max-h-[85vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-10">
+                        
+                        {/* 🔥 Beautiful Timeline TOC */}
                         {tocItems.length > 0 && (
-                            <div className="bg-gray-50/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm toc-animate">
+                            <div className="bg-gray-50/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm toc-animate shadow-sm">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-6 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                                     {t('docView.content.toc.title')}
@@ -225,13 +241,23 @@ export const DocumentView: React.FC<{
                     </div>
                 </aside>
 
-                <main className="flex-grow min-w-0">
-                    <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} />
-                    <div className="mt-10">
+                <main className="flex-grow min-w-0 flex flex-col items-center">
+                    <div className="w-full max-w-[850px] mb-8">
+                         <DocumentHeader 
+                            title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} 
+                            updatedAt={doc.updatedAt} 
+                            tagIds={doc.tagIds || []} 
+                            tagById={tagById}
+                            viewPermissions={doc.viewPermissions}
+                        />
+                    </div>
+                    <div className="w-full">
                         {isEditingContent ? (
-                            <DocumentEditor quillRef={quillRef} content={editableContent.html || ''} onChange={(h) => setEditableContent({html: h})} docId={doc.id} isUploadingImage={isUploadingImage} setIsUploadingImage={setIsUploadingImage} />
+                            <div className="quill-content p-0 shadow-none border-none bg-transparent">
+                                <DocumentEditor quillRef={quillRef} content={editableContent.html || ''} onChange={(h) => setEditableContent({html: h})} docId={doc.id} isUploadingImage={isUploadingImage} setIsUploadingImage={setIsUploadingImage} />
+                            </div>
                         ) : (
-                            <div className="quill-content max-w-none animate-fade-in" dangerouslySetInnerHTML={{ __html: viewHtml }} />
+                            <div className="quill-content animate-fade-in" dangerouslySetInnerHTML={{ __html: viewHtml }} />
                         )}
                     </div>
                 </main>
