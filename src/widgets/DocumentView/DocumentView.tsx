@@ -127,12 +127,11 @@ export const DocumentView: React.FC<{
 
     useEffect(() => { loadFiles(); }, [loadFiles]);
 
-    // 🔥 Modified to allow IDs and correctly parse TOC
     const { viewHtml, tocItems } = useMemo(() => {
         const html = editableContent.html || '';
         if (!html) return { viewHtml: '', tocItems: [] };
         
-        // 1. Sanitize allowing ID attribute
+        // 🔥 Critical: Allow ID in sanitized HTML for ScrollSpy
         const sanitizedHtml = DOMPurify.sanitize(html, { ADD_ATTR: ['id'] });
         
         const parser = new DOMParser();
@@ -143,45 +142,43 @@ export const DocumentView: React.FC<{
         headers.forEach((header, index) => {
             const text = header.textContent?.trim() || '';
             if (!text) return;
-            const id = `section-${index}`;
-            header.id = id; // Set ID for intersection observer
+            const id = `heading-${index}`;
+            header.id = id; 
             toc.push({ id, text, level: parseInt(header.tagName.substring(1)) });
         });
         
         return { viewHtml: htmlDoc.body.innerHTML, tocItems: toc };
     }, [editableContent.html]);
 
-    // 🔥 Robust ScrollSpy Implementation
+    // 🔥 Real-time Scroll Listener for reliable ScrollSpy
     useEffect(() => {
         if (isEditingContent || tocItems.length === 0) return;
 
-        // Small delay to ensure dangerouslySetInnerHTML has finished painting
-        const timer = setTimeout(() => {
-            const observer = new IntersectionObserver(
-                (entries) => {
-                    // Find the first intersecting element (the one at the top)
-                    const visible = entries.find(e => e.isIntersecting);
-                    if (visible) {
-                        setActiveId(visible.target.id);
-                    }
-                },
-                { 
-                    // rootMargin detects when element enters the top 20% of viewport
-                    rootMargin: '-100px 0px -80% 0px', 
-                    threshold: 0 
+        const handleScroll = () => {
+            const offset = 150; // Consider fixed header + margin
+            const scrollPosition = window.scrollY + offset;
+
+            // Find the section we are currently in
+            let currentId = tocItems[0].id;
+            
+            for (const item of tocItems) {
+                const element = document.getElementById(item.id);
+                if (element && element.offsetTop <= scrollPosition) {
+                    currentId = item.id;
+                } else {
+                    break; 
                 }
-            );
+            }
+            
+            setActiveId(currentId);
+        };
 
-            tocItems.forEach((item) => {
-                const el = document.getElementById(item.id);
-                if (el) observer.observe(el);
-            });
+        window.addEventListener('scroll', handleScroll);
+        // Run once on load
+        setTimeout(handleScroll, 500); 
 
-            return () => observer.disconnect();
-        }, 100);
-
-        return () => clearTimeout(timer);
-    }, [viewHtml, tocItems, isEditingContent]);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [tocItems, isEditingContent, viewHtml]);
 
     const handleSaveContent = async () => {
         const html = editableContent.html || '';
@@ -205,7 +202,7 @@ export const DocumentView: React.FC<{
     const scrollToHeading = (id: string) => {
         const el = document.getElementById(id);
         if (el) {
-            window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+            window.scrollTo({ top: el.offsetTop - 120, behavior: 'smooth' });
         }
     };
 
@@ -241,7 +238,7 @@ export const DocumentView: React.FC<{
                         {tocItems.length > 0 && (
                             <div className="bg-white/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm toc-animate shadow-sm">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-6 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
                                     {t('docView.content.toc.title')}
                                 </h4>
                                 <nav className="space-y-1 relative">
@@ -249,9 +246,25 @@ export const DocumentView: React.FC<{
                                     {tocItems.map((item) => {
                                         const isActive = activeId === item.id;
                                         return (
-                                            <button key={item.id} onClick={() => scrollToHeading(item.id)} className={`w-full text-left py-2 pl-6 pr-3 rounded-xl text-[11px] transition-all duration-300 relative group hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm ${isActive ? 'bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : ''} ${item.level === 1 ? (isActive ? 'font-black text-blue-600 dark:text-blue-400' : 'font-black uppercase text-gray-900 dark:text-white') : item.level === 2 ? (isActive ? 'font-black text-blue-500' : 'font-bold text-gray-500 dark:text-gray-400') : (isActive ? 'font-bold text-blue-400' : 'text-gray-400 dark:text-gray-500 italic')}`}>
-                                                <div className={`absolute left-[5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border-2 border-white dark:border-gray-900 transition-all duration-500 z-10 ${isActive ? 'bg-blue-600 scale-[1.75] shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-400'}`} />
-                                                <span className={`line-clamp-2 transition-transform duration-300 ${isActive ? 'translate-x-1' : ''}`}>{item.text}</span>
+                                            <button 
+                                                key={item.id} 
+                                                onClick={() => scrollToHeading(item.id)} 
+                                                className={`w-full text-left py-2 pl-6 pr-3 rounded-xl text-[11px] transition-all duration-300 relative group ${
+                                                    isActive 
+                                                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                                                    : 'hover:bg-white dark:hover:bg-gray-800/50 hover:shadow-sm'
+                                                } ${
+                                                    item.level === 1 ? (isActive ? 'font-black text-blue-600 dark:text-blue-400' : 'font-black uppercase text-gray-900 dark:text-white') : 
+                                                    item.level === 2 ? (isActive ? 'font-black text-blue-500' : 'font-bold text-gray-500 dark:text-gray-400') : 
+                                                    (isActive ? 'font-bold text-blue-400' : 'text-gray-400 dark:text-gray-500 italic')
+                                                }`}
+                                            >
+                                                <div className={`absolute left-[5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border-2 border-white dark:border-gray-900 transition-all duration-500 z-10 ${
+                                                    isActive ? 'bg-blue-600 scale-[1.75] shadow-[0_0_10px_rgba(37,99,235,0.6)]' : 'bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-400'
+                                                }`} />
+                                                <span className={`line-clamp-2 transition-transform duration-300 ${isActive ? 'translate-x-1' : ''}`}>
+                                                    {item.text}
+                                                </span>
                                             </button>
                                         );
                                     })}
