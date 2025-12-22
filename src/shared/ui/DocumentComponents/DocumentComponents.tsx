@@ -2,7 +2,7 @@ import React from 'react';
 import { Document, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../icons';
-import { formatDistance } from '../../lib/utils/format';
+import { formatDistance, getCategoryName } from '../../lib/utils/format';
 
 interface DocumentGridItemProps {
   doc: Document;
@@ -45,7 +45,7 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({
             {doc.titleKey ? t(doc.titleKey) : doc.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-             {doc.categoryKey ? t(`categories.${doc.categoryKey}`) : '---'}
+             {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
           </p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export const DocumentListItem: React.FC<{
         </h3>
         <div className="flex items-center gap-3 mt-1">
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            {doc.categoryKey ? t(`categories.${doc.categoryKey}`) : '---'}
+            {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
           </span>
           <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
           <span className="text-[10px] text-gray-400">
