@@ -27,7 +27,55 @@ const QUILL_CONTENT_STYLES = `
     .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
     .dark .quill-content p { color: #d1d5db; }
     .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
-    .quill-uploading-image { padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(59,130,246,.35); background: rgba(59,130,246,.06); margin: 12px 0; }
+    
+    /* 🔥 Professional Uploading State */
+    .quill-uploading-image { 
+        position: relative;
+        display: block;
+        margin: 20px 0;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px dashed rgba(59, 130, 246, 0.4);
+        background: rgba(59, 130, 246, 0.05);
+        max-width: 400px;
+        aspect-ratio: 16 / 9;
+    }
+    .quill-uploading-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(8px) brightness(0.7);
+        transform: scale(1.05);
+    }
+    .quill-uploading-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        gap: 12px;
+        z-index: 10;
+    }
+    .quill-uploading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: quill-spin 0.8s linear infinite;
+    }
+    @keyframes quill-spin {
+        to { transform: rotate(360deg); }
+    }
+    .quill-uploading-text {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
 `;
 
 const registerUploadingImageBlot = () => {
@@ -35,26 +83,38 @@ const registerUploadingImageBlot = () => {
     if (!Quill) return;
     if ((Quill as any).__uploadingImageRegistered) return;
     const BlockEmbed = Quill.import('blots/block/embed');
+    
     class UploadingImageBlot extends BlockEmbed {
         static blotName = 'uploadingImage';
         static tagName = 'div';
         static className = 'quill-uploading-image';
+        
         static create(value: any) {
             const node = super.create() as HTMLDivElement;
-            node.setAttribute('data-upload-id', value?.id || '');
+            const id = value?.id || '';
+            const preview = value?.preview || '';
+            
+            node.setAttribute('data-upload-id', id);
             node.contentEditable = 'false';
+            
             node.innerHTML = `
-                <div style="display:flex;align-items:center;gap:8px;opacity:.85;font-style:italic;">
-                  <span>⏳</span>
-                  <span>Uploading image…</span>
+                ${preview ? `<img src="${preview}" class="quill-uploading-preview" />` : ''}
+                <div class="quill-uploading-overlay">
+                    <div class="quill-uploading-spinner"></div>
+                    <div class="quill-uploading-text">Optimizing & Uploading...</div>
                 </div>
             `;
             return node;
         }
+        
         static value(node: any) {
-            return { id: node.getAttribute('data-upload-id') || '' };
+            return { 
+                id: node.getAttribute('data-upload-id') || '',
+                preview: node.querySelector('img')?.getAttribute('src') || ''
+            };
         }
     }
+    
     Quill.register(UploadingImageBlot);
     (Quill as any).__uploadingImageRegistered = true;
 };
@@ -72,10 +132,7 @@ export const DocumentView: React.FC<{
 }> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [] }) => {
     const { t, lang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
-    
-    // editableContent represents the "saved" or "in-flight" content for the parent
-    const [editableContent, setEditableContent] = useState<DocumentContent>(doc.content[lang] || emptyContentTemplate);
-    
+    const [editableContent, setEditableContent] = useState<DocumentContent>(doc.content?.[lang] || emptyContentTemplate);
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -88,9 +145,8 @@ export const DocumentView: React.FC<{
         registerUploadingImageBlot();
     }, []);
 
-    // Sync state when document or language changes
     useEffect(() => {
-        setEditableContent(doc.content[lang] || emptyContentTemplate);
+        setEditableContent(doc.content?.[lang] || emptyContentTemplate);
     }, [doc.id, lang]);
 
     const loadFiles = useCallback(async () => {
@@ -107,7 +163,6 @@ export const DocumentView: React.FC<{
         loadFiles();
     }, [loadFiles]);
 
-    // -- Memoized Content Processing (TOC) --
     const { viewHtml, tocItems } = useMemo(() => {
         const html = editableContent.html || '';
         if (!html) return { viewHtml: '', tocItems: [] };
@@ -129,10 +184,15 @@ export const DocumentView: React.FC<{
     }, [editableContent.html]);
 
     const handleSaveContent = async () => {
+        const html = editableContent.html || '';
+        
+        if (html.includes('data:image/')) {
+            alert('Помилка: У тексті знайдено прямі дані зображення (Base64). Будь ласка, зачекайте завершення завантаження або видаліть зображення та додайте його знову через кнопку або перетягування.');
+            return;
+        }
+
         setIsSaving(true);
         try {
-            const html = editableContent.html || '';
-            // Remove any leftover uploading blocks before saving
             const cleanedHtml = html.replace(/<div class="quill-uploading-image"[^>]*>[\s\S]*?<\/div>/gi, '');
             const finalHtml = DOMPurify.sanitize(cleanedHtml);
             
@@ -142,6 +202,7 @@ export const DocumentView: React.FC<{
         } catch (e) {
             console.error('[DocumentView] Save failed:', e);
             setSaveStatus('error');
+            alert('Помилка збереження: ' + (e instanceof Error ? e.message : 'Unknown error'));
         } finally {
             setIsSaving(false);
             setTimeout(() => setSaveStatus('idle'), 2000);

@@ -28,6 +28,7 @@ const AppContent: React.FC = () => {
 
   const {
     documents,
+    allDocuments, // 🔥 These are all raw documents from Firestore
     categories,
     isLoading: isDocsLoading,
     searchTerm,
@@ -63,7 +64,7 @@ const AppContent: React.FC = () => {
     document.title = t('title');
   }, [lang, t]);
 
-  // -- Memoized Callbacks for Performance --
+  // -- Memoized Callbacks --
   const handleSelectDoc = useCallback((docItem: Document) => {
     navigate(`/doc/${docItem.id}`);
   }, [navigate]);
@@ -73,8 +74,6 @@ const AppContent: React.FC = () => {
   }, [openModal]);
 
   const handleAddNewDoc = useCallback(() => {
-    // 🔥 Critical Fix: Generate ID BEFORE opening the modal
-    // This allows the modal to use the ID for file uploads immediately
     const newId = `doc_${Date.now()}`;
     openModal('edit-doc', { id: newId });
   }, [openModal]);
@@ -151,7 +150,7 @@ const AppContent: React.FC = () => {
             path="/doc/:id" 
             element={
               <DocumentPage 
-                 documents={documents}
+                 documents={allDocuments} // 🔥 Use allDocuments to prevent 404/Crash if filters are active
                  categories={categories}
                  onUpdateContent={handleUpdateContent}
                  onRequireLogin={handleRequireLoginDownload}
@@ -168,7 +167,7 @@ const AppContent: React.FC = () => {
                 <AdminPage 
                   isDocsLoading={isDocsLoading}
                   categories={categories}
-                  documents={documents}
+                  documents={allDocuments} // 🔥 Admin sees EVERYTHING in admin panel
                   allTags={allTags}
                   onUpdateCategory={handleEditCategory}
                   onDeleteCategory={handleDeleteCategory}

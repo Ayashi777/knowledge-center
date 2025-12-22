@@ -18,8 +18,8 @@ interface DocumentPageProps {
 }
 
 export const DocumentPage: React.FC<DocumentPageProps> = ({
-    documents,
-    categories,
+    documents = [],
+    categories = [],
     onUpdateContent,
     onRequireLogin,
     onLoginClick,
@@ -33,20 +33,21 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     
     const { allTags, isLoading: isDocsLoading } = useDocumentManagement();
 
-    const docItem = documents.find((d) => d.id === id);
+    // 🔥 Safety check for find
+    const docItem = (documents || []).find((d) => d.id === id);
 
     if (isAuthLoading || isDocsLoading) {
       return (
         <div className="flex items-center justify-center h-[80vh]">
-          <Icon name="loading" className="w-10 h-10 text-blue-600" />
+          <Icon name="loading" className="w-10 h-10 text-blue-600 animate-spin" />
         </div>
       );
     }
 
     if (!docItem) return <Navigate to="/" />;
 
-    const cat = categories.find((c) => c.nameKey === docItem.categoryKey);
-    const hasAccess = cat?.viewPermissions?.includes(currentUserRole);
+    const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
+    const hasAccess = currentUserRole === 'admin' || cat?.viewPermissions?.includes(currentUserRole);
 
     if (hasAccess) {
       return (
