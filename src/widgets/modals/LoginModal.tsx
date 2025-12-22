@@ -91,15 +91,14 @@ export const LoginModal: React.FC<{
         }
     };
 
-    // Full list of roles for registration (Deep Fix)
-    const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect', 'employee', 'worker', 'dispatcher', 'hr'];
+    // 🔥 Client-only roles for registration
+    const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
 
-    // Roles with icons for the sidebar
+    // 🔥 Roles with icons for the sidebar
     const roleInfo = [
         { role: 'foreman', icon: 'construction' },
         { role: 'designer', icon: 'it' },
-        { role: 'architect', icon: 'view-boards' },
-        { role: 'employee', icon: 'user' },
+        { role: 'architect', icon: 'view-boards' }
     ];
 
     const getStatusClass = (valid: boolean, value: string) => {
@@ -136,11 +135,11 @@ export const LoginModal: React.FC<{
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldRoleType')}</label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                                    <div className="grid grid-cols-3 gap-2 mt-1">
                                         {selectableRoles.map(role => (
-                                            <label key={role} className={`p-2 border rounded-xl cursor-pointer transition-all flex items-center justify-center text-center ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                                            <label key={role} className={`p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-center text-center ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                                                 <input type="radio" name="roleType" value={role} checked={reqRoleType === role} onChange={() => setReqRoleType(role)} className="hidden" />
-                                                <span className={`text-[9px] font-black uppercase leading-tight ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`roles.${role}`)}</span>
+                                                <span className={`text-[10px] font-black uppercase leading-tight ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`roles.${role}`)}</span>
                                             </label>
                                         ))}
                                     </div>

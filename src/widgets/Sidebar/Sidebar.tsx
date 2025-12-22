@@ -33,6 +33,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useI18n();
 
+  // 🔥 Publicly selectable roles for filtering
+  const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+
   return (
     <aside className="w-full lg:w-72 shrink-0 space-y-8">
       {/* Search/Filters header for mobile maybe? */}
@@ -88,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {t('sidebar.forWhom')}
         </h3>
         <div className="flex flex-wrap gap-2">
-          {['foreman', 'designer', 'architect', 'admin'].map((role) => (
+          {selectableRoles.map((role) => (
             <button
               key={role}
               onClick={() => onRoleSelect(selectedRole === role ? 'all' : role as UserRole)}

@@ -32,15 +32,10 @@
     "architect": "Architect",
     "architectDesc": "Access to architectural plans and material specs.",
     "admin": "Administrator",
-    "adminDesc": "Full access to all documents and settings.",
     "employee": "Employee",
-    "employeeDesc": "Access to internal corporate regulations.",
     "worker": "Worker",
-    "workerDesc": "Access to instructions and safety techniques.",
     "dispatcher": "Dispatcher",
-    "dispatcherDesc": "Management of logistics and schedules.",
-    "hr": "HR",
-    "hrDesc": "Access to HR documentation."
+    "hr": "HR"
   },
   "adminDocs": {
     "title": "Documentation",

@@ -32,15 +32,10 @@
     "architect": "Архітектор",
     "architectDesc": "Доступ до архітектурних планів та специфікацій матеріалів.",
     "admin": "Адміністратор",
-    "adminDesc": "Повний доступ до всіх документів та налаштувань.",
     "employee": "Співробітник",
-    "employeeDesc": "Доступ до внутрішніх корпоративних регламентів.",
     "worker": "Робітник",
-    "workerDesc": "Доступ до інструкцій та технік безпеки.",
     "dispatcher": "Диспетчер",
-    "dispatcherDesc": "Керування логістикою та графіками.",
-    "hr": "HR",
-    "hrDesc": "Доступ до кадрової документації."
+    "hr": "HR"
   },
   "adminDocs": {
     "title": "Документація",
@@ -187,7 +182,7 @@
     "fieldCompany": "Компанія / Посада",
     "placeholderCompany": "ТОВ \"АКМЕ Буд\"",
     "fieldEmail": "Робоча пошта",
-    "placeholderEmail": "i.ivanenko@acme.com",
+    "placeholderEmail": "email@example.com",
     "fieldPassword": "Створіть пароль",
     "fieldPasswordConfirm": "Підтвердіть пароль",
     "placeholderPassword": "Мінімум 8 символів",
