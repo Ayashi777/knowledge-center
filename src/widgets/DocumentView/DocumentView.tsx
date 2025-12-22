@@ -14,7 +14,7 @@ import { DocumentFileList } from './ui/DocumentFileList';
 import { DocumentEditor } from './ui/DocumentEditor';
 
 /**
- * 🔥 Professional CSS Styles for Content & Table of Contents
+ * 🔥 Professional CSS Styles
  */
 const QUILL_CONTENT_STYLES = `
     .quill-content {
@@ -192,9 +192,9 @@ export const DocumentView: React.FC<{
                 <aside className="lg:w-80 shrink-0 sticky top-28 h-auto max-h-[85vh] overflow-y-auto pr-2 custom-scrollbar">
                     <div className="space-y-10">
                         
-                        {/* 🔥 Beautiful Timeline TOC */}
+                        {/* 1. TOC Section */}
                         {tocItems.length > 0 && (
-                            <div className="bg-gray-50/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm toc-animate shadow-sm">
+                            <div className="bg-white/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-6 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                                     {t('docView.content.toc.title')}
@@ -219,10 +219,17 @@ export const DocumentView: React.FC<{
                             </div>
                         )}
 
-                        {/* Files Section */}
-                        <div className="bg-white dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                            <h4 className="font-black text-gray-900 dark:text-white mb-5 text-[10px] uppercase tracking-[0.2em]">{t('docView.downloadFiles')}</h4>
-                            <DocumentFileList docId={doc.id} files={files} isLoading={isLoadingFiles} currentUserRole={currentUserRole} onRefresh={loadFiles} />
+                        {/* 2. Professional Document Cards */}
+                        <div className="space-y-4 px-1">
+                            <h4 className="font-black text-gray-900 dark:text-white mb-4 text-[10px] uppercase tracking-[0.2em] ml-2">Available Documents</h4>
+                            <DocumentFileList 
+                                docId={doc.id} 
+                                files={files} 
+                                isLoading={isLoadingFiles} 
+                                currentUserRole={currentUserRole} 
+                                onRefresh={loadFiles} 
+                                docThumbnail={doc.thumbnailUrl} // 🔥 Pass thumbnail to files list
+                            />
                         </div>
 
                         {/* Admin Actions */}
