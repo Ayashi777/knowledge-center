@@ -9,18 +9,44 @@ import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '@shared/api/firebase/firebase';
 import { UserRole, UserProfile } from '@shared/types';
 
+const normalizeRole = (raw: any): UserRole => {
+  const role = String(raw || 'guest').toLowerCase().trim() as UserRole;
+  const valid: UserRole[] = ['guest', 'foreman', 'designer', 'architect', 'admin'];
+  return valid.includes(role) ? role : 'guest';
+};
+
+const extractRoleLoose = (data: any): UserRole => {
+  if (!data) return 'guest';
+  if (data.role !== undefined) return normalizeRole(data.role);
+
+  const roleKey = Object.keys(data).find(k => k.trim() === 'role');
+  return normalizeRole(roleKey ? data[roleKey] : 'guest');
+};
+
+const getUserRole = async (user: User): Promise<UserRole> => {
+  const userRef = doc(db, 'users', user.uid);
+  const snap = await getDoc(userRef);
+
+  if (snap.exists()) return extractRoleLoose(snap.data());
+
+  const assigned: UserRole = 'guest';
+  await setDoc(userRef, {
+    uid: user.uid,
+    email: user.email || '',
+    role: assigned,
+    createdAt: new Date().toISOString(),
+  }, { merge: true });
+
+  return assigned;
+};
+
 export const AuthApi = {
     subscribeToAuthChanges: (callback: (user: User | null, role: UserRole) => void) => {
         return onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data() as UserProfile;
-                        callback(user, userData.role || 'guest');
-                    } else {
-                        callback(user, 'guest');
-                    }
+                    const role = await getUserRole(user);
+                    callback(user, role);
                 } catch (error) {
                     console.error("Error fetching user role:", error);
                     callback(user, 'guest');

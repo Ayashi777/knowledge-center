@@ -18,17 +18,9 @@ service cloud.firestore {
 
     // --- Users Collection ---
     match /users/{userId} {
-      // Users can read any profile (for directory/mentions if needed) 
-      // or we can restrict to 'isAuthenticated()'
       allow read: if isAuthenticated();
-      
-      // Only the user themselves or an admin can update basic profile
-      // But ROLE can ONLY be updated by admin (handled by checking request.resource.data.role)
       allow update: if isAdmin() || (request.auth.uid == userId && request.resource.data.role == resource.data.role);
-      
-      // Creating a profile (usually on first login/register)
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      
       allow delete: if isAdmin();
     }
 
@@ -36,14 +28,13 @@ service cloud.firestore {
     match /requests/{requestId} {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
       allow create: if isAuthenticated();
-      // Only admin can approve/deny (update status)
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     // --- Categories ---
     match /categories/{categoryId} {
-      allow read: if true; // Publicly readable, but content filtered by app
+      allow read: if true;
       allow write: if isAdmin();
     }
 
@@ -55,7 +46,7 @@ service cloud.firestore {
 
     // --- Documents ---
     match /documents/{docId} {
-      allow read: if isAuthenticated(); 
+      allow read: if true; 
       allow write: if isAdmin();
     }
   }

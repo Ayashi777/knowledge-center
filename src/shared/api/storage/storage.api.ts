@@ -1,7 +1,12 @@
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage } from '@shared/api/firebase/firebase';
 
-const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar', 'jpg', 'jpeg', 'png', 'txt'];
+const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+
+const isSystemAsset = (name: string) => {
+  const n = name.toLowerCase();
+  return n.includes('/.system/') || n.startsWith('thumbnail') || n.startsWith('cover_');
+};
 
 export const StorageApi = {
     isFileTypeAllowed: (fileName: string): boolean => {
@@ -23,13 +28,17 @@ export const StorageApi = {
                 }
             }
 
-            return await Promise.all(
-                res.items.map(async (item) => {
-                    const url = await getDownloadURL(item);
-                    const extension = item.name.split('.').pop()?.toLowerCase();
-                    return { name: item.name, url, extension };
-                })
+            const files = await Promise.all(
+                res.items
+                    .filter(item => !isSystemAsset(item.name))
+                    .map(async (item) => {
+                        const url = await getDownloadURL(item);
+                        const extension = item.name.split('.').pop()?.toLowerCase();
+                        return { name: item.name, url, extension };
+                    })
             );
+
+            return files;
         } catch (e) {
             console.error('Storage list failed', e);
             return [];

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
-import { Document, Category, Tag, Language, UserRole } from '@shared/types';
+import { Document, Category, Tag, UserRole } from '@shared/types';
 import { CategoriesApi } from '@shared/api/firestore/categories.api';
 import { TagsApi } from '@shared/api/firestore/tags.api';
 
@@ -46,11 +46,15 @@ export const useDocumentManagement = () => {
         };
     }, []);
 
+    // Reset to page 1 when any filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy]);
+
     const handleTagSelect = (tagId: string) => {
         setSelectedTags(prev => 
             prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
         );
-        setCurrentPage(1);
     };
 
     const clearFilters = () => {
@@ -58,8 +62,13 @@ export const useDocumentManagement = () => {
         setSelectedCategory('all');
         setSelectedTags([]);
         setSelectedRoleFilter('all');
-        setCurrentPage(1);
     };
+
+    const catByKey = useMemo(() => {
+        const m = new Map<string, Category>();
+        categories.forEach(c => m.set(c.nameKey, c));
+        return m;
+    }, [categories]);
 
     const sortedAndFilteredDocs = useMemo(() => {
         let result = documents.filter(doc => {
@@ -73,10 +82,14 @@ export const useDocumentManagement = () => {
             const matchesTags = selectedTags.length === 0 || 
                                selectedTags.every(tagId => doc.tagIds?.includes(tagId));
             
-            const matchesRole = selectedRoleFilter === 'all' || 
-                               doc.viewPermissions?.includes(selectedRoleFilter as UserRole);
+            const matchesRole = (d: Document) => {
+                if (selectedRoleFilter === 'all') return true;
+                const cat = catByKey.get(d.categoryKey);
+                // In Main, roles filter logic: if category allows this role
+                return !!cat?.viewPermissions?.includes(selectedRoleFilter as UserRole);
+            };
             
-            return matchesSearch && matchesCategory && matchesTags && matchesRole;
+            return matchesSearch && matchesCategory && matchesTags && matchesRole(doc);
         });
 
         // Sorting
@@ -93,7 +106,7 @@ export const useDocumentManagement = () => {
         });
 
         return result;
-    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy]);
+    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey]);
 
     // Pagination
     const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
@@ -102,11 +115,8 @@ export const useDocumentManagement = () => {
         return sortedAndFilteredDocs.slice(start, start + docsPerPage);
     }, [sortedAndFilteredDocs, currentPage]);
 
-    // Categories that have documents (for filtering)
-    const visibleCategories = useMemo(() => {
-        const usedKeys = new Set(documents.map(d => d.categoryKey));
-        return categories.filter(c => usedKeys.has(c.nameKey));
-    }, [categories, documents]);
+    // Show all categories in the filter (Main behavior)
+    const visibleCategories = categories;
 
     return {
         documents,
