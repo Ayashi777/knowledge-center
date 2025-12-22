@@ -78,12 +78,16 @@ export const useDocumentManagement = () => {
 
     const sortedAndFilteredDocs = useMemo(() => {
         let result = documents.filter(doc => {
+            // Filter: show only documents with existing categories
+            const normDocCat = normalizeCategoryKey(doc.categoryKey);
+            const exists = categories.some(c => normalizeCategoryKey(c.nameKey) === normDocCat);
+            if (!exists) return false;
+
             const displayTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
             const matchesSearch = 
                 displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 doc.description?.toLowerCase().includes(searchTerm.toLowerCase());
             
-            const normDocCat = normalizeCategoryKey(doc.categoryKey);
             const normSelectedCat = normalizeCategoryKey(selectedCategory);
             const matchesCategory = selectedCategory === 'all' || normDocCat === normSelectedCat;
             
@@ -114,10 +118,18 @@ export const useDocumentManagement = () => {
         });
 
         return result;
-    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey, t]);
+    }, [documents, categories, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey, t]);
 
     // Pagination
     const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
+    
+    // Auto-adjust current page if it exceeds total pages
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
+
     const paginatedDocs = useMemo(() => {
         const start = (currentPage - 1) * docsPerPage;
         return sortedAndFilteredDocs.slice(start, start + docsPerPage);

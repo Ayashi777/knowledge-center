@@ -6,14 +6,15 @@ type TabId = 'content' | 'users' | 'tags' | 'requests';
 interface AdminTabsProps {
     activeTab: TabId;
     setActiveTab: (id: TabId) => void;
+    pendingRequestsCount?: number;
 }
 
-export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab }) => {
+export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, pendingRequestsCount = 0 }) => {
     const tabs = [
         { id: 'content', label: 'Контент', icon: 'document-text' },
         { id: 'tags', label: 'Теги', icon: 'tag' },
         { id: 'users', label: 'Користувачі', icon: 'users' },
-        { id: 'requests', label: 'Заявки', icon: 'info-circle' },
+        { id: 'requests', label: 'Заявки', icon: 'info-circle', badge: pendingRequestsCount },
     ] as const;
 
     return (
@@ -30,6 +31,11 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab })
                 >
                     <Icon name={tab.icon as any} className="w-4 h-4" />
                     {tab.label}
+                    {!!tab.badge && (
+                        <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-[10px] rounded-full animate-pulse">
+                            {tab.badge}
+                        </span>
+                    )}
                     {activeTab === tab.id && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
                     )}

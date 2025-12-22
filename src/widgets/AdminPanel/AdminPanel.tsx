@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Category, Document, Tag, UserProfile, UserRole } from '@shared/types';
 import { UsersApi, AccessRequest } from '@shared/api/firestore/users.api';
+import { TagsApi } from '@shared/api/firestore/tags.api';
 import { TagEditorModal } from '@widgets/modals/TagEditorModal';
 import { UserEditorModal } from '@widgets/modals/UserEditorModal';
 import { useI18n } from '@app/providers/i18n/i18n';
@@ -26,6 +27,8 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
+type TabId = 'content' | 'users' | 'tags' | 'requests';
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   categories,
   documents,
@@ -39,12 +42,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onClose,
 }) => {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'content' | 'users' | 'tags' | 'requests'>('content');
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const hash = window.location.hash.replace('#', '') as TabId;
+    return ['content', 'users', 'tags', 'requests'].includes(hash) ? hash : 'content';
+  });
+  
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    window.location.hash = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'users') {
@@ -84,10 +95,51 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       }
   };
 
+  const handleSaveTag = async (tagData: Partial<Tag>) => {
+    try {
+      if (tagData.id) {
+        await TagsApi.update(tagData.id, tagData);
+      } else {
+        await TagsApi.create(tagData as Omit<Tag, 'id'>);
+      }
+      setEditingTag(null);
+    } catch (error) {
+      console.error('Failed to save tag:', error);
+    }
+  };
+
+  const handleDeleteTag = async (id: string) => {
+    if (window.confirm('Ви впевнені, що хочете видалити цей тег?')) {
+      try {
+        await TagsApi.delete(id);
+      } catch (error) {
+        console.error('Failed to delete tag:', error);
+      }
+    }
+  };
+
+  const handleSaveUser = async (userData: Partial<UserProfile>) => {
+    try {
+      if (userData.uid) {
+        const { uid, ...data } = userData;
+        await UsersApi.updateUser(uid, data);
+      }
+      setEditingUser(null);
+    } catch (error) {
+      console.error('Failed to save user:', error);
+    }
+  };
+
+  const pendingRequestsCount = requests.filter(r => r.status === 'pending').length;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden animate-slide-up">
       <AdminHeader onClose={onClose} />
-      <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <AdminTabs 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        pendingRequestsCount={pendingRequestsCount}
+      />
 
       <div className="p-8 min-h-[500px]">
         {activeTab === 'content' && (
@@ -108,6 +160,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             allTags={allTags}
             onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
             onEditTag={setEditingTag}
+            onDeleteTag={handleDeleteTag}
           />
         )}
 
@@ -140,14 +193,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <TagEditorModal
           tag={editingTag}
           onClose={() => setEditingTag(null)}
-          onSave={async () => setEditingTag(null)}
+          onSave={handleSaveTag}
         />
       )}
       {editingUser && (
         <UserEditorModal
           user={editingUser}
           onClose={() => setEditingUser(null)}
-          onSave={async () => setEditingUser(null)}
+          onSave={handleSaveUser}
         />
       )}
     </div>
