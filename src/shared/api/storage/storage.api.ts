@@ -19,26 +19,41 @@ export const StorageApi = {
         const legacyPathRef = ref(storage, `documents/${docId}`);
         
         try {
-            let res = await listAll(newPathRef);
-            
-            if (res.items.length === 0) {
-                const legacyRes = await listAll(legacyPathRef);
-                if (legacyRes.items.length > 0) {
-                    res = legacyRes;
-                }
-            }
+            // Fetch both locations in parallel
+            const [newRes, legacyRes] = await Promise.all([
+                listAll(newPathRef).catch(() => ({ items: [] })),
+                listAll(legacyPathRef).catch(() => ({ items: [] }))
+            ]);
 
-            const files = await Promise.all(
-                res.items
+            // Map and filter items from both locations
+            const fetchItemDetails = async (item: any) => {
+                const url = await getDownloadURL(item);
+                const extension = item.name.split('.').pop()?.toLowerCase();
+                return { name: item.name, url, extension };
+            };
+
+            const modernItems = await Promise.all(
+                newRes.items
                     .filter(item => !isSystemAsset(item.name))
-                    .map(async (item) => {
-                        const url = await getDownloadURL(item);
-                        const extension = item.name.split('.').pop()?.toLowerCase();
-                        return { name: item.name, url, extension };
-                    })
+                    .map(fetchItemDetails)
             );
 
-            return files;
+            const legacyItems = await Promise.all(
+                legacyRes.items
+                    .filter(item => !isSystemAsset(item.name))
+                    .map(fetchItemDetails)
+            );
+
+            // Merge and deduplicate: prefer modern files if names match
+            const fileMap = new Map<string, { name: string; url: string; extension: string }>();
+            
+            // Add legacy items first
+            legacyItems.forEach(item => fileMap.set(item.name, item));
+            
+            // Overwrite with modern items (they take priority)
+            modernItems.forEach(item => fileMap.set(item.name, item));
+
+            return Array.from(fileMap.values());
         } catch (e) {
             console.error('Storage list failed', e);
             return [];
