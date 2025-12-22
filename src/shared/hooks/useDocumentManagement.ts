@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { UserRole } from '@shared/types';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
@@ -9,127 +9,127 @@ import { useDocuments } from '@entities/document/model/useDocuments';
 export const useDocumentManagement = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // -- State Helpers (Reading from URL or Defaults) --
-    const getParam = (key: string, defaultValue: string) => searchParams.get(key) || defaultValue;
+    // -- URL State Accessors (Single Source of Truth) --
+    const searchTerm = searchParams.get('q') || '';
+    const selectedCategoryKey = searchParams.get('category') || 'all';
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
     
-    // UI State synced with URL where applicable
-    const [searchTerm, setSearchTerm] = useState(() => getParam('q', ''));
-    const [selectedCategory, setSelectedCategory] = useState(() => getParam('category', 'all'));
-    const [currentPage, setCurrentPage] = useState(() => parseInt(getParam('page', '1'), 10));
-    
-    // Other UI State (can be kept local or also synced if needed)
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    // UI-only state (doesn't necessarily need to be in URL)
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
     const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
     const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     
-    const docsPerPage = 9;
+    const ITEMS_PER_PAGE = 9;
 
-    // -- URL Synchronization --
+    // -- Update Handlers (Updating URL instead of local state) --
+    const setSearchTerm = useCallback((q: string) => {
+        setSearchParams(prev => {
+            if (!q) prev.delete('q');
+            else prev.set('q', q);
+            prev.set('page', '1'); // Reset page on search
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const setSelectedCategory = useCallback((category: string) => {
+        setSearchParams(prev => {
+            if (category === 'all') prev.delete('category');
+            else prev.set('category', category);
+            prev.set('page', '1'); // Reset page on category change
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const setCurrentPage = useCallback((page: number) => {
+        setSearchParams(prev => {
+            if (page <= 1) prev.delete('page');
+            else prev.set('page', page.toString());
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    // Auto-scroll to top when page changes
     useEffect(() => {
-        const params: Record<string, string> = {};
-        if (searchTerm) params.q = searchTerm;
-        if (selectedCategory !== 'all') params.category = selectedCategory;
-        if (currentPage > 1) params.page = currentPage.toString();
-        
-        // Update URL without breaking the history stack too much (replace: true optional)
-        setSearchParams(params, { replace: true });
-    }, [searchTerm, selectedCategory, currentPage, setSearchParams]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
 
-    // Handle back/forward buttons or manual URL edits
-    useEffect(() => {
-        const q = getParam('q', '');
-        const cat = getParam('category', 'all');
-        const pg = parseInt(getParam('page', '1'), 10);
-
-        if (q !== searchTerm) setSearchTerm(q);
-        if (cat !== selectedCategory) setSelectedCategory(cat);
-        if (pg !== currentPage) setCurrentPage(pg);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
-
-    // -- Entities --
-    const { categories, isLoading: isCatsLoading } = useCategories();
+    // -- Data Entities --
+    const { categories, isLoading: isCategoriesLoading } = useCategories();
     const { tags, isLoading: isTagsLoading } = useTags();
-    const { documents, allDocuments, isLoading: isDocsLoading } = useDocuments({
+    const { documents, allFetchedDocuments, isLoading: isDocumentsLoading } = useDocuments({
         categories,
         searchTerm,
-        selectedCategory,
-        selectedTags,
+        selectedCategoryKey,
+        selectedTagIds,
         selectedRoleFilter,
         sortBy
     });
 
-    const isLoading = isCatsLoading || isTagsLoading || isDocsLoading;
+    const isLoading = isCategoriesLoading || isTagsLoading || isDocumentsLoading;
 
-    // -- Pagination logic --
-    const totalPages = Math.ceil(documents.length / docsPerPage);
+    // -- Pagination Logic --
+    const totalPages = Math.ceil(documents.length / ITEMS_PER_PAGE);
     
+    // Correction: if current page is beyond total pages (after filter)
     useEffect(() => {
         if (totalPages > 0 && currentPage > totalPages) {
             setCurrentPage(totalPages);
         }
-    }, [totalPages, currentPage]);
+    }, [totalPages, currentPage, setCurrentPage]);
 
-    const paginatedDocs = useMemo(() => {
-        const start = (currentPage - 1) * docsPerPage;
-        return documents.slice(start, start + docsPerPage);
+    const paginatedDocuments = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return documents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     }, [documents, currentPage]);
 
-    // Reset page on filter change (except when page itself changes)
-    useEffect(() => {
-        // We only reset if it's a filter change, not a manual page change from URL
-        const q = getParam('q', '');
-        const cat = getParam('category', 'all');
-        if (searchTerm !== q || selectedCategory !== cat) {
-            setCurrentPage(1);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchTerm, selectedCategory]);
-
-    const handleTagSelect = (tagId: string) => {
-        setSelectedTags(prev => 
-            prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    const handleTagToggle = (tagId: string) => {
+        setSelectedTagIds(prevIds => 
+            prevIds.includes(tagId) ? prevIds.filter(id => id !== tagId) : [...prevIds, tagId]
         );
     };
 
-    const clearFilters = () => {
-        setSearchTerm('');
-        setSelectedCategory('all');
-        setSelectedTags([]);
+    const resetFilters = () => {
+        setSearchParams({}, { replace: true });
+        setSelectedTagIds([]);
         setSelectedRoleFilter('all');
-        setCurrentPage(1);
     };
 
     return {
-        documents: allDocuments,
+        // Data
+        allDocuments: allFetchedDocuments,
         categories,
         allTags: tags,
         isLoading,
         
+        // Search & Filters
         searchTerm,
         setSearchTerm,
-        selectedCategory,
+        selectedCategory: selectedCategoryKey,
         setSelectedCategory,
-        selectedTags,
-        handleTagSelect,
+        selectedTags: selectedTagIds,
+        handleTagSelect: handleTagToggle,
         selectedRoleFilter,
         setSelectedRoleFilter,
-        clearFilters,
+        clearFilters: resetFilters,
         
+        // UI State
         sortBy,
         setSortBy,
         viewMode,
         setViewMode,
         
+        // Pagination
         currentPage,
         setCurrentPage,
         totalPages,
         
+        // Processed Results
         sortedAndFilteredDocs: documents,
-        paginatedDocs,
+        paginatedDocs: paginatedDocuments,
         visibleCategories: categories,
         
+        // Actions
         actions: {
             createDocument: DocumentsApi.create,
             updateDocument: DocumentsApi.updateMetadata,

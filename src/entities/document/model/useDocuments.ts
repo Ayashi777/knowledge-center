@@ -7,8 +7,8 @@ import { useI18n } from '@app/providers/i18n/i18n';
 interface UseDocumentsProps {
     categories: Category[];
     searchTerm: string;
-    selectedCategory: string;
-    selectedTags: string[];
+    selectedCategoryKey: string;
+    selectedTagIds: string[];
     selectedRoleFilter: UserRole | 'all';
     sortBy: 'recent' | 'alpha';
 }
@@ -16,93 +16,95 @@ interface UseDocumentsProps {
 export const useDocuments = ({
     categories,
     searchTerm,
-    selectedCategory,
-    selectedTags,
+    selectedCategoryKey,
+    selectedTagIds,
     selectedRoleFilter,
     sortBy
 }: UseDocumentsProps) => {
     const { t } = useI18n();
-    const [documents, setDocuments] = useState<Document[]>([]);
+    const [rawDocuments, setRawDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         setIsLoading(true);
-        // Впроваджуємо ліміт та серверне сортування
-        const unsub = DocumentsApi.subscribeFiltered(
+        const unsubscribe = DocumentsApi.subscribeFiltered(
             { 
-                categoryKey: selectedCategory !== 'all' ? selectedCategory : undefined,
+                categoryKey: selectedCategoryKey !== 'all' ? selectedCategoryKey : undefined,
                 sortBy: sortBy,
-                limitCount: 100 // Завантажуємо перші 100 документів (для нашого масштабу це ідеально)
+                limitCount: 150 
             },
-            (docs) => {
-                setDocuments(docs);
+            (fetchedDocs) => {
+                setRawDocuments(fetchedDocs);
                 setIsLoading(false);
             },
-            (err) => {
-                console.error("Firestore error:", err);
+            (error) => {
+                console.error("[useDocuments] Subscription failed:", error);
                 setIsLoading(false);
             }
         );
-        return unsub;
-    }, [selectedCategory, sortBy]); // Тепер сортування теж може відбуватися на сервері
+        return unsubscribe;
+    }, [selectedCategoryKey, sortBy]);
 
-    const catByKey = useMemo(() => {
-        const m = new Map<string, Category>();
-        categories.forEach(c => {
-            m.set(normalizeCategoryKey(c.nameKey), c);
+    const categoryMap = useMemo(() => {
+        const map = new Map<string, Category>();
+        categories.forEach(category => {
+            map.set(normalizeCategoryKey(category.nameKey), category);
         });
-        return m;
+        return map;
     }, [categories]);
 
-    const filteredDocs = useMemo(() => {
-        return documents.filter(doc => {
-            const normDocCat = normalizeCategoryKey(doc.categoryKey);
-            const categoryExists = categories.some(c => normalizeCategoryKey(c.nameKey) === normDocCat);
-            if (!categoryExists) return false;
+    const processedDocuments = useMemo(() => {
+        return rawDocuments.filter(document => {
+            const documentCategoryKey = normalizeCategoryKey(document.categoryKey);
+            
+            // 1. Validation: Hide documents with orphaned categories
+            const isValidCategory = categories.some(cat => normalizeCategoryKey(cat.nameKey) === documentCategoryKey);
+            if (!isValidCategory) return false;
 
-            const displayTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
+            // 2. Search Filter
+            const displayTitle = document.titleKey ? t(document.titleKey) : document.title || '';
             const matchesSearch = displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                 doc.description?.toLowerCase().includes(searchTerm.toLowerCase());
+                                 document.description?.toLowerCase().includes(searchTerm.toLowerCase());
             if (!matchesSearch) return false;
 
-            const matchesCategory = selectedCategory === 'all' || normDocCat === normalizeCategoryKey(selectedCategory);
+            // 3. Category Filter
+            const matchesCategory = selectedCategoryKey === 'all' || documentCategoryKey === normalizeCategoryKey(selectedCategoryKey);
             if (!matchesCategory) return false;
 
-            const matchesTags = selectedTags.length === 0 || 
-                               selectedTags.every(tagId => doc.tagIds?.includes(tagId));
+            // 4. Tags Filter
+            const matchesTags = selectedTagIds.length === 0 || 
+                               selectedTagIds.every(tagId => document.tagIds?.includes(tagId));
             if (!matchesTags) return false;
 
+            // 5. Role Filter
             if (selectedRoleFilter !== 'all') {
-                const cat = catByKey.get(normDocCat);
-                if (!cat?.viewPermissions?.includes(selectedRoleFilter as UserRole)) return false;
+                const category = categoryMap.get(documentCategoryKey);
+                if (!category?.viewPermissions?.includes(selectedRoleFilter as UserRole)) return false;
             }
 
             return true;
         });
-    }, [documents, categories, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, t, catByKey]);
+    }, [rawDocuments, categories, searchTerm, selectedCategoryKey, selectedTagIds, selectedRoleFilter, t, categoryMap]);
 
-    // Клієнтське сортування залишаємо як fallback для пошукових результатів
-    const sortedDocs = useMemo(() => {
-        const result = [...filteredDocs];
-        if (searchTerm) { // Тільки якщо є пошук, бо сервер не знає про нього
-            result.sort((a, b) => {
-                if (sortBy === 'recent') {
-                    const dateA = a.updatedAt?.toDate?.() || new Date(a.updatedAt) || 0;
-                    const dateB = b.updatedAt?.toDate?.() || new Date(b.updatedAt) || 0;
-                    return (dateB as any) - (dateA as any);
-                } else {
-                    const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
-                    const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
-                    return titleA.localeCompare(titleB);
-                }
-            });
-        }
+    const sortedDocuments = useMemo(() => {
+        const result = [...processedDocuments];
+        result.sort((a, b) => {
+            if (sortBy === 'recent') {
+                const timeA = a.updatedAt?.toMillis?.() || 0;
+                const timeB = b.updatedAt?.toMillis?.() || 0;
+                return timeB - timeA;
+            } else {
+                const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
+                const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
+                return titleA.localeCompare(titleB);
+            }
+        });
         return result;
-    }, [filteredDocs, sortBy, t, searchTerm]);
+    }, [processedDocuments, sortBy, t]);
 
     return {
-        documents: sortedDocs,
-        allDocuments: documents,
+        documents: sortedDocuments,
+        allFetchedDocuments: rawDocuments,
         isLoading
     };
 };

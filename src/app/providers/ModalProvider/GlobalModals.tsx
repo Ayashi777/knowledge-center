@@ -4,12 +4,19 @@ import { LoginModal } from '@widgets/modals/LoginModal';
 import { DocumentEditorModal } from '@widgets/modals/DocumentEditorModal';
 import { CategoryEditorModal } from '@widgets/modals/CategoryEditorModal';
 import { useAdminActions } from '@shared/hooks/useAdminActions';
-import { useDocumentManagement } from '@shared/hooks/useDocumentManagement';
+import { Category, Tag } from '@shared/types';
 
-export const GlobalModals: React.FC = () => {
+interface GlobalModalsProps {
+    availableCategories: Category[];
+    availableTags: Tag[];
+}
+
+export const GlobalModals: React.FC<GlobalModalsProps> = ({ 
+    availableCategories, 
+    availableTags 
+}) => {
     const { modal, closeModal } = useModal();
     const { handleSaveDocument, handleSaveCategory } = useAdminActions();
-    const { categories, allTags } = useDocumentManagement();
 
     if (!modal.type) return null;
 
@@ -28,8 +35,8 @@ export const GlobalModals: React.FC = () => {
                     doc={modal.data}
                     onSave={async (d) => { await handleSaveDocument(d); closeModal(); }}
                     onClose={closeModal}
-                    availableCategories={categories}
-                    availableTags={allTags}
+                    availableCategories={availableCategories}
+                    availableTags={availableTags}
                 />
             );
         case 'edit-category':

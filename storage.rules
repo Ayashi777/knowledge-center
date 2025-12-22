@@ -13,15 +13,21 @@ service firebase.storage {
         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Rules for documents and images inside documents
-    match /documents/{allPaths=**} {
-      allow read, list: if true;
+    // Thumbnails: publicly readable for UI cards, write only by admin
+    match /thumbnails/{allPaths=**} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Default: allow read for everything, write only for admin
+    // Documents files: only for authenticated users, write only for admin
+    match /documents/{allPaths=**} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // Default: allow read for auth users, write only for admin
     match /{allPaths=**} {
-      allow read: if true;
+      allow read: if isAuth();
       allow write: if isAdmin();
     }
   }

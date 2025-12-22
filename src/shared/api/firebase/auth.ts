@@ -7,11 +7,21 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '@shared/api/firebase/firebase';
-import { UserRole, UserProfile } from '@shared/types';
+import { UserRole } from '@shared/types';
 
 const normalizeRole = (raw: any): UserRole => {
   const role = String(raw || 'guest').toLowerCase().trim() as UserRole;
-  const valid: UserRole[] = ['guest', 'foreman', 'designer', 'architect', 'admin'];
+  const valid: UserRole[] = [
+    'guest', 
+    'foreman', 
+    'designer', 
+    'architect', 
+    'admin', 
+    'employee', 
+    'worker', 
+    'dispatcher', 
+    'hr'
+  ];
   return valid.includes(role) ? role : 'guest';
 };
 

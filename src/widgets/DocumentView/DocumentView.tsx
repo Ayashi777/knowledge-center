@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import ReactQuill from 'react-quill-new';
+import DOMPurify from 'dompurify';
 import 'react-quill-new/dist/quill.snow.css';
 import { Document, UserRole, DocumentContent, Tag } from '@shared/types';
 import { useI18n, Language } from '@app/providers/i18n/i18n';
@@ -11,6 +12,24 @@ import { getCategoryName } from '@shared/lib/utils/format';
 import { DocumentHeader } from './ui/DocumentHeader';
 import { DocumentFileList } from './ui/DocumentFileList';
 import { DocumentEditor } from './ui/DocumentEditor';
+
+/**
+ * 🔥 CSS Styles for Quill Content
+ * Defined outside component to prevent re-injection on every render.
+ */
+const QUILL_CONTENT_STYLES = `
+    .quill-content h1 { font-size: 2.25rem; font-weight: 900; margin: 2rem 0 1.5rem; color: #111827; }
+    .quill-content h2 { font-size: 1.5rem; font-weight: 800; margin: 2.5rem 0 1rem; text-transform: uppercase; color: #111827; }
+    .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #111827; }
+    .quill-content p { font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.25rem; color: #374151; }
+    .quill-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+    .quill-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+    .quill-content img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
+    .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
+    .dark .quill-content p { color: #d1d5db; }
+    .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+    .quill-uploading-image { padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(59,130,246,.35); background: rgba(59,130,246,.06); margin: 12px 0; }
+`;
 
 /**
  * ✅ Quill placeholder blot (embed)
@@ -49,8 +68,9 @@ const registerUploadingImageBlot = () => {
  */
 const processContentForTOC = (htmlContent: string) => {
     if (!htmlContent) return { modifiedHtml: '', toc: [] };
+    const sanitizedHtml = DOMPurify.sanitize(htmlContent);
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const doc = parser.parseFromString(sanitizedHtml, 'text/html');
     const headers = doc.querySelectorAll('h1, h2, h3');
     const toc: { id: string; text: string; level: number }[] = [];
     headers.forEach((header, index) => {
@@ -116,7 +136,8 @@ export const DocumentView: React.FC<{
         try {
             const html = editableContent.html || '';
             const cleanedHtml = html.replace(/<div class="quill-uploading-image"[^>]*>[\s\S]*?<\/div>/gi, '');
-            await onUpdateContent(doc.id, lang, { html: cleanedHtml });
+            const finalHtml = DOMPurify.sanitize(cleanedHtml);
+            await onUpdateContent(doc.id, lang, { html: finalHtml });
             setSaveStatus('saved');
             setIsEditingContent(false);
         } catch (e) {
@@ -139,19 +160,7 @@ export const DocumentView: React.FC<{
 
     return (
         <div className="pt-24 pb-20 animate-fade-in">
-             <style>{`
-                .quill-content h1 { font-size: 2.25rem; font-weight: 900; margin: 2rem 0 1.5rem; color: #111827; }
-                .quill-content h2 { font-size: 1.5rem; font-weight: 800; margin: 2.5rem 0 1rem; text-transform: uppercase; color: #111827; }
-                .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #111827; }
-                .quill-content p { font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.25rem; color: #374151; }
-                .quill-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
-                .quill-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.5rem; }
-                .quill-content img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
-                .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
-                .dark .quill-content p { color: #d1d5db; }
-                .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
-                .quill-uploading-image { padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(59,130,246,.35); background: rgba(59,130,246,.06); margin: 12px 0; }
-            `}</style>
+             <style>{QUILL_CONTENT_STYLES}</style>
 
             <header className="mb-10">
                 <nav className="text-xs text-gray-400 font-black uppercase tracking-widest mb-4 flex flex-wrap items-center">
@@ -162,7 +171,7 @@ export const DocumentView: React.FC<{
                     <span className="text-gray-800 dark:text-gray-200 font-semibold">{doc.titleKey ? t(doc.titleKey) : doc.title}</span>
                     {saveStatus === 'saved' && <span className="ml-3 text-green-600 font-black uppercase">Saved ✓</span>}
                 </nav>
-                <button onClick={onClose} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-bold mb-6">
+                <button onClick={onClose} aria-label={t('docView.backToList')} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-bold mb-6">
                     <Icon name="chevron-left" className="w-4 h-4" /> {t('docView.backToList')}
                 </button>
             </header>

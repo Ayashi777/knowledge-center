@@ -19,7 +19,28 @@
     "locked": "Locked",
     "approve": "Approve",
     "deny": "Deny",
-    "status": "Status"
+    "status": "Status",
+    "error": "An error occurred"
+  },
+  "roles": {
+    "guest": "Guest",
+    "guestDesc": "Basic access to public materials.",
+    "foreman": "Foreman",
+    "foremanDesc": "View construction codes and safety protocols.",
+    "designer": "Designer",
+    "designerDesc": "Access to technical drawings and logistics.",
+    "architect": "Architect",
+    "architectDesc": "Access to architectural plans and material specs.",
+    "admin": "Administrator",
+    "adminDesc": "Full access to all documents and settings.",
+    "employee": "Employee",
+    "employeeDesc": "Access to internal corporate regulations.",
+    "worker": "Worker",
+    "workerDesc": "Access to instructions and safety techniques.",
+    "dispatcher": "Dispatcher",
+    "dispatcherDesc": "Management of logistics and schedules.",
+    "hr": "HR",
+    "hrDesc": "Access to HR documentation."
   },
   "adminDocs": {
     "title": "Documentation",
@@ -121,6 +142,8 @@
     "accessDenied": "Access Denied",
     "accessPendingTitle": "Request Sent",
     "accessPendingDescription": "Your request to access this document is under review. The administrator will check it shortly. Thank you for your patience!",
+    "accessRequiredForRoles": "This document is intended for the role of {roles}. Please log in or register to get access.",
+    "accessRequiredGeneric": "This document has a limited access level. Please log in or register to get access.",
     "backToList": "Back to List",
     "uploadNew": "Upload New",
     "filesEmpty": "No files available",
@@ -147,22 +170,9 @@
     "processing": "Processing...",
     "noAccount": "No account? Register",
     "accessLevelsTitle": "Access Levels",
-    "defaultLevel": "Default Level",
-    "defaultLevelDesc": "Basic access only.",
     "accessRequired": "Access Required",
     "adminPasswordTitle": "Admin Auth",
-    "adminPasswordDesc": "Enter admin password.",
-    "roles": {
-      "guest": "Guest",
-      "foreman": "Foreman",
-      "foremanDesc": "Site protocols access.",
-      "designer": "Designer",
-      "designerDesc": "Blueprints access.",
-      "architect": "Architect",
-      "architectDesc": "Access to material specs and plans.",
-      "admin": "Admin",
-      "adminDesc": "Full access."
-    },
+    "adminPasswordDesc": "Enter admin password to continue.",
     "context": {
       "view": "Login required to view.",
       "download": "Login required to download.",
@@ -234,16 +244,5 @@
     "ЯКАСЬ ТМ ДЛЯ АРХІТЕКТОРА": "SOME TM FOR ARCHITECT",
     "ЦСП": "CSP",
     "Fixit": "Fixit"
-  },
-  "roles": {
-    "guest": "Guest",
-    "foreman": "Foreman",
-    "designer": "Designer",
-    "architect": "Architect",
-    "admin": "Admin",
-    "employee": "Employee",
-    "worker": "Worker",
-    "dispatcher": "Dispatcher",
-    "hr": "HR"
   }
 }

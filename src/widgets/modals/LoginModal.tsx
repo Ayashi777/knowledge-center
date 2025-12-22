@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
@@ -61,7 +61,7 @@ export const LoginModal: React.FC<{
             onClose();
         } catch (err: any) {
             console.error(err);
-            setError("Помилка авторизації. Перевірте email та пароль.");
+            setError(t('loginModal.error') || "Помилка авторизації.");
         } finally {
             setIsLoading(false);
         }
@@ -85,19 +85,22 @@ export const LoginModal: React.FC<{
             setView('success');
         } catch (error: any) {
             console.error(error);
-            setError(error.code === 'auth/email-already-in-use' ? "Цей email вже зареєстрований." : "Помилка реєстрації.");
+            setError(error.code === 'auth/email-already-in-use' ? t('userEditorModal.emailInUse') : t('common.error'));
         } finally {
             setIsLoading(false);
         }
     };
 
-    const roleInfo = [
-        { role: 'foreman', title: t('loginModal.roles.foreman'), desc: t('loginModal.roles.foremanDesc'), icon: 'construction' },
-        { role: 'designer', title: t('loginModal.roles.designer'), desc: t('loginModal.roles.designerDesc'), icon: 'it' },
-        { role: 'architect', title: t('loginModal.roles.architect'), desc: t('loginModal.roles.architectDesc'), icon: 'view-boards' },
-    ];
+    // Full list of roles for registration (Deep Fix)
+    const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect', 'employee', 'worker', 'dispatcher', 'hr'];
 
-    const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+    // Roles with icons for the sidebar
+    const roleInfo = [
+        { role: 'foreman', icon: 'construction' },
+        { role: 'designer', icon: 'it' },
+        { role: 'architect', icon: 'view-boards' },
+        { role: 'employee', icon: 'user' },
+    ];
 
     const getStatusClass = (valid: boolean, value: string) => {
         if (!value) return "border-gray-200 dark:border-gray-700";
@@ -133,11 +136,11 @@ export const LoginModal: React.FC<{
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldRoleType')}</label>
-                                    <div className="grid grid-cols-3 gap-3 mt-1">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
                                         {selectableRoles.map(role => (
-                                            <label key={role} className={`p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-center text-center ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                                            <label key={role} className={`p-2 border rounded-xl cursor-pointer transition-all flex items-center justify-center text-center ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                                                 <input type="radio" name="roleType" value={role} checked={reqRoleType === role} onChange={() => setReqRoleType(role)} className="hidden" />
-                                                <span className={`text-[10px] font-black uppercase ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`loginModal.roles.${role}`)}</span>
+                                                <span className={`text-[9px] font-black uppercase leading-tight ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`roles.${role}`)}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -184,8 +187,8 @@ export const LoginModal: React.FC<{
                                     <Icon name={info.icon as any} className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{info.title}</p>
-                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{info.desc}</p>
+                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{t(`roles.${info.role}`)}</p>
+                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t(`roles.${info.role}Desc`)}</p>
                                 </div>
                             </div>
                         ))}
@@ -196,7 +199,7 @@ export const LoginModal: React.FC<{
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{t('roles.guest')}</p>
-                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t('loginModal.defaultLevelDesc')}</p>
+                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t('roles.guestDesc')}</p>
                                 </div>
                             </div>
                         </div>

@@ -72,86 +72,74 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     return (
       <div className="pt-32 text-center animate-fade-in px-4">
         <div className="text-center w-full max-w-lg mx-auto">
-          {(() => {
-            return (
-              <>
-                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                  <Icon
-                    name={isGuest ? 'clock' : 'lock-closed'}
-                    className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
-                  />
-                </div>
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+            <Icon
+              name={isGuest ? 'clock' : 'lock-closed'}
+              className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
+            />
+          </div>
 
-                {isGuest ? (
-                  <>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                      {t('docView.accessPendingTitle')}
-                    </h1>
+          {isGuest ? (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {t('docView.accessPendingTitle')}
+              </h1>
 
-                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                      {t('docView.accessPendingDescription')}
-                    </p>
+              <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                {t('docView.accessPendingDescription')}
+              </p>
 
-                    <div className="mt-8">
-                      <button
-                        onClick={() => navigate('/')}
-                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        {t('docView.backToList')}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                      {t('docView.accessDenied')}
-                    </h1>
+              <div className="mt-8">
+                <button
+                  onClick={() => navigate('/')}
+                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {t('docView.backToList')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {t('docView.accessDenied')}
+              </h1>
 
-                    {displayRoles.length > 0 ? (
-                      <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                        Цей документ призначений для ролі{' '}
-                        <strong className="text-gray-900 dark:text-white">
-                          {displayRoles.map((r) => t(`roles.${r}`)).join(', ')}
-                        </strong>
-                        .
-                        <br />
-                        Будь ласка, увійдіть або зареєструйтесь, щоб отримати доступ.
-                      </p>
-                    ) : (
-                      <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                        Цей документ має обмежений рівень доступу.
-                        <br />
-                        Будь ласка, увійдіть або зареєструйтесь, щоб отримати доступ.
-                      </p>
-                    )}
+              {displayRoles.length > 0 ? (
+                <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                  {t('docView.accessRequiredForRoles', {
+                    roles: displayRoles.map((r) => t(`roles.${r}`)).join(', ')
+                  })}
+                </p>
+              ) : (
+                <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                  {t('docView.accessRequiredGeneric')}
+                </p>
+              )}
 
-                    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                      <button
-                        onClick={onLoginClick}
-                        className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        {t('header.login')}
-                      </button>
+              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  onClick={onLoginClick}
+                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {t('header.login')}
+                </button>
 
-                      <button
-                        onClick={onRegisterClick}
-                        className="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors"
-                      >
-                        {t('registrationModal.title')}
-                      </button>
-                    </div>
+                <button
+                  onClick={onRegisterClick}
+                  className="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  {t('registrationModal.title')}
+                </button>
+              </div>
 
-                    <button
-                      onClick={() => navigate('/')}
-                      className="mt-10 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                    >
-                      ...або повернутись до списку
-                    </button>
-                  </>
-                )}
-              </>
-            );
-          })()}
+              <button
+                onClick={() => navigate('/')}
+                className="mt-10 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                {t('docView.backToList')}
+              </button>
+            </>
+          )}
         </div>
       </div>
     );

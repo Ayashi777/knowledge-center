@@ -12,8 +12,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
+    function getUserRole() {
+      return getUserData().role;
+    }
+    
     function isAdmin() {
-      return isAuthenticated() && getUserData().role == 'admin';
+      return isAuthenticated() && getUserRole() == 'admin';
     }
 
     // --- Users Collection ---
@@ -46,7 +50,14 @@ service cloud.firestore {
 
     // --- Documents ---
     match /documents/{docId} {
-      allow read: if true; 
+      // Дозволяємо читати метадані всім для відображення в списку,
+      // АЛЕ контент документа або сам документ може бути обмежений ролями.
+      // Якщо в документі є viewPermissions, перевіряємо їх.
+      allow read: if isAdmin() || 
+                   (!('viewPermissions' in resource.data) || 
+                    resource.data.viewPermissions.size() == 0 || 
+                    (isAuthenticated() && getUserRole() in resource.data.viewPermissions));
+      
       allow write: if isAdmin();
     }
   }

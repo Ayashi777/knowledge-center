@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Document, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../icons';
-import { formatDistance, getCategoryName } from '../../lib/utils/format';
+import { formatRelativeTime, getCategoryName } from '../../lib/utils/format';
 
 interface DocumentGridItemProps {
   doc: Document;
@@ -12,7 +12,7 @@ interface DocumentGridItemProps {
   tagById?: Map<string, Tag>;
 }
 
-export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({ 
+export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({ 
   doc, 
   onClick, 
   onRequireLogin, 
@@ -21,9 +21,19 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({
 }) => {
   const { t, lang } = useI18n();
 
+  const handleItemClick = (e: React.MouseEvent) => {
+    // If user clicked a button or a specific interactive element inside, we might want to prevent this
+    // But here we just decide between login or open
+    if (isGuest) {
+      onRequireLogin();
+    } else {
+      onClick();
+    }
+  };
+
   return (
     <div
-      onClick={isGuest ? onRequireLogin : onClick}
+      onClick={handleItemClick}
       className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
     >
       <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -33,7 +43,7 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({
       <div className="flex items-start gap-4 mb-4">
         {doc.thumbnailUrl ? (
           <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 group-hover:scale-110 transition-transform">
-            <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+            <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
           </div>
         ) : (
           <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform">
@@ -74,7 +84,7 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({
         <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-700/30">
           <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500 text-[10px] font-medium uppercase tracking-tight">
             <Icon name="clock" className="w-3 h-3" />
-            <span>{doc.updatedAt ? formatDistance(doc.updatedAt.toDate(), lang) : '---'}</span>
+            <span>{formatRelativeTime(doc.updatedAt, lang)}</span>
           </div>
           {isGuest && (
             <div className="flex items-center gap-1 text-[10px] font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-0.5 rounded uppercase">
@@ -86,7 +96,7 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export const DocumentListItem: React.FC<{
   doc: Document;
@@ -94,7 +104,7 @@ export const DocumentListItem: React.FC<{
   onEdit?: () => void;
   onDelete?: () => void;
   showAdminControls?: boolean;
-}> = ({ doc, onClick, onEdit, onDelete, showAdminControls }) => {
+}> = memo(({ doc, onClick, onEdit, onDelete, showAdminControls }) => {
   const { t, lang } = useI18n();
 
   return (
@@ -104,7 +114,7 @@ export const DocumentListItem: React.FC<{
         className="w-10 h-10 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/30 transition-colors shrink-0 cursor-pointer"
       >
         {doc.thumbnailUrl ? (
-          <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+          <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <Icon name="document-text" className="w-5 h-5" />
         )}
@@ -120,7 +130,7 @@ export const DocumentListItem: React.FC<{
           </span>
           <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
           <span className="text-[10px] text-gray-400">
-             {doc.updatedAt ? formatDistance(doc.updatedAt.toDate(), lang) : '---'}
+             {formatRelativeTime(doc.updatedAt, lang)}
           </span>
         </div>
       </div>
@@ -131,21 +141,23 @@ export const DocumentListItem: React.FC<{
             <button
               onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              title={t('common.edit')}
             >
               <Icon name="pencil" className="w-4 h-4" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title={t('common.delete')}
             >
               <Icon name="trash" className="w-4 h-4" />
             </button>
           </>
         )}
-        <div className="hidden sm:block p-2 text-gray-300">
+        <div className="hidden sm:block p-2 text-gray-300" onClick={onClick}>
           <Icon name="chevron-right" className="w-5 h-5" />
         </div>
       </div>
     </div>
   );
-};
+});

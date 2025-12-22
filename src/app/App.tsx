@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   Routes,
   Route,
@@ -18,6 +18,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { useAuth } from './providers/AuthProvider';
 import { useDocumentManagement } from '@/shared/hooks/useDocumentManagement';
 import { useAdminActions } from '@/shared/hooks/useAdminActions';
+import { Document, Category } from '@shared/types';
 
 const AppContent: React.FC = () => {
   const { t, lang } = useI18n();
@@ -62,31 +63,73 @@ const AppContent: React.FC = () => {
     document.title = t('title');
   }, [lang, t]);
 
+  // -- Memoized Callbacks for Performance --
+  const handleSelectDoc = useCallback((docItem: Document) => {
+    navigate(`/doc/${docItem.id}`);
+  }, [navigate]);
+
+  const handleEditDoc = useCallback((doc: Document) => {
+    openModal('edit-doc', doc);
+  }, [openModal]);
+
+  const handleAddNewDoc = useCallback(() => {
+    openModal('edit-doc', {});
+  }, [openModal]);
+
+  const handleRequireLogin = useCallback(() => {
+    openModal('login', 'login', 'view');
+  }, [openModal]);
+
+  const handleRequireLoginDownload = useCallback(() => {
+    openModal('login', 'login', 'download');
+  }, [openModal]);
+
+  const handleRegisterClick = useCallback(() => {
+    openModal('login', 'request', 'view');
+  }, [openModal]);
+
+  const handleLoginClick = useCallback(() => {
+    openModal('login');
+  }, [openModal]);
+
+  const handleEditCategory = useCallback((cat: Category) => {
+    openModal('edit-category', cat);
+  }, [openModal]);
+
+  const handleAddCategory = useCallback(() => {
+    openModal('edit-category', {
+        id: `cat${Date.now()}`,
+        nameKey: '',
+        iconName: 'construction',
+        viewPermissions: ['admin'],
+      });
+  }, [openModal]);
+
   const showAdminControls = currentUserRole === 'admin';
 
   return (
-    <MainLayout onLoginClick={() => openModal('login')}>
+    <MainLayout onLoginClick={handleLoginClick}>
         <Routes>
           <Route
             path="/"
             element={
               <DashboardView
-                onSelectDoc={(docItem) => navigate(`/doc/${docItem.id}`)}
+                onSelectDoc={handleSelectDoc}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 docs={paginatedDocs}
                 totalDocsCount={sortedAndFilteredDocs.length}
                 showAdminControls={showAdminControls}
-                onEditDoc={(doc) => openModal('edit-doc', doc)}
+                onEditDoc={handleEditDoc}
                 onDeleteDoc={handleDeleteDocument}
-                onAddNewDoc={() => openModal('edit-doc', {})}
+                onAddNewDoc={handleAddNewDoc}
                 selectedCategory={selectedCategory}
                 onCategorySelect={setSelectedCategory}
                 visibleCategories={visibleCategories}
                 allTags={allTags}
                 selectedTags={selectedTags}
                 onTagSelect={handleTagSelect}
-                onRequireLogin={() => openModal('login', 'login', 'view')}
+                onRequireLogin={handleRequireLogin}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
                 sortBy={sortBy}
@@ -97,7 +140,7 @@ const AppContent: React.FC = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                onEditCategory={(cat) => openModal('edit-category', cat)}
+                onEditCategory={handleEditCategory}
               />
             }
           />
@@ -108,9 +151,9 @@ const AppContent: React.FC = () => {
                  documents={documents}
                  categories={categories}
                  onUpdateContent={handleUpdateContent}
-                 onRequireLogin={() => openModal('login', 'login', 'download')}
-                 onLoginClick={() => openModal('login', 'login', 'view')}
-                 onRegisterClick={() => openModal('login', 'request', 'view')}
+                 onRequireLogin={handleRequireLoginDownload}
+                 onLoginClick={handleLoginClick}
+                 onRegisterClick={handleRegisterClick}
                  onCategorySelect={setSelectedCategory}
               />
             } 
@@ -124,18 +167,13 @@ const AppContent: React.FC = () => {
                   categories={categories}
                   documents={documents}
                   allTags={allTags}
-                  onUpdateCategory={(cat) => openModal('edit-category', cat)}
+                  onUpdateCategory={handleEditCategory}
                   onDeleteCategory={handleDeleteCategory}
-                  onAddCategory={() => openModal('edit-category', {
-                      id: `cat${Date.now()}`,
-                      nameKey: '',
-                      iconName: 'construction',
-                      viewPermissions: ['admin'],
-                    })}
+                  onAddCategory={handleAddCategory}
                   onDeleteDocument={handleDeleteDocument}
-                  onEditDocument={(doc) => openModal('edit-doc', doc)}
-                  onAddDocument={() => openModal('edit-doc', {})}
-                  onLoginClick={() => openModal('login')}
+                  onEditDocument={handleEditDoc}
+                  onAddDocument={handleAddNewDoc}
+                  onLoginClick={handleLoginClick}
                 />
               ) : (
                 <Navigate to="/" replace />
@@ -145,7 +183,10 @@ const AppContent: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         
-        <GlobalModals />
+        <GlobalModals 
+            availableCategories={categories}
+            availableTags={allTags}
+        />
     </MainLayout>
   );
 };

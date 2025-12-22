@@ -89,6 +89,26 @@ export const StorageApi = {
         }
     },
 
+    // Delete everything related to a document (files + images + thumbnail)
+    deleteAllDocumentFiles: async (docId: string): Promise<void> => {
+        const folders = [
+            `documents/${docId}/files`,
+            `documents/${docId}/images`,
+            `documents/${docId}` // Legacy folder
+        ];
+
+        for (const folderPath of folders) {
+            try {
+                const folderRef = ref(storage, folderPath);
+                const res = await listAll(folderRef);
+                const deletePromises = res.items.map(item => deleteObject(item));
+                await Promise.all(deletePromises);
+            } catch (e) {
+                // Ignore errors (like folder doesn't exist)
+            }
+        }
+    },
+
     uploadImage: async (file: File, docId: string): Promise<string> => {
         const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
         const path = `documents/${docId}/images/${Date.now()}-${safeName}`;
@@ -112,3 +132,4 @@ export const uploadDocumentFile = (docId: string, file: File) => StorageApi.uplo
 export const listDocumentFiles = StorageApi.listDocumentFiles;
 export const deleteDocumentFile = StorageApi.deleteFile;
 export const uploadImage = StorageApi.uploadImage;
+export const deleteAllDocumentFiles = StorageApi.deleteAllDocumentFiles;

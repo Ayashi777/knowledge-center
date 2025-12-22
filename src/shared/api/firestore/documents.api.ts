@@ -13,57 +13,36 @@ import {
     onSnapshot,
     where,
     limit,
-    startAfter,
-    QueryConstraint
+    QueryConstraint,
+    Timestamp,
+    DocumentData
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { Document, DocumentContent, Language } from "@shared/types";
 
 const COLLECTION_NAME = "documents";
 
-const stripUndefinedDeep = (value: any): any => {
-    if (Array.isArray(value)) {
-        return value.map(stripUndefinedDeep).filter((v) => v !== undefined);
-    }
-    if (value && typeof value === 'object') {
-        const out: any = {};
-        for (const [k, v] of Object.entries(value)) {
-            const cleaned = stripUndefinedDeep(v);
-            if (cleaned !== undefined) out[k] = cleaned;
+const prepareDataForFirestore = (data: Record<string, any>): Record<string, any> => {
+    const cleaned: Record<string, any> = {};
+    Object.keys(data).forEach(key => {
+        if (data[key] !== undefined) {
+            cleaned[key] = data[key];
         }
-        return out;
-    }
-    return value === undefined ? undefined : value;
+    });
+    return cleaned;
 };
 
-const mapDocument = (doc: any): Document => {
-    const data = doc.data ? doc.data() : doc;
-    const id = doc.id || data.id;
-
+const mapToDocument = (id: string, data: DocumentData): Document => {
     return {
         ...data,
-        id,
+        id: id,
         content: data.content || {},
-        updatedAt: data.updatedAt,
-        createdAt: data.createdAt
+        updatedAt: data.updatedAt as Timestamp,
+        createdAt: data.createdAt as Timestamp,
     } as Document;
 };
 
 export const DocumentsApi = {
-    getAll: async (): Promise<Document[]> => {
-        const q = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(mapDocument);
-    },
-
-    subscribeAll: (onUpdate: (docs: Document[]) => void, onError?: (error: any) => void) => {
-        const q = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'));
-        return onSnapshot(q, (snapshot) => {
-            const docs = snapshot.docs.map(mapDocument);
-            onUpdate(docs);
-        }, onError);
-    },
-
     subscribeFiltered: (
         options: { 
             categoryKey?: string; 
@@ -71,7 +50,7 @@ export const DocumentsApi = {
             sortBy?: 'recent' | 'alpha';
         }, 
         onUpdate: (docs: Document[]) => void, 
-        onError?: (error: any) => void
+        onError?: (error: Error) => void
     ) => {
         const constraints: QueryConstraint[] = [];
 
@@ -92,80 +71,49 @@ export const DocumentsApi = {
         const q = query(collection(db, COLLECTION_NAME), ...constraints);
 
         return onSnapshot(q, (snapshot) => {
-            const docs = snapshot.docs.map(mapDocument);
+            const docs = snapshot.docs.map(snap => mapToDocument(snap.id, snap.data()));
             onUpdate(docs);
         }, (error) => {
-            // Firestore might require an index for some combinations
-            if (error.code === 'failed-precondition') {
-                console.warn("Firestore index required. Falling back to simple query.");
-                // Fallback to simple query if index is missing
-                const fallbackQ = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'), limit(options.limitCount || 50));
-                onSnapshot(fallbackQ, (snap) => onUpdate(snap.docs.map(mapDocument)), onError);
-            } else {
-                onError?.(error);
-            }
+            onError?.(error as Error);
         });
     },
 
     getById: async (id: string): Promise<Document | null> => {
         const snap = await getDoc(doc(db, COLLECTION_NAME, id));
-        return snap.exists() ? mapDocument(snap) : null;
+        return snap.exists() ? mapToDocument(snap.id, snap.data()) : null;
     },
 
-    create: async (docData: Partial<Document>): Promise<void> => {
-        const id = docData.id || `doc${Date.now()}`;
+    create: async (documentData: Partial<Document>): Promise<void> => {
+        const id = documentData.id || `doc_${Date.now()}`;
         const docRef = doc(db, COLLECTION_NAME, id);
         
-        const cleanData = stripUndefinedDeep({
-            ...docData,
+        const payload = prepareDataForFirestore({
+            ...documentData,
             id,
             updatedAt: serverTimestamp(),
             createdAt: serverTimestamp()
         });
         
-        if (!cleanData.content) cleanData.content = {};
-        
-        await setDoc(docRef, cleanData);
+        await setDoc(docRef, payload);
     },
 
-    updateMetadata: async (id: string, data: Partial<Document>): Promise<void> => {
+    updateMetadata: async (id: string, metadata: Partial<Omit<Document, 'content'>>): Promise<void> => {
         const docRef = doc(db, COLLECTION_NAME, id);
-        const { content, ...safeData } = data as any;
-        
-        const cleanData = stripUndefinedDeep({
-            ...safeData,
+        const payload = prepareDataForFirestore({
+            ...metadata,
             updatedAt: serverTimestamp()
         });
-
-        await updateDoc(docRef, cleanData);
+        await updateDoc(docRef, payload);
     },
 
-    updateContent: async (id: string, lang: Language, newContent: DocumentContent): Promise<void> => {
+    // 🔥 Deep Deep Optimization: Using dot notation to update only specific language content
+    updateContent: async (id: string, lang: Language, content: DocumentContent): Promise<void> => {
         const docRef = doc(db, COLLECTION_NAME, id);
-        const html = (newContent?.html ?? '').toString();
-
-        await runTransaction(db, async (tx) => {
-            const snap = await tx.get(docRef);
-            
-            if (!snap.exists()) {
-                 tx.set(docRef, stripUndefinedDeep({
-                    id,
-                    content: { [lang]: { html } },
-                    updatedAt: serverTimestamp(),
-                 }));
-                 return;
-            }
-
-            const data = snap.data();
-            const currentContent = data?.content || {};
-            
-            const nextContent = stripUndefinedDeep({
-                ...currentContent,
-                [lang]: { html }
-            });
-
-            tx.update(docRef, {
-                content: nextContent,
+        
+        // Use a transaction to ensure updatedAt is synced with content change
+        await runTransaction(db, async (transaction) => {
+            transaction.update(docRef, {
+                [`content.${lang}`]: content,
                 updatedAt: serverTimestamp()
             });
         });
