@@ -30,3 +30,30 @@ export const formatRelativeTime = (updatedAt: any, lang: Language, t?: (key: str
         return '—';
     }
 };
+
+/**
+ * Нормалізує ключ категорії (видаляє префікс 'categories.' якщо він є)
+ */
+export const normalizeCategoryKey = (key: string | null | undefined): string => {
+  if (!key) return '';
+  return key.startsWith('categories.') ? key.replace('categories.', '') : key;
+};
+
+/**
+ * Локалізує назву категорії з підтримкою обох форматів ключів
+ */
+export const getCategoryName = (key: string | null | undefined, t: (key: string) => string): string => {
+  if (!key) return '—';
+  
+  const normalized = normalizeCategoryKey(key);
+  
+  // Пробуємо знайти переклад з префіксом (новий стандарт)
+  const translated = t(`categories.${normalized}`);
+  
+  // Якщо переклад не знайшовся (повернувся сам ключ), пробуємо сирий ключ (зворотна сумісність)
+  if (translated === `categories.${normalized}`) {
+      return t(key);
+  }
+  
+  return translated;
+};

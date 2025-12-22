@@ -4,6 +4,7 @@ import { Document, Category, Tag, UserRole } from '@shared/types';
 import { CategoriesApi } from '@shared/api/firestore/categories.api';
 import { TagsApi } from '@shared/api/firestore/tags.api';
 import { useI18n } from '@app/providers/i18n/i18n';
+import { normalizeCategoryKey } from '@shared/lib/utils/format';
 
 export const useDocumentManagement = () => {
     const { t } = useI18n();
@@ -68,7 +69,10 @@ export const useDocumentManagement = () => {
 
     const catByKey = useMemo(() => {
         const m = new Map<string, Category>();
-        categories.forEach(c => m.set(c.nameKey, c));
+        categories.forEach(c => {
+            const normKey = normalizeCategoryKey(c.nameKey);
+            m.set(normKey, c);
+        });
         return m;
     }, [categories]);
 
@@ -79,15 +83,17 @@ export const useDocumentManagement = () => {
                 displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 doc.description?.toLowerCase().includes(searchTerm.toLowerCase());
             
-            const matchesCategory = selectedCategory === 'all' || doc.categoryKey === selectedCategory;
+            const normDocCat = normalizeCategoryKey(doc.categoryKey);
+            const normSelectedCat = normalizeCategoryKey(selectedCategory);
+            const matchesCategory = selectedCategory === 'all' || normDocCat === normSelectedCat;
             
             const matchesTags = selectedTags.length === 0 || 
                                selectedTags.every(tagId => doc.tagIds?.includes(tagId));
             
             const matchesRole = (d: Document) => {
                 if (selectedRoleFilter === 'all') return true;
-                const cat = catByKey.get(d.categoryKey);
-                // In Main, roles filter logic: if category allows this role
+                const normKey = normalizeCategoryKey(d.categoryKey);
+                const cat = catByKey.get(normKey);
                 return !!cat?.viewPermissions?.includes(selectedRoleFilter as UserRole);
             };
             

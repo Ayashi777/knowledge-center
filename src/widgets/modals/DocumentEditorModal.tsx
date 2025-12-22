@@ -3,6 +3,7 @@ import { Document, Category, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { StorageApi } from '@shared/api/storage/storage.api';
 import { Icon } from '@shared/ui/icons';
+import { getCategoryName } from '@shared/lib/utils/format';
 
 export const DocumentEditorModal: React.FC<{
     doc: Partial<Document> | null,
@@ -107,7 +108,7 @@ export const DocumentEditorModal: React.FC<{
                         >
                             {availableCategories.map(cat => (
                                 <option key={cat.id} value={cat.nameKey}>
-                                    {t(`categories.${cat.nameKey}`) || cat.nameKey}
+                                    {getCategoryName(cat.nameKey, t)}
                                 </option>
                             ))}
                         </select>

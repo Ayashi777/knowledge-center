@@ -5,6 +5,7 @@ import { Document, UserRole, DocumentContent, Tag } from '@shared/types';
 import { useI18n, Language } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { StorageApi } from '@shared/api/storage/storage.api';
+import { getCategoryName } from '@shared/lib/utils/format';
 
 // Sub-components
 import { DocumentHeader } from './ui/DocumentHeader';
@@ -156,7 +157,7 @@ export const DocumentView: React.FC<{
                 <nav className="text-xs text-gray-400 font-black uppercase tracking-widest mb-4 flex flex-wrap items-center">
                     <button onClick={onClose} className="hover:text-blue-600 transition-colors">{t('dashboard.title')}</button>
                     <span className="mx-2">/</span>
-                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">{t(`categories.${doc.categoryKey}`)}</button>
+                    <button onClick={() => onCategoryClick(doc.categoryKey)} className="hover:text-blue-600 font-medium">{getCategoryName(doc.categoryKey, t)}</button>
                     <span className="mx-2">/</span>
                     <span className="text-gray-800 dark:text-gray-200 font-semibold">{doc.titleKey ? t(doc.titleKey) : doc.title}</span>
                     {saveStatus === 'saved' && <span className="ml-3 text-green-600 font-black uppercase">Saved ✓</span>}

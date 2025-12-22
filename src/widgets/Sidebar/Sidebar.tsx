@@ -2,6 +2,7 @@ import React from 'react';
 import { Category, UserRole, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
+import { getCategoryName, normalizeCategoryKey } from '@shared/lib/utils/format';
 
 interface SidebarProps {
   visibleCategories: Category[];
@@ -59,13 +60,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={() => onCategorySelect(cat.nameKey)}
                 className={`flex-grow flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group-active:scale-[0.98] ${
-                  selectedCategory === cat.nameKey
+                  normalizeCategoryKey(selectedCategory) === normalizeCategoryKey(cat.nameKey)
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
                 }`}
               >
                 <Icon name={cat.iconName as any || 'folder'} className="w-5 h-5 shrink-0" />
-                <span className="font-bold text-sm truncate">{t(`categories.${cat.nameKey}`)}</span>
+                <span className="font-bold text-sm truncate">{getCategoryName(cat.nameKey, t)}</span>
               </button>
               
               {showAdminControls && (
