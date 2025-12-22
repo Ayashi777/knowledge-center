@@ -3,8 +3,10 @@ import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { Document, Category, Tag, UserRole } from '@shared/types';
 import { CategoriesApi } from '@shared/api/firestore/categories.api';
 import { TagsApi } from '@shared/api/firestore/tags.api';
+import { useI18n } from '@app/providers/i18n/i18n';
 
 export const useDocumentManagement = () => {
+    const { t } = useI18n();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [tags, setTags] = useState<Tag[]>([]);
@@ -72,10 +74,10 @@ export const useDocumentManagement = () => {
 
     const sortedAndFilteredDocs = useMemo(() => {
         let result = documents.filter(doc => {
+            const displayTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
             const matchesSearch = 
-                doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (doc.titleKey && doc.titleKey.toLowerCase().includes(searchTerm.toLowerCase()));
+                displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                doc.description?.toLowerCase().includes(searchTerm.toLowerCase());
             
             const matchesCategory = selectedCategory === 'all' || doc.categoryKey === selectedCategory;
             
@@ -97,16 +99,16 @@ export const useDocumentManagement = () => {
             if (sortBy === 'recent') {
                 const dateA = a.updatedAt?.toDate?.() || new Date(a.updatedAt) || 0;
                 const dateB = b.updatedAt?.toDate?.() || new Date(b.updatedAt) || 0;
-                return dateB - dateA;
+                return (dateB as any) - (dateA as any);
             } else {
-                const titleA = a.title || a.titleKey || '';
-                const titleB = b.title || b.titleKey || '';
+                const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
+                const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
                 return titleA.localeCompare(titleB);
             }
         });
 
         return result;
-    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey]);
+    }, [documents, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey, t]);
 
     // Pagination
     const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);

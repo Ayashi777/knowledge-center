@@ -1,5 +1,5 @@
-import React from 'react';
-import { Document, ViewMode } from '@shared/types';
+import React, { useMemo } from 'react';
+import { Document, ViewMode, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { DocumentGridItem, DocumentListItem } from '@shared/ui/DocumentComponents';
 
@@ -12,6 +12,7 @@ interface DocumentListProps {
     showAdminControls: boolean;
     onEditDoc: (doc: Document) => void;
     onDeleteDoc: (id: string) => void;
+    allTags?: Tag[];
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({
@@ -23,8 +24,15 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     showAdminControls,
     onEditDoc,
     onDeleteDoc,
+    allTags = [],
 }) => {
     const { t } = useI18n();
+
+    const tagById = useMemo(() => {
+        const m = new Map<string, Tag>();
+        allTags.forEach(tag => m.set(tag.id, tag));
+        return m;
+    }, [allTags]);
 
     if (docs.length === 0) {
         return (
@@ -44,6 +52,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     onClick={() => onSelectDoc(doc)} 
                     onRequireLogin={onRequireLogin} 
                     isGuest={isGuest} 
+                    tagById={tagById}
                 />
             ))}
         </div>

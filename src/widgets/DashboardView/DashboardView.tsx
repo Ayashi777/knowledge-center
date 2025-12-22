@@ -123,6 +123,7 @@ export const DashboardView: React.FC<{
                         showAdminControls={showAdminControls}
                         onEditDoc={onEditDoc}
                         onDeleteDoc={onDeleteDoc}
+                        allTags={allTags}
                     />
 
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />

@@ -1,15 +1,24 @@
 import React from 'react';
-import { Document } from '@shared/types';
+import { Document, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../icons';
 import { formatDistance } from '../../lib/utils/format';
 
-export const DocumentGridItem: React.FC<{
+interface DocumentGridItemProps {
   doc: Document;
   onClick: () => void;
   onRequireLogin: () => void;
   isGuest: boolean;
-}> = ({ doc, onClick, onRequireLogin, isGuest }) => {
+  tagById?: Map<string, Tag>;
+}
+
+export const DocumentGridItem: React.FC<DocumentGridItemProps> = ({ 
+  doc, 
+  onClick, 
+  onRequireLogin, 
+  isGuest,
+  tagById 
+}) => {
   const { t, lang } = useI18n();
 
   return (
@@ -22,9 +31,15 @@ export const DocumentGridItem: React.FC<{
       </div>
 
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform">
-          <Icon name="document-text" className="w-6 h-6" />
-        </div>
+        {doc.thumbnailUrl ? (
+          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 group-hover:scale-110 transition-transform">
+            <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform">
+            <Icon name="document-text" className="w-6 h-6" />
+          </div>
+        )}
         <div className="min-w-0">
           <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {doc.titleKey ? t(doc.titleKey) : doc.title}
@@ -37,11 +52,18 @@ export const DocumentGridItem: React.FC<{
 
       <div className="mt-auto space-y-3">
         <div className="flex flex-wrap gap-1.5">
-          {doc.tagIds?.slice(0, 3).map((tagId) => (
-            <span key={tagId} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 rounded text-[10px] font-bold uppercase tracking-wider">
-              {tagId}
-            </span>
-          ))}
+          {doc.tagIds?.slice(0, 3).map((tagId) => {
+            const tag = tagById?.get(tagId);
+            return (
+              <span 
+                key={tagId} 
+                className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                style={tag?.color ? { borderLeft: `2px solid ${tag.color}` } : undefined}
+              >
+                {tag?.name || tagId}
+              </span>
+            );
+          })}
           {(doc.tagIds?.length || 0) > 3 && (
             <span className="px-2 py-0.5 text-gray-400 text-[10px] font-bold">
               +{(doc.tagIds?.length || 0) - 3}
@@ -79,9 +101,13 @@ export const DocumentListItem: React.FC<{
     <div className="group flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all">
       <div
         onClick={onClick}
-        className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/30 transition-colors shrink-0 cursor-pointer"
+        className="w-10 h-10 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/30 transition-colors shrink-0 cursor-pointer"
       >
-        <Icon name="document-text" className="w-5 h-5" />
+        {doc.thumbnailUrl ? (
+          <img src={doc.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <Icon name="document-text" className="w-5 h-5" />
+        )}
       </div>
 
       <div className="flex-grow min-w-0 cursor-pointer" onClick={onClick}>

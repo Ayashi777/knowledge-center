@@ -20,7 +20,7 @@ const syncUserEmailHandler = async (change, context) => {
     }
 };
 
-exports.syncUserEmail = functions.firestore
+exports.syncUserEmail = functions.region('europe-west3').firestore
   .document("users/{userId}")
   .onUpdate(syncUserEmailHandler);
 
