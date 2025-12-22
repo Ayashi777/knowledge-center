@@ -43,6 +43,9 @@ export const CategoryEditorModal: React.FC<{
 
     const icons: IconName[] = ['folder', 'document-text', 'construction', 'electrical', 'safety', 'logistics', 'it', 'hr', 'finance', 'legal'];
 
+    // For categories, we still show all roles because an admin might want to create a private category for staff
+    const rolesForPermissions = ALL_ROLES.filter(r => r !== 'admin');
+
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg p-8 border border-gray-100 dark:border-gray-700" onClick={e => e.stopPropagation()}>
@@ -65,7 +68,7 @@ export const CategoryEditorModal: React.FC<{
                             value={nameKey}
                             onChange={e => setNameKey(e.target.value)}
                             className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
-                            placeholder="e.g. documentation_key"
+                            placeholder={t('categoryEditorModal.placeholderName')}
                             required
                         />
                     </div>
@@ -93,7 +96,7 @@ export const CategoryEditorModal: React.FC<{
                             {t('categoryEditorModal.labelPermissions')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {ALL_ROLES.filter(r => r !== 'admin').map(role => (
+                            {rolesForPermissions.map(role => (
                                 <button
                                     key={role}
                                     type="button"

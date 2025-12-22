@@ -223,6 +223,7 @@
     "createTitle": "Create Category",
     "editTitle": "Edit Category",
     "labelName": "Category Name (key)",
+    "placeholderName": "e.g. armoplit",
     "labelIcon": "Icon",
     "labelPermissions": "Permissions"
   },

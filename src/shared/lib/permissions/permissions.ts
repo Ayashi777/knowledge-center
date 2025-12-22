@@ -4,6 +4,7 @@ import { UserRole, Category, Document } from '@shared/types';
  * Перевіряє, чи має роль доступ до категорії
  */
 export const canViewCategory = (role: UserRole, category: Category): boolean => {
+    if (!category) return false;
     if (role === 'admin') return true;
     // Якщо дозволи не вказані — категорія публічна
     if (!category.viewPermissions || category.viewPermissions.length === 0) return true;
@@ -14,6 +15,7 @@ export const canViewCategory = (role: UserRole, category: Category): boolean => 
  * Перевіряє доступ до документа (враховує і документ, і його категорію)
  */
 export const canViewDocument = (role: UserRole, doc: Document, categories: Category[]): boolean => {
+    if (!doc || !categories) return false;
     if (role === 'admin') return true;
 
     // 1. Перевірка на рівні документа
@@ -22,7 +24,7 @@ export const canViewDocument = (role: UserRole, doc: Document, categories: Categ
     }
 
     // 2. Перевірка на рівні категорії
-    const category = categories.find(c => c.nameKey === doc.categoryKey);
+    const category = (categories || []).find(c => c.nameKey === doc.categoryKey);
     if (category) {
         return canViewCategory(role, category);
     }
@@ -32,6 +34,7 @@ export const canViewDocument = (role: UserRole, doc: Document, categories: Categ
 };
 
 export const canDownloadDocument = (role: UserRole, doc: Document, categories: Category[]): boolean => {
+    if (!doc) return false;
     if (role === 'admin') return true;
     
     // Якщо є специфічні права на завантаження — перевіряємо їх

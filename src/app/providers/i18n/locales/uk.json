@@ -220,8 +220,10 @@
     "noTagsHint": "Теги ще не створені. Додайте їх в Адмін-панелі."
   },
   "categoryEditorModal": {
+    "createTitle": "Створити категорію",
     "editTitle": "Редагувати дозволи категорії",
     "labelName": "Назва категорії (код або ключ)",
+    "placeholderName": "напр. armoplit або categories.armoplit",
     "labelIcon": "Іконка",
     "labelPermissions": "Дозволи на перегляд"
   },

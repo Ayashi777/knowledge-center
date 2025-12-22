@@ -25,6 +25,9 @@ export const DocumentEditorModal: React.FC<{
     
     const thumbInputRef = useRef<HTMLInputElement>(null);
 
+    // 🔥 Validation: Title must be present and at least one role must be selected
+    const isFormValid = title.trim().length > 0 && viewPermissions.length > 0;
+
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -35,7 +38,7 @@ export const DocumentEditorModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim()) return;
+        if (!isFormValid) return;
 
         onSave({
             ...doc,
@@ -83,7 +86,7 @@ export const DocumentEditorModal: React.FC<{
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTitle')}</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTitle')}*</label>
                             <input
                                 type="text"
                                 value={title}
@@ -106,8 +109,10 @@ export const DocumentEditorModal: React.FC<{
                         </div>
                     </div>
 
-                    <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-3xl border border-blue-100 dark:border-blue-900/30">
-                        <label className="block text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-4">{t('editorModal.labelPermissions')}</label>
+                    <div className={`p-6 rounded-3xl border transition-all ${viewPermissions.length === 0 ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-blue-50/50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/30'}`}>
+                        <label className={`block text-[10px] font-black uppercase tracking-widest mb-4 ${viewPermissions.length === 0 ? 'text-red-600' : 'text-blue-600 dark:text-blue-400'}`}>
+                            {t('editorModal.labelPermissions')}* {viewPermissions.length === 0 && "(Виберіть хоча б одну роль)"}
+                        </label>
                         <div className="flex flex-wrap gap-2">
                             {ALL_ROLES.filter(r => r !== 'admin').map(role => (
                                 <button
@@ -116,7 +121,7 @@ export const DocumentEditorModal: React.FC<{
                                     onClick={() => togglePermission(role)}
                                     className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border-2 ${
                                         viewPermissions.includes(role)
-                                            ? 'bg-blue-600 border-blue-600 text-white'
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
                                             : 'bg-white dark:bg-gray-800 border-blue-100 dark:border-gray-700 text-blue-400'
                                     }`}
                                 >
@@ -124,7 +129,6 @@ export const DocumentEditorModal: React.FC<{
                                 </button>
                             ))}
                         </div>
-                        <p className="mt-3 text-[10px] text-blue-500 italic font-medium">*{t('editorModal.permissionsHint')}</p>
                     </div>
 
                     <div>
@@ -156,8 +160,16 @@ export const DocumentEditorModal: React.FC<{
                                 placeholder="https://..."
                             />
                             {doc?.id && (
-                                <button type="button" onClick={() => thumbInputRef.current?.click()} className="px-4 bg-gray-100 dark:bg-gray-700 rounded-2xl">
-                                    <Icon name={isUploadingThumb ? 'loading' : 'plus'} className={isUploadingThumb ? 'animate-spin' : ''} />
+                                <button 
+                                    type="button" 
+                                    onClick={() => thumbInputRef.current?.click()} 
+                                    disabled={isUploadingThumb}
+                                    className="px-6 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center min-w-[64px]"
+                                >
+                                    <Icon 
+                                        name={isUploadingThumb ? 'loading' : 'plus'} 
+                                        className={`w-6 h-6 ${isUploadingThumb ? 'text-blue-600' : 'text-gray-500'}`} 
+                                    />
                                 </button>
                             )}
                         </div>
@@ -165,7 +177,17 @@ export const DocumentEditorModal: React.FC<{
 
                     <div className="flex gap-3 pt-4">
                         <button type="button" onClick={onClose} className="flex-1 py-4 font-black uppercase text-[10px] tracking-widest text-gray-400">{t('common.cancel')}</button>
-                        <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/20">{t('common.save')}</button>
+                        <button 
+                            type="submit" 
+                            disabled={!isFormValid}
+                            className={`flex-1 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all ${
+                                isFormValid 
+                                ? 'bg-blue-600 text-white shadow-blue-500/20' 
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            {t('common.save')}
+                        </button>
                     </div>
                 </form>
                 <input type="file" ref={thumbInputRef} onChange={handleThumbUpload} className="hidden" accept="image/*" />

@@ -3,6 +3,7 @@ import { Document, Category, UserRole } from '@shared/types';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { normalizeCategoryKey } from '@shared/lib/utils/format';
 import { useI18n } from '@app/providers/i18n/i18n';
+import { useAuth } from '@app/providers/AuthProvider';
 
 interface UseDocumentsProps {
     categories: Category[];
@@ -22,6 +23,7 @@ export const useDocuments = ({
     sortBy
 }: UseDocumentsProps) => {
     const { t } = useI18n();
+    const { role: currentUserRole } = useAuth();
     const [rawDocuments, setRawDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -57,26 +59,26 @@ export const useDocuments = ({
         return rawDocuments.filter(document => {
             const documentCategoryKey = normalizeCategoryKey(document.categoryKey);
             
-            // 1. Validation: Hide documents with orphaned categories
+            // 🔥 Admin Exception: Let admins see everything, even documents with missing categories
             const isValidCategory = categories.some(cat => normalizeCategoryKey(cat.nameKey) === documentCategoryKey);
-            if (!isValidCategory) return false;
+            if (!isValidCategory && currentUserRole !== 'admin') return false;
 
-            // 2. Search Filter
+            // 1. Search Filter
             const displayTitle = document.titleKey ? t(document.titleKey) : document.title || '';
             const matchesSearch = displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                  document.description?.toLowerCase().includes(searchTerm.toLowerCase());
             if (!matchesSearch) return false;
 
-            // 3. Category Filter
+            // 2. Category Filter
             const matchesCategory = selectedCategoryKey === 'all' || documentCategoryKey === normalizeCategoryKey(selectedCategoryKey);
             if (!matchesCategory) return false;
 
-            // 4. Tags Filter
+            // 3. Tags Filter
             const matchesTags = selectedTagIds.length === 0 || 
                                selectedTagIds.every(tagId => document.tagIds?.includes(tagId));
             if (!matchesTags) return false;
 
-            // 5. Role Filter
+            // 4. Role Filter (Only for non-admins or if filter is active)
             if (selectedRoleFilter !== 'all') {
                 const category = categoryMap.get(documentCategoryKey);
                 if (!category?.viewPermissions?.includes(selectedRoleFilter as UserRole)) return false;
@@ -84,7 +86,7 @@ export const useDocuments = ({
 
             return true;
         });
-    }, [rawDocuments, categories, searchTerm, selectedCategoryKey, selectedTagIds, selectedRoleFilter, t, categoryMap]);
+    }, [rawDocuments, categories, searchTerm, selectedCategoryKey, selectedTagIds, selectedRoleFilter, t, categoryMap, currentUserRole]);
 
     const sortedDocuments = useMemo(() => {
         const result = [...processedDocuments];
