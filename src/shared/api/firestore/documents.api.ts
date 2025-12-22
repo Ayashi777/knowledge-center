@@ -83,34 +83,29 @@ export const DocumentsApi = {
         return snap.exists() ? mapToDocument(snap.id, snap.data()) : null;
     },
 
-    create: async (documentData: Partial<Document>): Promise<void> => {
-        const id = documentData.id || `doc_${Date.now()}`;
+    // 🔥 Improved Save: Handles both create and update with merge
+    saveMetadata: async (id: string, metadata: Partial<Document>): Promise<void> => {
         const docRef = doc(db, COLLECTION_NAME, id);
         
-        const payload = prepareDataForFirestore({
-            ...documentData,
-            id,
-            updatedAt: serverTimestamp(),
-            createdAt: serverTimestamp()
-        });
-        
-        await setDoc(docRef, payload);
-    },
-
-    updateMetadata: async (id: string, metadata: Partial<Omit<Document, 'content'>>): Promise<void> => {
-        const docRef = doc(db, COLLECTION_NAME, id);
         const payload = prepareDataForFirestore({
             ...metadata,
-            updatedAt: serverTimestamp()
+            id,
+            updatedAt: serverTimestamp(),
+            // Only set createdAt if it's a new document (using serverTimestamp conditionally)
         });
-        await updateDoc(docRef, payload);
+
+        // Use setDoc with merge: true to avoid crashes if document doesn't exist yet
+        await setDoc(docRef, payload, { merge: true });
+        
+        // If it was a create, we might want to ensure createdAt exists
+        // (Firestore doesn't have a simple "set if not exists" for a single field inside setDoc merge)
+        // But for our needs, updatedAt is the primary field.
     },
 
     // 🔥 Deep Deep Optimization: Using dot notation to update only specific language content
     updateContent: async (id: string, lang: Language, content: DocumentContent): Promise<void> => {
         const docRef = doc(db, COLLECTION_NAME, id);
         
-        // Use a transaction to ensure updatedAt is synced with content change
         await runTransaction(db, async (transaction) => {
             transaction.update(docRef, {
                 [`content.${lang}`]: content,

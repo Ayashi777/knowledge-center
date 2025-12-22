@@ -13,15 +13,16 @@ export const useAdminActions = () => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleSaveDocument = useCallback(async (documentData: Partial<Document>) => {
+        if (!documentData.id) {
+            console.error('[useAdminActions] Document ID is missing');
+            return;
+        }
+
         setIsProcessing(true);
         try {
-            if (documentData.id) {
-                // Ensure we don't accidentally overwrite content during metadata update
-                const { content, ...metadata } = documentData;
-                await DocumentsApi.updateMetadata(documentData.id, metadata);
-            } else {
-                await DocumentsApi.create(documentData);
-            }
+            // We strip 'content' to prevent accidental wipes of the rich text during metadata edits
+            const { content, ...metadata } = documentData;
+            await DocumentsApi.saveMetadata(documentData.id, metadata);
         } catch (error) {
             console.error('[useAdminActions] Document save failed:', error);
             alert(t('common.error') || 'Save failed');

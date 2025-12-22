@@ -73,7 +73,10 @@ const AppContent: React.FC = () => {
   }, [openModal]);
 
   const handleAddNewDoc = useCallback(() => {
-    openModal('edit-doc', {});
+    // 🔥 Critical Fix: Generate ID BEFORE opening the modal
+    // This allows the modal to use the ID for file uploads immediately
+    const newId = `doc_${Date.now()}`;
+    openModal('edit-doc', { id: newId });
   }, [openModal]);
 
   const handleRequireLogin = useCallback(() => {
@@ -98,7 +101,7 @@ const AppContent: React.FC = () => {
 
   const handleAddCategory = useCallback(() => {
     openModal('edit-category', {
-        id: `cat${Date.now()}`,
+        id: `cat_${Date.now()}`,
         nameKey: '',
         iconName: 'construction',
         viewPermissions: ['admin'],

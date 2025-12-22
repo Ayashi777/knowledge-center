@@ -219,10 +219,13 @@
     "labelCategory": "Category",
     "labelTags": "Tags",
     "placeholderTags": "safety, update",
+    "labelPermissions": "View Permissions",
+    "permissionsHint": "Admins see everything by default. If nothing is selected, category rules apply.",
     "labelDownloadPermissions": "Download Permissions",
     "noTagsHint": "No tags created yet. Add them in the Admin Panel."
   },
   "categoryEditorModal": {
+    "createTitle": "Create Category",
     "editTitle": "Edit Category",
     "labelName": "Category Name (key)",
     "labelIcon": "Icon",

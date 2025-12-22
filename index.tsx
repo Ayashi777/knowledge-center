@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './src/app/App';
 import { I18nProvider } from './src/app/providers/i18n/i18n';
 import { AuthProvider } from './src/app/providers/AuthProvider';
@@ -13,12 +14,14 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <I18nProvider>
-        <ModalProvider>
-            <App />
-        </ModalProvider>
-      </I18nProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <I18nProvider>
+          <ModalProvider>
+              <App />
+          </ModalProvider>
+        </I18nProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

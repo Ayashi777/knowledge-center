@@ -15,7 +15,6 @@ import { DocumentEditor } from './ui/DocumentEditor';
 
 /**
  * 🔥 CSS Styles for Quill Content
- * Defined outside component to prevent re-injection on every render.
  */
 const QUILL_CONTENT_STYLES = `
     .quill-content h1 { font-size: 2.25rem; font-weight: 900; margin: 2rem 0 1.5rem; color: #111827; }
@@ -31,9 +30,6 @@ const QUILL_CONTENT_STYLES = `
     .quill-uploading-image { padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(59,130,246,.35); background: rgba(59,130,246,.06); margin: 12px 0; }
 `;
 
-/**
- * ✅ Quill placeholder blot (embed)
- */
 const registerUploadingImageBlot = () => {
     const Quill = (ReactQuill as any).Quill;
     if (!Quill) return;
@@ -63,25 +59,6 @@ const registerUploadingImageBlot = () => {
     (Quill as any).__uploadingImageRegistered = true;
 };
 
-/**
- * 🔥 Helper function: Парсинг HTML для створення Змісту (Table of Contents)
- */
-const processContentForTOC = (htmlContent: string) => {
-    if (!htmlContent) return { modifiedHtml: '', toc: [] };
-    const sanitizedHtml = DOMPurify.sanitize(htmlContent);
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(sanitizedHtml, 'text/html');
-    const headers = doc.querySelectorAll('h1, h2, h3');
-    const toc: { id: string; text: string; level: number }[] = [];
-    headers.forEach((header, index) => {
-        const text = header.textContent || '';
-        const id = `heading-${index}-${text.slice(0, 30).replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '-')}`;
-        header.id = id;
-        toc.push({ id, text, level: parseInt(header.tagName.substring(1)) });
-    });
-    return { modifiedHtml: doc.body.innerHTML, toc };
-};
-
 const emptyContentTemplate: DocumentContent = { html: '' };
 
 export const DocumentView: React.FC<{
@@ -95,14 +72,15 @@ export const DocumentView: React.FC<{
 }> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [] }) => {
     const { t, lang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
+    
+    // editableContent represents the "saved" or "in-flight" content for the parent
     const [editableContent, setEditableContent] = useState<DocumentContent>(doc.content[lang] || emptyContentTemplate);
+    
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const [viewHtml, setViewHtml] = useState('');
-    const [tocItems, setTocItems] = useState<{ id: string; text: string; level: number }[]>([]);
 
     const quillRef = useRef<ReactQuill | null>(null);
 
@@ -110,37 +88,59 @@ export const DocumentView: React.FC<{
         registerUploadingImageBlot();
     }, []);
 
+    // Sync state when document or language changes
     useEffect(() => {
-        const rawContent = doc.content[lang] || emptyContentTemplate;
-        setEditableContent(rawContent);
-        if (!isEditingContent) {
-            const { modifiedHtml, toc } = processContentForTOC(rawContent.html || '');
-            setViewHtml(modifiedHtml);
-            setTocItems(toc);
-        }
-    }, [doc, lang, isEditingContent]);
+        setEditableContent(doc.content[lang] || emptyContentTemplate);
+    }, [doc.id, lang]);
 
     const loadFiles = useCallback(async () => {
         setIsLoadingFiles(true);
-        const docFiles = await StorageApi.listDocumentFiles(doc.id);
-        setFiles(docFiles);
-        setIsLoadingFiles(false);
+        try {
+            const docFiles = await StorageApi.listDocumentFiles(doc.id);
+            setFiles(docFiles);
+        } finally {
+            setIsLoadingFiles(false);
+        }
     }, [doc.id]);
 
     useEffect(() => {
         loadFiles();
     }, [loadFiles]);
 
+    // -- Memoized Content Processing (TOC) --
+    const { viewHtml, tocItems } = useMemo(() => {
+        const html = editableContent.html || '';
+        if (!html) return { viewHtml: '', tocItems: [] };
+
+        const sanitizedHtml = DOMPurify.sanitize(html);
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(sanitizedHtml, 'text/html');
+        const headers = htmlDoc.querySelectorAll('h1, h2, h3');
+        const toc: { id: string; text: string; level: number }[] = [];
+
+        headers.forEach((header, index) => {
+            const text = header.textContent || '';
+            const id = `heading-${index}-${text.slice(0, 30).replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '-')}`;
+            header.id = id;
+            toc.push({ id, text, level: parseInt(header.tagName.substring(1)) });
+        });
+
+        return { viewHtml: htmlDoc.body.innerHTML, tocItems: toc };
+    }, [editableContent.html]);
+
     const handleSaveContent = async () => {
         setIsSaving(true);
         try {
             const html = editableContent.html || '';
+            // Remove any leftover uploading blocks before saving
             const cleanedHtml = html.replace(/<div class="quill-uploading-image"[^>]*>[\s\S]*?<\/div>/gi, '');
             const finalHtml = DOMPurify.sanitize(cleanedHtml);
+            
             await onUpdateContent(doc.id, lang, { html: finalHtml });
             setSaveStatus('saved');
             setIsEditingContent(false);
         } catch (e) {
+            console.error('[DocumentView] Save failed:', e);
             setSaveStatus('error');
         } finally {
             setIsSaving(false);
@@ -180,11 +180,11 @@ export const DocumentView: React.FC<{
                 <aside className="lg:w-1/4 order-2 lg:order-1">
                     <div className="sticky top-24 space-y-10">
                         {tocItems.length > 0 && (
-                            <div>
+                            <div className="animate-fade-in">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-widest">{t('docView.content.toc.title')}</h4>
                                 <nav className="flex flex-col gap-2 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
                                     {tocItems.map((item) => (
-                                        <button key={item.id} onClick={() => scrollToHeading(item.id)} className={`text-left text-sm hover:text-blue-600 ${item.level === 1 ? 'font-bold' : 'text-gray-500 ml-2'}`}>{item.text}</button>
+                                        <button key={item.id} onClick={() => scrollToHeading(item.id)} className={`text-left text-sm hover:text-blue-600 transition-colors ${item.level === 1 ? 'font-bold' : 'text-gray-500 ml-2'}`}>{item.text}</button>
                                     ))}
                                 </nav>
                             </div>
@@ -196,11 +196,11 @@ export const DocumentView: React.FC<{
                         {currentUserRole === 'admin' && (
                             <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-2">
                                 {!isEditingContent ? (
-                                    <button onClick={() => setIsEditingContent(true)} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-blue-500/20">{t('docView.editContent')}</button>
+                                    <button onClick={() => setIsEditingContent(true)} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all">{t('docView.editContent')}</button>
                                 ) : (
                                     <>
-                                        <button onClick={handleSaveContent} disabled={isSaving || isUploadingImage} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs">{isSaving ? '...' : t('common.save')}</button>
-                                        <button onClick={() => setIsEditingContent(false)} className="w-full py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-2xl font-black uppercase text-xs">{t('common.cancel')}</button>
+                                        <button onClick={handleSaveContent} disabled={isSaving || isUploadingImage} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-green-500/20 disabled:opacity-50">{isSaving ? '...' : t('common.save')}</button>
+                                        <button onClick={() => setIsEditingContent(false)} className="w-full py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-2xl font-black uppercase text-xs hover:bg-gray-200 transition-all">{t('common.cancel')}</button>
                                     </>
                                 )}
                             </div>
