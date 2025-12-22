@@ -40,7 +40,7 @@ const QUILL_CONTENT_STYLES = `
     .quill-content p { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.5rem; color: #374151; }
     .quill-content ul, .quill-content ol { padding-left: 1.5rem; margin-bottom: 1.5rem; }
     .quill-content li { margin-bottom: 0.5rem; color: #374151; }
-    .quill-content img { border-radius: 1rem; margin: 3rem 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 100%; height: auto; }
+    .quill-content img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 100%; height: auto; }
     .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 { color: #f9fafb; }
     .dark .quill-content p, .dark .quill-content li { color: #d1d5db; }
     .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; }
@@ -93,15 +93,11 @@ export const DocumentView: React.FC<{
     const { t, lang: currentLang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
     
-    // 🔥 Improved initialization with Fallback logic
     const getInitialContent = useCallback(() => {
         if (!doc.content) return emptyContentTemplate;
-        // 1. Try current language
         if (doc.content[currentLang]?.html) return doc.content[currentLang]!;
-        // 2. Fallback to any available language (uk, it, en)
         const fallbackLang = Object.keys(doc.content).find(l => doc.content[l]?.html);
         if (fallbackLang) return doc.content[fallbackLang]!;
-        
         return emptyContentTemplate;
     }, [doc.content, currentLang]);
 
@@ -117,7 +113,6 @@ export const DocumentView: React.FC<{
 
     useEffect(() => { registerUploadingImageBlot(); }, []);
 
-    // 🔥 Fix: Sync when doc object OR current language changes
     useEffect(() => {
         setEditableContent(getInitialContent());
     }, [doc.content, currentLang, getInitialContent]);
@@ -132,32 +127,60 @@ export const DocumentView: React.FC<{
 
     useEffect(() => { loadFiles(); }, [loadFiles]);
 
+    // 🔥 Modified to allow IDs and correctly parse TOC
     const { viewHtml, tocItems } = useMemo(() => {
         const html = editableContent.html || '';
         if (!html) return { viewHtml: '', tocItems: [] };
-        const sanitizedHtml = DOMPurify.sanitize(html);
+        
+        // 1. Sanitize allowing ID attribute
+        const sanitizedHtml = DOMPurify.sanitize(html, { ADD_ATTR: ['id'] });
+        
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(sanitizedHtml, 'text/html');
         const headers = htmlDoc.querySelectorAll('h1, h2, h3');
         const toc: { id: string; text: string; level: number }[] = [];
+        
         headers.forEach((header, index) => {
             const text = header.textContent?.trim() || '';
             if (!text) return;
             const id = `section-${index}`;
-            header.id = id;
+            header.id = id; // Set ID for intersection observer
             toc.push({ id, text, level: parseInt(header.tagName.substring(1)) });
         });
+        
         return { viewHtml: htmlDoc.body.innerHTML, tocItems: toc };
     }, [editableContent.html]);
 
+    // 🔥 Robust ScrollSpy Implementation
     useEffect(() => {
         if (isEditingContent || tocItems.length === 0) return;
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => { if (entry.isIntersecting) setActiveId(entry.target.id); });
-        }, { rootMargin: '-150px 0px -70% 0px', threshold: 0 });
-        const elements = tocItems.map(item => document.getElementById(item.id)).filter(Boolean);
-        elements.forEach(el => observer.observe(el!));
-        return () => observer.disconnect();
+
+        // Small delay to ensure dangerouslySetInnerHTML has finished painting
+        const timer = setTimeout(() => {
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    // Find the first intersecting element (the one at the top)
+                    const visible = entries.find(e => e.isIntersecting);
+                    if (visible) {
+                        setActiveId(visible.target.id);
+                    }
+                },
+                { 
+                    // rootMargin detects when element enters the top 20% of viewport
+                    rootMargin: '-100px 0px -80% 0px', 
+                    threshold: 0 
+                }
+            );
+
+            tocItems.forEach((item) => {
+                const el = document.getElementById(item.id);
+                if (el) observer.observe(el);
+            });
+
+            return () => observer.disconnect();
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, [viewHtml, tocItems, isEditingContent]);
 
     const handleSaveContent = async () => {
