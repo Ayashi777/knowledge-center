@@ -14,15 +14,10 @@ export const StorageApi = {
         const legacyPathRef = ref(storage, `documents/${docId}`);
         
         try {
-            // Спробуємо новий шлях
             let res = await listAll(newPathRef);
             
-            // Якщо в новому шляху нічого немає, спробуємо старий (fallback)
-            // Але фільтруємо папку images, якщо вона там є
             if (res.items.length === 0) {
                 const legacyRes = await listAll(legacyPathRef);
-                // В старому дизайні файли лежали прямо в documents/{docId}
-                // Ми беремо тільки файли, ігноруючи підпапки (prefixes)
                 if (legacyRes.items.length > 0) {
                     res = legacyRes;
                 }
@@ -54,7 +49,6 @@ export const StorageApi = {
     },
 
     deleteFile: async (docId: string, fileName: string): Promise<void> => {
-        // Намагаємося видалити з обох місць (для безпеки при legacy)
         const paths = [
             `documents/${docId}/files/${fileName}`,
             `documents/${docId}/${fileName}`
@@ -64,9 +58,9 @@ export const StorageApi = {
             try {
                 const storageRef = ref(storage, path);
                 await deleteObject(storageRef);
-                break; // Якщо видалили, зупиняємось
+                break;
             } catch (e) {
-                // Ignore errors for missing files in one of the paths
+                // Ignore missing file errors
             }
         }
     },
@@ -77,5 +71,20 @@ export const StorageApi = {
         const storageRef = ref(storage, path);
         await uploadBytes(storageRef, file);
         return await getDownloadURL(storageRef);
+    },
+
+    uploadThumbnail: async (file: File, docId: string): Promise<string> => {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        const path = `documents/${docId}/thumbnail.${ext}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
     }
 };
+
+// --- Legacy Exports for 1:1 Compatibility with Main ---
+export const isFileTypeAllowed = StorageApi.isFileTypeAllowed;
+export const uploadDocumentFile = StorageApi.uploadFile;
+export const listDocumentFiles = StorageApi.listDocumentFiles;
+export const deleteDocumentFile = StorageApi.deleteFile;
+export const uploadImage = StorageApi.uploadImage;
