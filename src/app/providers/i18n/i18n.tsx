@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
-import { translations } from './translations';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import './config'; // Import i18n configuration
 import { Language } from '@shared/types';
 
 export type { Language };
@@ -12,43 +13,20 @@ type I18nContextType = {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const resolveKey = (obj: any, key: string): string => {
-  if (!key) return '';
-  try {
-    return key.split('.').reduce((acc, part) => {
-        if (acc && typeof acc === 'object') return acc[part];
-        return undefined;
-    }, obj);
-  } catch (e) {
-    return key;
-  }
-};
-
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Language>('uk');
+  const { t: i18nT, i18n } = useTranslation();
+
+  const setLang = useCallback((lang: Language) => {
+    i18n.changeLanguage(lang);
+  }, [i18n]);
 
   const t = useCallback((key: string | undefined | null, options?: Record<string, string | number>): string => {
     if (!key) return '';
-    
-    let text = resolveKey(translations[lang as keyof typeof translations], key);
-
-    if (!text) {
-        // Fallback to English only if key exists there, otherwise return key name
-        text = resolveKey((translations as any).en, key) || key;
-    }
-    
-    if (options && typeof text === 'string') {
-      Object.entries(options).forEach(([k, v]) => {
-        const regex = new RegExp(`{${k}}`, 'g');
-        text = text.replace(regex, String(v));
-      });
-    }
-
-    return text;
-  }, [lang]);
+    return i18nT(key, options);
+  }, [i18nT]);
   
   return (
-    <I18nContext.Provider value={{ lang, setLang, t }}>
+    <I18nContext.Provider value={{ lang: i18n.language as Language, setLang, t }}>
       {children}
     </I18nContext.Provider>
   );

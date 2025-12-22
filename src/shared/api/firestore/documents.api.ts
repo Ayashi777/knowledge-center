@@ -10,7 +10,11 @@ import {
     serverTimestamp,
     runTransaction,
     orderBy,
-    onSnapshot
+    onSnapshot,
+    where,
+    limit,
+    startAfter,
+    QueryConstraint
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";
 import { Document, DocumentContent, Language } from "@shared/types";
@@ -58,6 +62,49 @@ export const DocumentsApi = {
             const docs = snapshot.docs.map(mapDocument);
             onUpdate(docs);
         }, onError);
+    },
+
+    subscribeFiltered: (
+        options: { 
+            categoryKey?: string; 
+            limitCount?: number;
+            sortBy?: 'recent' | 'alpha';
+        }, 
+        onUpdate: (docs: Document[]) => void, 
+        onError?: (error: any) => void
+    ) => {
+        const constraints: QueryConstraint[] = [];
+
+        if (options.categoryKey && options.categoryKey !== 'all') {
+            constraints.push(where('categoryKey', '==', options.categoryKey));
+        }
+
+        if (options.sortBy === 'alpha') {
+            constraints.push(orderBy('title', 'asc'));
+        } else {
+            constraints.push(orderBy('updatedAt', 'desc'));
+        }
+
+        if (options.limitCount) {
+            constraints.push(limit(options.limitCount));
+        }
+
+        const q = query(collection(db, COLLECTION_NAME), ...constraints);
+
+        return onSnapshot(q, (snapshot) => {
+            const docs = snapshot.docs.map(mapDocument);
+            onUpdate(docs);
+        }, (error) => {
+            // Firestore might require an index for some combinations
+            if (error.code === 'failed-precondition') {
+                console.warn("Firestore index required. Falling back to simple query.");
+                // Fallback to simple query if index is missing
+                const fallbackQ = query(collection(db, COLLECTION_NAME), orderBy('updatedAt', 'desc'), limit(options.limitCount || 50));
+                onSnapshot(fallbackQ, (snap) => onUpdate(snap.docs.map(mapDocument)), onError);
+            } else {
+                onError?.(error);
+            }
+        });
     },
 
     getById: async (id: string): Promise<Document | null> => {

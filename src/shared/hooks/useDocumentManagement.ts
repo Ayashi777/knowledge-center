@@ -1,58 +1,91 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { UserRole } from '@shared/types';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
-import { Document, Category, Tag, UserRole } from '@shared/types';
-import { CategoriesApi } from '@shared/api/firestore/categories.api';
-import { TagsApi } from '@shared/api/firestore/tags.api';
-import { useI18n } from '@app/providers/i18n/i18n';
-import { normalizeCategoryKey } from '@shared/lib/utils/format';
+import { useCategories } from '@entities/category/model/useCategories';
+import { useTags } from '@entities/tag/model/useTags';
+import { useDocuments } from '@entities/document/model/useDocuments';
 
 export const useDocumentManagement = () => {
-    const { t } = useI18n();
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    // Filters & UI State
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    // -- State Helpers (Reading from URL or Defaults) --
+    const getParam = (key: string, defaultValue: string) => searchParams.get(key) || defaultValue;
+    
+    // UI State synced with URL where applicable
+    const [searchTerm, setSearchTerm] = useState(() => getParam('q', ''));
+    const [selectedCategory, setSelectedCategory] = useState(() => getParam('category', 'all'));
+    const [currentPage, setCurrentPage] = useState(() => parseInt(getParam('page', '1'), 10));
+    
+    // Other UI State (can be kept local or also synced if needed)
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
     const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [currentPage, setCurrentPage] = useState(1);
+    
     const docsPerPage = 9;
 
+    // -- URL Synchronization --
     useEffect(() => {
-        setIsLoading(true);
+        const params: Record<string, string> = {};
+        if (searchTerm) params.q = searchTerm;
+        if (selectedCategory !== 'all') params.category = selectedCategory;
+        if (currentPage > 1) params.page = currentPage.toString();
         
-        const unsubDocs = DocumentsApi.subscribeAll(
-            (docs) => {
-                setDocuments(docs);
-                setIsLoading(false);
-            },
-            (err) => {
-                console.error("Error fetching documents:", err);
-                setError(err.message);
-                setIsLoading(false);
-            }
-        );
+        // Update URL without breaking the history stack too much (replace: true optional)
+        setSearchParams(params, { replace: true });
+    }, [searchTerm, selectedCategory, currentPage, setSearchParams]);
 
-        const unsubCats = CategoriesApi.subscribeAll(setCategories);
-        const unsubTags = TagsApi.subscribeAll(setTags);
-
-        return () => {
-            unsubDocs();
-            unsubCats();
-            unsubTags();
-        };
-    }, []);
-
-    // Reset to page 1 when any filter changes
+    // Handle back/forward buttons or manual URL edits
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy]);
+        const q = getParam('q', '');
+        const cat = getParam('category', 'all');
+        const pg = parseInt(getParam('page', '1'), 10);
+
+        if (q !== searchTerm) setSearchTerm(q);
+        if (cat !== selectedCategory) setSelectedCategory(cat);
+        if (pg !== currentPage) setCurrentPage(pg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
+    // -- Entities --
+    const { categories, isLoading: isCatsLoading } = useCategories();
+    const { tags, isLoading: isTagsLoading } = useTags();
+    const { documents, allDocuments, isLoading: isDocsLoading } = useDocuments({
+        categories,
+        searchTerm,
+        selectedCategory,
+        selectedTags,
+        selectedRoleFilter,
+        sortBy
+    });
+
+    const isLoading = isCatsLoading || isTagsLoading || isDocsLoading;
+
+    // -- Pagination logic --
+    const totalPages = Math.ceil(documents.length / docsPerPage);
+    
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
+
+    const paginatedDocs = useMemo(() => {
+        const start = (currentPage - 1) * docsPerPage;
+        return documents.slice(start, start + docsPerPage);
+    }, [documents, currentPage]);
+
+    // Reset page on filter change (except when page itself changes)
+    useEffect(() => {
+        // We only reset if it's a filter change, not a manual page change from URL
+        const q = getParam('q', '');
+        const cat = getParam('category', 'all');
+        if (searchTerm !== q || selectedCategory !== cat) {
+            setCurrentPage(1);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, selectedCategory]);
 
     const handleTagSelect = (tagId: string) => {
         setSelectedTags(prev => 
@@ -65,87 +98,15 @@ export const useDocumentManagement = () => {
         setSelectedCategory('all');
         setSelectedTags([]);
         setSelectedRoleFilter('all');
+        setCurrentPage(1);
     };
 
-    const catByKey = useMemo(() => {
-        const m = new Map<string, Category>();
-        categories.forEach(c => {
-            const normKey = normalizeCategoryKey(c.nameKey);
-            m.set(normKey, c);
-        });
-        return m;
-    }, [categories]);
-
-    const sortedAndFilteredDocs = useMemo(() => {
-        let result = documents.filter(doc => {
-            // Filter: show only documents with existing categories
-            const normDocCat = normalizeCategoryKey(doc.categoryKey);
-            const exists = categories.some(c => normalizeCategoryKey(c.nameKey) === normDocCat);
-            if (!exists) return false;
-
-            const displayTitle = doc.titleKey ? t(doc.titleKey) : doc.title || '';
-            const matchesSearch = 
-                displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                doc.description?.toLowerCase().includes(searchTerm.toLowerCase());
-            
-            const normSelectedCat = normalizeCategoryKey(selectedCategory);
-            const matchesCategory = selectedCategory === 'all' || normDocCat === normSelectedCat;
-            
-            const matchesTags = selectedTags.length === 0 || 
-                               selectedTags.every(tagId => doc.tagIds?.includes(tagId));
-            
-            const matchesRole = (d: Document) => {
-                if (selectedRoleFilter === 'all') return true;
-                const normKey = normalizeCategoryKey(d.categoryKey);
-                const cat = catByKey.get(normKey);
-                return !!cat?.viewPermissions?.includes(selectedRoleFilter as UserRole);
-            };
-            
-            return matchesSearch && matchesCategory && matchesTags && matchesRole(doc);
-        });
-
-        // Sorting
-        result.sort((a, b) => {
-            if (sortBy === 'recent') {
-                const dateA = a.updatedAt?.toDate?.() || new Date(a.updatedAt) || 0;
-                const dateB = b.updatedAt?.toDate?.() || new Date(b.updatedAt) || 0;
-                return (dateB as any) - (dateA as any);
-            } else {
-                const titleA = a.titleKey ? t(a.titleKey) : a.title || '';
-                const titleB = b.titleKey ? t(b.titleKey) : b.title || '';
-                return titleA.localeCompare(titleB);
-            }
-        });
-
-        return result;
-    }, [documents, categories, searchTerm, selectedCategory, selectedTags, selectedRoleFilter, sortBy, catByKey, t]);
-
-    // Pagination
-    const totalPages = Math.ceil(sortedAndFilteredDocs.length / docsPerPage);
-    
-    // Auto-adjust current page if it exceeds total pages
-    useEffect(() => {
-        if (totalPages > 0 && currentPage > totalPages) {
-            setCurrentPage(totalPages);
-        }
-    }, [totalPages, currentPage]);
-
-    const paginatedDocs = useMemo(() => {
-        const start = (currentPage - 1) * docsPerPage;
-        return sortedAndFilteredDocs.slice(start, start + docsPerPage);
-    }, [sortedAndFilteredDocs, currentPage]);
-
-    // Show all categories in the filter (Main behavior)
-    const visibleCategories = categories;
-
     return {
-        documents,
+        documents: allDocuments,
         categories,
         allTags: tags,
         isLoading,
-        error,
         
-        // Filter state & actions
         searchTerm,
         setSearchTerm,
         selectedCategory,
@@ -156,21 +117,18 @@ export const useDocumentManagement = () => {
         setSelectedRoleFilter,
         clearFilters,
         
-        // UI State
         sortBy,
         setSortBy,
         viewMode,
         setViewMode,
         
-        // Pagination
         currentPage,
         setCurrentPage,
         totalPages,
         
-        // Processed data
-        sortedAndFilteredDocs,
+        sortedAndFilteredDocs: documents,
         paginatedDocs,
-        visibleCategories,
+        visibleCategories: categories,
         
         actions: {
             createDocument: DocumentsApi.create,

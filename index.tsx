@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './src/app/App';
 import { I18nProvider } from './src/app/providers/i18n/i18n';
 import { AuthProvider } from './src/app/providers/AuthProvider';
+import { ModalProvider } from './src/app/providers/ModalProvider/ModalProvider';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,7 +15,9 @@ root.render(
   <React.StrictMode>
     <AuthProvider>
       <I18nProvider>
-        <App />
+        <ModalProvider>
+            <App />
+        </ModalProvider>
       </I18nProvider>
     </AuthProvider>
   </React.StrictMode>

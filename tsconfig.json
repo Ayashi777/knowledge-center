@@ -23,7 +23,9 @@
       "@shared/*": ["./src/shared/*"],
       "@app/*": ["./src/app/*"],
       "@widgets/*": ["./src/widgets/*"],
-      "@pages/*": ["./src/pages/*"]
+      "@pages/*": ["./src/pages/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@features/*": ["./src/features/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
