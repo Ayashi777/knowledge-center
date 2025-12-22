@@ -36,7 +36,7 @@ const QUILL_CONTENT_STYLES = `
     }
     .quill-content h1 { font-size: 2.5rem; font-weight: 900; margin: 3rem 0 1.5rem; color: #111827; line-height: 1.1; letter-spacing: -0.03em; }
     .quill-content h2 { font-size: 1.75rem; font-weight: 800; margin: 2.5rem 0 1.25rem; color: #111827; letter-spacing: -0.02em; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; display: inline-block; }
-    .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 1rem; color: #1f2937; }
+    .quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #1f2937; }
     .quill-content p { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.5rem; color: #374151; }
     .quill-content ul, .quill-content ol { padding-left: 1.5rem; margin-bottom: 1.5rem; }
     .quill-content li { margin-bottom: 0.5rem; color: #374151; }
@@ -45,7 +45,6 @@ const QUILL_CONTENT_STYLES = `
     .dark .quill-content p, .dark .quill-content li { color: #d1d5db; }
     .quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; }
 
-    /* TOC Animations */
     @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     .toc-animate { animation: slideIn 0.4s ease forwards; }
 `;
@@ -91,19 +90,37 @@ export const DocumentView: React.FC<{
     onCategoryClick: (categoryKey: string) => void;
     allTags?: Tag[];
 }> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [] }) => {
-    const { t, lang } = useI18n();
+    const { t, lang: currentLang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
-    const [editableContent, setEditableContent] = useState<DocumentContent>(doc.content?.[lang] || emptyContentTemplate);
+    
+    // 🔥 Improved initialization with Fallback logic
+    const getInitialContent = useCallback(() => {
+        if (!doc.content) return emptyContentTemplate;
+        // 1. Try current language
+        if (doc.content[currentLang]?.html) return doc.content[currentLang]!;
+        // 2. Fallback to any available language (uk, it, en)
+        const fallbackLang = Object.keys(doc.content).find(l => doc.content[l]?.html);
+        if (fallbackLang) return doc.content[fallbackLang]!;
+        
+        return emptyContentTemplate;
+    }, [doc.content, currentLang]);
+
+    const [editableContent, setEditableContent] = useState<DocumentContent>(getInitialContent);
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [activeId, setActiveId] = useState<string | null>(null);
 
     const quillRef = useRef<ReactQuill | null>(null);
 
     useEffect(() => { registerUploadingImageBlot(); }, []);
-    useEffect(() => { setEditableContent(doc.content?.[lang] || emptyContentTemplate); }, [doc.id, lang]);
+
+    // 🔥 Fix: Sync when doc object OR current language changes
+    useEffect(() => {
+        setEditableContent(getInitialContent());
+    }, [doc.content, currentLang, getInitialContent]);
 
     const loadFiles = useCallback(async () => {
         setIsLoadingFiles(true);
@@ -133,6 +150,16 @@ export const DocumentView: React.FC<{
         return { viewHtml: htmlDoc.body.innerHTML, tocItems: toc };
     }, [editableContent.html]);
 
+    useEffect(() => {
+        if (isEditingContent || tocItems.length === 0) return;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => { if (entry.isIntersecting) setActiveId(entry.target.id); });
+        }, { rootMargin: '-150px 0px -70% 0px', threshold: 0 });
+        const elements = tocItems.map(item => document.getElementById(item.id)).filter(Boolean);
+        elements.forEach(el => observer.observe(el!));
+        return () => observer.disconnect();
+    }, [viewHtml, tocItems, isEditingContent]);
+
     const handleSaveContent = async () => {
         const html = editableContent.html || '';
         if (html.includes('data:image/')) {
@@ -143,7 +170,7 @@ export const DocumentView: React.FC<{
         try {
             const cleanedHtml = html.replace(/<div class="quill-uploading-image"[^>]*>[\s\S]*?<\/div>/gi, '');
             const finalHtml = DOMPurify.sanitize(cleanedHtml);
-            await onUpdateContent(doc.id, lang, { html: finalHtml });
+            await onUpdateContent(doc.id, currentLang, { html: finalHtml });
             setSaveStatus('saved');
             setIsEditingContent(false);
         } catch (e) { setSaveStatus('error'); } finally {
@@ -155,10 +182,7 @@ export const DocumentView: React.FC<{
     const scrollToHeading = (id: string) => {
         const el = document.getElementById(id);
         if (el) {
-            const offset = 120;
-            const bodyRect = document.body.getBoundingClientRect().top;
-            const elementRect = el.getBoundingClientRect().top;
-            window.scrollTo({ top: elementRect - bodyRect - offset, behavior: 'smooth' });
+            window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
         }
     };
 
@@ -191,48 +215,30 @@ export const DocumentView: React.FC<{
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
                 <aside className="lg:w-80 shrink-0 sticky top-28 h-auto max-h-[85vh] overflow-y-auto pr-2 custom-scrollbar">
                     <div className="space-y-10">
-                        
-                        {/* 1. TOC Section */}
                         {tocItems.length > 0 && (
-                            <div className="bg-white/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
+                            <div className="bg-white/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm toc-animate shadow-sm">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-6 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                                     {t('docView.content.toc.title')}
                                 </h4>
                                 <nav className="space-y-1 relative">
                                     <div className="absolute left-[7px] top-2 bottom-2 w-[1px] bg-gray-200 dark:bg-gray-700" />
-                                    {tocItems.map((item) => (
-                                        <button 
-                                            key={item.id} 
-                                            onClick={() => scrollToHeading(item.id)} 
-                                            className={`w-full text-left py-2 pl-6 pr-3 rounded-xl text-[11px] transition-all relative group hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm ${
-                                                item.level === 1 ? 'font-black uppercase text-gray-900 dark:text-white' : 
-                                                item.level === 2 ? 'font-bold text-gray-500 dark:text-gray-400' : 
-                                                'text-gray-400 dark:text-gray-500 italic'
-                                            }`}
-                                        >
-                                            <div className="absolute left-[5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border-2 border-white dark:border-gray-900 bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-600 group-hover:scale-125 transition-all z-10" />
-                                            <span className="line-clamp-2">{item.text}</span>
-                                        </button>
-                                    ))}
+                                    {tocItems.map((item) => {
+                                        const isActive = activeId === item.id;
+                                        return (
+                                            <button key={item.id} onClick={() => scrollToHeading(item.id)} className={`w-full text-left py-2 pl-6 pr-3 rounded-xl text-[11px] transition-all duration-300 relative group hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm ${isActive ? 'bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : ''} ${item.level === 1 ? (isActive ? 'font-black text-blue-600 dark:text-blue-400' : 'font-black uppercase text-gray-900 dark:text-white') : item.level === 2 ? (isActive ? 'font-black text-blue-500' : 'font-bold text-gray-500 dark:text-gray-400') : (isActive ? 'font-bold text-blue-400' : 'text-gray-400 dark:text-gray-500 italic')}`}>
+                                                <div className={`absolute left-[5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border-2 border-white dark:border-gray-900 transition-all duration-500 z-10 ${isActive ? 'bg-blue-600 scale-[1.75] shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-400'}`} />
+                                                <span className={`line-clamp-2 transition-transform duration-300 ${isActive ? 'translate-x-1' : ''}`}>{item.text}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </nav>
                             </div>
                         )}
-
-                        {/* 2. Professional Document Cards */}
                         <div className="space-y-4 px-1">
                             <h4 className="font-black text-gray-900 dark:text-white mb-4 text-[10px] uppercase tracking-[0.2em] ml-2">Available Documents</h4>
-                            <DocumentFileList 
-                                docId={doc.id} 
-                                files={files} 
-                                isLoading={isLoadingFiles} 
-                                currentUserRole={currentUserRole} 
-                                onRefresh={loadFiles} 
-                                docThumbnail={doc.thumbnailUrl} // 🔥 Pass thumbnail to files list
-                            />
+                            <DocumentFileList docId={doc.id} files={files} isLoading={isLoadingFiles} currentUserRole={currentUserRole} onRefresh={loadFiles} docThumbnail={doc.thumbnailUrl} />
                         </div>
-
-                        {/* Admin Actions */}
                         {currentUserRole === 'admin' && (
                             <div className="space-y-3">
                                 {!isEditingContent ? (
@@ -250,13 +256,7 @@ export const DocumentView: React.FC<{
 
                 <main className="flex-grow min-w-0 flex flex-col items-center">
                     <div className="w-full max-w-[850px] mb-8">
-                         <DocumentHeader 
-                            title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} 
-                            updatedAt={doc.updatedAt} 
-                            tagIds={doc.tagIds || []} 
-                            tagById={tagById}
-                            viewPermissions={doc.viewPermissions}
-                        />
+                         <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} viewPermissions={doc.viewPermissions} />
                     </div>
                     <div className="w-full">
                         {isEditingContent ? (
