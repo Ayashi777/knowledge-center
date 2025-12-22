@@ -36,8 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-full lg:w-72 shrink-0 space-y-8">
       {/* Search/Filters header for mobile maybe? */}
       <div className="flex items-center justify-between lg:hidden">
-        <h2 className="text-lg font-bold">Фільтри</h2>
-        <button onClick={onClearFilters} className="text-sm text-blue-600 font-medium">Очистити</button>
+        <h2 className="text-lg font-bold">{t('sidebar.filters')}</h2>
+        <button onClick={onClearFilters} className="text-sm text-blue-600 font-medium">{t('sidebar.clear')}</button>
       </div>
 
       {/* Categories */}
@@ -84,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Roles Filter (UI only) */}
       <section className="pt-4 border-t border-gray-100 dark:border-gray-800">
         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
-          Призначено для
+          {t('sidebar.forWhom')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {['employee', 'worker', 'dispatcher', 'hr'].map((role) => (
@@ -130,13 +130,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
             <Icon name="info-circle" className="w-32 h-32" />
         </div>
-        <h4 className="font-black text-lg mb-2 relative z-10 uppercase tracking-tight">Потрібна допомога?</h4>
-        <p className="text-blue-100 text-sm mb-4 relative z-10 leading-snug">Якщо ви не знайшли потрібний документ, зверніться до адміністратора або вашого керівника.</p>
+        <h4 className="font-black text-lg mb-2 relative z-10 uppercase tracking-tight">{t('sidebar.helpTitle')}</h4>
+        <p className="text-blue-100 text-sm mb-4 relative z-10 leading-snug">{t('sidebar.helpDescription')}</p>
         <a 
           href="mailto:support@example.com" 
           className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-colors relative z-10"
         >
-          Написати нам
+          {t('sidebar.contactUs')}
         </a>
       </div>
     </aside>

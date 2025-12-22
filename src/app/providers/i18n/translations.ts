@@ -19,6 +19,10 @@ export const translations = {
       resetFilters: 'Скинути фільтри',
       add: 'Додати',
       activeFilters: 'Активні фільтри',
+      locked: 'Закрито',
+      approve: 'Схвалити',
+      deny: 'Відхилити',
+      status: 'Статус',
     },
     adminDocs: {
       title: 'Документація',
@@ -47,6 +51,18 @@ export const translations = {
       noTags: 'Теги ще не створені.',
       confirmDelete: 'Ви впевнені, що хочете видалити цей тег? Він буде видалений з усіх документів, де він використовується.',
     },
+    adminRequests: {
+      title: 'Заявки на доступ',
+      noRequests: 'Заявок немає',
+      tableUser: 'Користувач',
+      tableInfo: 'Компанія / Телефон',
+      tableRequestedRole: 'Роль (запит)',
+      tableStatus: 'Статус',
+      tableActions: 'Дії',
+      pending: 'В очікуванні',
+      approved: 'Схвалено',
+      denied: 'Відхилено',
+    },
     tagEditor: {
         createTitle: 'Створити новий тег',
         editTitle: 'Редагувати тег',
@@ -65,6 +81,13 @@ export const translations = {
       allTypes: 'Всі типи',
       tags: 'Теги',
       forWhom: 'Для кого',
+      categories: 'Категорії',
+      allDocs: 'Всі документи',
+      helpTitle: 'Потрібна допомога?',
+      helpDescription: 'Якщо ви не знайшли потрібний документ, зверніться до адміністратора або вашого керівника.',
+      contactUs: 'Написати нам',
+      filters: 'Фільтри',
+      clear: 'Очистити',
     },
     dashboard: {
       title: 'Центр Технічних Рішень',
@@ -76,7 +99,7 @@ export const translations = {
       recentDocs: 'Останні оновлення',
       allDocs: 'Всі документи',
       categories: 'Категорії',
-      confirmDelete: 'Ви впевнені, що хочете видалити цей документ?',
+      confirmDelete: 'Ви впевнені, що хочете видалити?',
       viewList: 'Список',
       viewGrid: 'Сітка',
       sortBy: 'Сортувати за',
@@ -103,6 +126,8 @@ export const translations = {
         accessPendingDescription: 'Ваш запит на доступ до цього документа розглядається. Адміністратор незабаром його перевірить. Дякуємо за терпіння!',
         backToList: 'Повернутися до списку',
         uploadNew: 'Завантажити новий',
+        filesEmpty: 'Файлів немає',
+        invalidFileType: 'Цей тип файлу не дозволений',
         content: {
             toc: {
                 title: 'Зміст документу',
@@ -209,6 +234,9 @@ export const translations = {
       fixit: "Fixit",
       freudenberg: "Freudenberg",
       typar: "Typar",
+      "ЯКАСЬ ТМ ДЛЯ АРХІТЕКТОРА": "ЯКАСЬ ТМ ДЛЯ АРХІТЕКТОРА",
+      "ЦСП": "ЦСП",
+      "Fixit": "Fixit",
     },
     roles: {
         guest: 'Гість',
@@ -216,6 +244,10 @@ export const translations = {
         designer: 'Проєктувальник',
         architect: 'Архітектор',
         admin: 'Адміністратор',
+        employee: 'Співробітник',
+        worker: 'Робітник',
+        dispatcher: 'Диспетчер',
+        hr: 'HR',
     }
   },
   en: {
@@ -236,6 +268,10 @@ export const translations = {
       resetFilters: 'Reset filters',
       add: 'Add',
       activeFilters: 'Active Filters',
+      locked: 'Locked',
+      approve: 'Approve',
+      deny: 'Deny',
+      status: 'Status',
     },
     adminDocs: {
       title: 'Documentation',
@@ -264,6 +300,18 @@ export const translations = {
       noTags: 'No tags created yet.',
       confirmDelete: 'Are you sure you want to delete this tag? It will be removed from all documents where it is used.',
     },
+    adminRequests: {
+        title: 'Access Requests',
+        noRequests: 'No requests yet',
+        tableUser: 'User',
+        tableInfo: 'Company / Phone',
+        tableRequestedRole: 'Role (req)',
+        tableStatus: 'Status',
+        tableActions: 'Actions',
+        pending: 'Pending',
+        approved: 'Approved',
+        denied: 'Denied',
+    },
     tagEditor: {
         createTitle: 'Create New Tag',
         editTitle: 'Edit Tag',
@@ -282,6 +330,13 @@ export const translations = {
       allTypes: 'All Types',
       tags: 'Tags',
       forWhom: 'For whom',
+      categories: 'Categories',
+      allDocs: 'All Documents',
+      helpTitle: 'Need help?',
+      helpDescription: 'If you can\'t find the document you need, contact your administrator or supervisor.',
+      contactUs: 'Contact Us',
+      filters: 'Filters',
+      clear: 'Clear',
     },
     dashboard: {
         title: 'Technical Solutions Center',
@@ -320,6 +375,8 @@ export const translations = {
         accessPendingDescription: 'Your request to access this document is under review. The administrator will check it shortly. Thank you for your patience!',
         backToList: 'Back to List',
         uploadNew: 'Upload New',
+        filesEmpty: 'No files available',
+        invalidFileType: 'File type not allowed',
         content: {
             toc: {
                 title: 'Table of Contents',
@@ -426,6 +483,9 @@ export const translations = {
         fixit: "Fixit",
         freudenberg: "Freudenberg",
         typar: "Typar",
+        "ЯКАСЬ ТМ ДЛЯ АРХІТЕКТОРА": "SOME TM FOR ARCHITECT",
+        "ЦСП": "CSP",
+        "Fixit": "Fixit",
     },
     roles: {
         guest: 'Guest',
@@ -433,6 +493,10 @@ export const translations = {
         designer: 'Designer',
         architect: 'Architect',
         admin: 'Admin',
+        employee: 'Employee',
+        worker: 'Worker',
+        dispatcher: 'Dispatcher',
+        hr: 'HR',
     }
   }
 };

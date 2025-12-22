@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Document, UserRole, DocumentContent, Tag } from '@shared/types';
@@ -99,15 +99,16 @@ export const DocumentView: React.FC<{
         }
     }, [doc, lang, isEditingContent]);
 
-    useEffect(() => {
-        const loadFiles = async () => {
-            setIsLoadingFiles(true);
-            const docFiles = await StorageApi.listDocumentFiles(doc.id);
-            setFiles(docFiles);
-            setIsLoadingFiles(false);
-        };
-        loadFiles();
+    const loadFiles = useCallback(async () => {
+        setIsLoadingFiles(true);
+        const docFiles = await StorageApi.listDocumentFiles(doc.id);
+        setFiles(docFiles);
+        setIsLoadingFiles(false);
     }, [doc.id]);
+
+    useEffect(() => {
+        loadFiles();
+    }, [loadFiles]);
 
     const handleSaveContent = async () => {
         setIsSaving(true);
@@ -180,7 +181,7 @@ export const DocumentView: React.FC<{
                         )}
                         <div>
                             <h4 className="font-black text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-widest">{t('docView.downloadFiles')}</h4>
-                            <DocumentFileList files={files} isLoading={isLoadingFiles} currentUserRole={currentUserRole} />
+                            <DocumentFileList docId={doc.id} files={files} isLoading={isLoadingFiles} currentUserRole={currentUserRole} onRefresh={loadFiles} />
                         </div>
                         {currentUserRole === 'admin' && (
                             <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-2">

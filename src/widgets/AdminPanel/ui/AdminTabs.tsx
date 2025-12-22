@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@shared/ui/icons';
 
-type TabId = 'content' | 'users' | 'tags';
+type TabId = 'content' | 'users' | 'tags' | 'requests';
 
 interface AdminTabsProps {
     activeTab: TabId;
@@ -13,6 +13,7 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab })
         { id: 'content', label: 'Контент', icon: 'document-text' },
         { id: 'tags', label: 'Теги', icon: 'tag' },
         { id: 'users', label: 'Користувачі', icon: 'users' },
+        { id: 'requests', label: 'Заявки', icon: 'info-circle' },
     ] as const;
 
     return (
@@ -27,7 +28,7 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab })
                             : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                     }`}
                 >
-                    <Icon name={tab.icon} className="w-4 h-4" />
+                    <Icon name={tab.icon as any} className="w-4 h-4" />
                     {tab.label}
                     {activeTab === tab.id && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
