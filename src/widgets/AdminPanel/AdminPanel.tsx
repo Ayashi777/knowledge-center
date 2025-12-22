@@ -30,9 +30,9 @@ interface AdminPanelProps {
 type TabId = 'content' | 'users' | 'tags' | 'requests';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
-  categories,
-  documents,
-  allTags,
+  categories = [],
+  documents = [],
+  allTags = [],
   onUpdateCategory,
   onDeleteCategory,
   onAddCategory,
@@ -61,7 +61,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (activeTab === 'users') {
       setIsLoading(true);
       const unsub = UsersApi.subscribeUsers((updatedUsers) => {
-        setUsers(updatedUsers);
+        setUsers(updatedUsers || []);
         setIsLoading(false);
       });
       return () => unsub();
@@ -69,7 +69,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (activeTab === 'requests') {
         setIsLoading(true);
         const unsub = UsersApi.subscribeRequests((updatedRequests) => {
-            setRequests(updatedRequests);
+            setRequests(updatedRequests || []);
             setIsLoading(false);
         });
         return () => unsub();
@@ -130,7 +130,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const pendingRequestsCount = requests.filter(r => r.status === 'pending').length;
+  // 🔥 Fix: Safe access with optional chaining and fallback
+  const pendingRequestsCount = (requests || []).filter(r => r.status === 'pending').length;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden animate-slide-up">
@@ -173,14 +174,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <>
                 {activeTab === 'users' && (
                     <UsersTab 
-                        users={users}
+                        users={users || []}
                         onEditUser={setEditingUser}
                     />
                 )}
 
                 {activeTab === 'requests' && (
                     <RequestsTab 
-                        requests={requests}
+                        requests={requests || []}
                         onApprove={handleApproveRequest}
                         onDeny={handleDenyRequest}
                     />
