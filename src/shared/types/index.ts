@@ -1,6 +1,6 @@
 // src/shared/types/index.ts
 
-export type Language = 'uk' | 'it';
+export type Language = 'uk' | 'it' | 'en';
 
 export type UserRole = 'guest' | 'foreman' | 'designer' | 'architect' | 'admin';
 
@@ -69,8 +69,10 @@ export interface Document {
   id: string;
   titleKey?: string;
   title?: string;
+  description?: string;
   thumbnailUrl?: string;
   updatedAt: any;
+  createdAt?: any;
   categoryKey: string;
   tagIds?: string[];
   content: {

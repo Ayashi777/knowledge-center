@@ -4,9 +4,8 @@ import {
     signOut as firebaseSignOut,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    Auth
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '@shared/api/firebase/firebase';
 import { UserRole, UserProfile } from '@shared/types';
 
@@ -51,6 +50,7 @@ export const AuthApi = {
 
         // Create user profile
         await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
             email: data.email,
             role: 'guest' as UserRole, 
             name: data.name,
@@ -76,6 +76,8 @@ export const AuthApi = {
     }
 };
 
-// Maintain backward compatibility if needed, but better to use AuthApi
+// --- Legacy Exports for 1:1 Compatibility with Main ---
 export const subscribeToAuthChanges = AuthApi.subscribeToAuthChanges;
 export const logout = AuthApi.logout;
+export const login = AuthApi.login;
+export const register = AuthApi.register;
