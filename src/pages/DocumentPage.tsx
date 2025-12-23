@@ -34,7 +34,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     
     const { allTags, isLoading: isDocsLoading } = useDocumentManagement();
 
-    // 🔥 Safety check for find
     const docItem = (documents || []).find((d) => d.id === id);
 
     if (isAuthLoading || isDocsLoading) {
@@ -48,17 +47,14 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     if (!docItem) return <Navigate to="/" />;
 
     const hasAccess = canViewDocument(currentUserRole, docItem, categories);
-
     const isGuest = currentUserRole === 'guest';
     
-    // Find category to get allowed roles for display
     const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
     const displayRoles = (cat?.viewPermissions || docItem.viewPermissions || [])
         .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'engineer' || r === 'architect'));
 
     return (
       <div className="relative min-h-screen">
-        {/* Document content with blur if no access */}
         <div className={!hasAccess ? "blur-2xl pointer-events-none select-none transition-all duration-700 opacity-50" : "transition-all duration-700"}>
           <DocumentView
             doc={docItem}
@@ -75,10 +71,19 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
           />
         </div>
 
-        {/* Access Restriction Overlay */}
         {!hasAccess && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-gray-950/40 backdrop-blur-md animate-fade-in">
-            <div className="bg-white dark:bg-gray-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-white/10 max-w-xl w-full text-center">
+            <div className="bg-white dark:bg-gray-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-white/10 max-w-xl w-full text-center relative overflow-hidden">
+              
+              {/* 🔥 Close Button Icon */}
+              <button 
+                onClick={() => navigate('/')}
+                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                title={t('common.cancel')}
+              >
+                <Icon name="x-mark" className="w-6 h-6" />
+              </button>
+
               <div className="mx-auto mb-8 w-20 h-20 rounded-3xl bg-blue-600/10 flex items-center justify-center">
                 <Icon
                   name={isGuest ? 'lock-closed' : 'clock'}
@@ -138,8 +143,9 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
 
               <button
                 onClick={() => navigate('/')}
-                className="mt-8 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                className="mt-8 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
               >
+                <Icon name="chevron-left" className="w-4 h-4" />
                 {t('docView.backToList')}
               </button>
             </div>

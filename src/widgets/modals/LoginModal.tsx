@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
@@ -31,7 +31,7 @@ export const LoginModal: React.FC<{
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Reliable Password Validation logic
+    // Password Validation logic
     const hasMinLen = reqPassword.length >= 8;
     const hasNumber = /[0-9]/.test(reqPassword);
     const hasUpper = /[A-Z]/.test(reqPassword);
@@ -98,10 +98,7 @@ export const LoginModal: React.FC<{
         window.location.href = '/';
     };
 
-    // Client-only roles for registration
     const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect'];
-
-    // Roles with icons for the sidebar
     const roleInfo = [
         { role: 'foreman', icon: 'construction' },
         { role: 'engineer', icon: 'it' },
@@ -117,12 +114,36 @@ export const LoginModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-white/10" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-white/10 relative" onClick={e => e.stopPropagation()}>
                 
-                <div className="flex-1 p-8 md:p-12 bg-white dark:bg-gray-800 flex flex-col justify-center min-h-[500px]">
+                {/* 🔥 Navigation Bar (Back & Close Icons) */}
+                <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 pointer-events-none z-10">
+                    <div className="pointer-events-auto">
+                        {(view === 'request' || view === 'success') && (
+                            <button 
+                                onClick={() => view === 'success' ? setView('login') : setView('login')}
+                                className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                                title={t('common.back')}
+                            >
+                                <Icon name="chevron-left" className="w-6 h-6" />
+                            </button>
+                        )}
+                    </div>
+                    <div className="pointer-events-auto">
+                        <button 
+                            onClick={onClose}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                            title={t('common.cancel')}
+                        >
+                            <Icon name="x-mark" className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex-1 p-8 md:p-12 md:pt-20 bg-white dark:bg-gray-800 flex flex-col justify-center min-h-[500px]">
                     {view === 'login' && (
                         <div className="animate-fade-in">
-                            <div className="mb-10">
+                            <div className="mb-10 pt-4">
                                 <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{t('loginModal.welcome')}</h2>
                                 <p className="text-gray-500 text-sm">{t('loginModal.subtitle')}</p>
                             </div>
@@ -154,13 +175,20 @@ export const LoginModal: React.FC<{
                                 {error && <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-xs text-red-600 font-bold">{error}</div>}
                                 <button type="submit" disabled={isLoading} className={`w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50 cursor-wait' : ''}`}>{isLoading ? t('loginModal.processing') : t('loginModal.submitButton')}</button>
                             </form>
-                            <div className="mt-8 text-center"><button onClick={() => setView('request')} className="text-sm font-bold text-blue-600 hover:underline">{t('loginModal.noAccount')}</button></div>
+                            <div className="mt-8 text-center">
+                                <button onClick={() => setView('request')} className="text-sm font-bold text-blue-600 hover:underline">
+                                    {t('loginModal.noAccount')}
+                                </button>
+                            </div>
                         </div>
                     )}
 
                     {view === 'request' && (
-                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto px-1 py-1">
-                            <div className="mb-8"><h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2><p className="text-gray-500 text-xs leading-relaxed">{t('registrationModal.description')}</p></div>
+                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto px-1 py-1 mt-4">
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
+                                <p className="text-gray-500 text-xs leading-relaxed">{t('registrationModal.description')}</p>
+                            </div>
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldRoleType')}</label>
@@ -223,7 +251,6 @@ export const LoginModal: React.FC<{
                                 </div>
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
-                                    <button type="button" onClick={() => setView('login')} className="flex-1 py-4 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700">{t('common.cancel')}</button>
                                     <button type="submit" disabled={!isFormValid || isLoading} className={`flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
                                 </div>
                             </form>
@@ -240,7 +267,7 @@ export const LoginModal: React.FC<{
                     )}
                 </div>
 
-                <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-900/50 p-8 border-l border-gray-100 dark:border-gray-800 flex flex-col justify-center">
+                <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-900/50 p-8 pt-20 border-l border-gray-100 dark:border-gray-800 flex flex-col justify-center">
                     <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">{t('loginModal.accessLevelsTitle')}</h3>
                     <div className="space-y-6">
                         {roleInfo.map(info => (
