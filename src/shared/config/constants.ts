@@ -4,12 +4,13 @@ export const CATEGORIES: Category[] = [];
 
 export const RECENT_DOCUMENTS: Document[] = [];
 
-export const BUSINESS_ROLES: UserRole[] = ['foreman', 'engineer', 'architect']; // 🔥 designer -> engineer
+// 🔥 Added 'worker' as a business/external role
+export const BUSINESS_ROLES: UserRole[] = ['foreman', 'engineer', 'architect', 'worker'];
 
 export const ALL_ROLES: UserRole[] = [
     'guest', 
     'foreman', 
-    'engineer', // 🔥 designer -> engineer
+    'engineer', 
     'architect', 
     'admin', 
     'employee', 

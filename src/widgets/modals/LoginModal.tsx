@@ -98,11 +98,15 @@ export const LoginModal: React.FC<{
         window.location.href = '/';
     };
 
-    const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect'];
+    // 🔥 Added 'worker' to selectable roles
+    const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect', 'worker'];
+    
+    // 🔥 Added 'worker' to sidebar info
     const roleInfo = [
         { role: 'foreman', icon: 'construction' },
         { role: 'engineer', icon: 'it' },
-        { role: 'architect', icon: 'view-boards' }
+        { role: 'architect', icon: 'view-boards' },
+        { role: 'worker', icon: 'user' }
     ];
 
     const getStatusClass = (valid: boolean, value: string) => {
@@ -116,12 +120,11 @@ export const LoginModal: React.FC<{
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-white/10 relative" onClick={e => e.stopPropagation()}>
                 
-                {/* 🔥 Navigation Bar (Back & Close Icons) */}
                 <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 pointer-events-none z-10">
                     <div className="pointer-events-auto">
                         {(view === 'request' || view === 'success') && (
                             <button 
-                                onClick={() => view === 'success' ? setView('login') : setView('login')}
+                                onClick={() => setView('login')}
                                 className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
                                 title={t('common.back')}
                             >
@@ -184,7 +187,7 @@ export const LoginModal: React.FC<{
                     )}
 
                     {view === 'request' && (
-                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto px-1 py-1 mt-4">
+                        <div className="animate-fade-in max-h-[80vh] overflow-y-auto px-1 py-1 mt-4 custom-scrollbar">
                             <div className="mb-8">
                                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{t('registrationModal.title')}</h2>
                                 <p className="text-gray-500 text-xs leading-relaxed">{t('registrationModal.description')}</p>
@@ -192,11 +195,11 @@ export const LoginModal: React.FC<{
                             <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldRoleType')}</label>
-                                    <div className="grid grid-cols-3 gap-2 mt-1">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
                                         {selectableRoles.map(role => (
                                             <label key={role} className={`p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-center text-center ${reqRoleType === role ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                                                 <input type="radio" name="roleType" value={role} checked={reqRoleType === role} onChange={() => setReqRoleType(role)} className="hidden" />
-                                                <span className={`text-[10px] font-black uppercase leading-tight ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`roles.${role}`)}</span>
+                                                <span className={`text-[9px] font-black uppercase leading-tight ${reqRoleType === role ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}`}>{t(`roles.${role}`)}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -251,7 +254,7 @@ export const LoginModal: React.FC<{
                                 </div>
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
-                                    <button type="submit" disabled={!isFormValid || isLoading} className={`flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
+                                    <button type="submit" disabled={!isFormValid || isLoading} className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
                                 </div>
                             </form>
                         </div>

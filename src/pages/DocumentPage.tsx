@@ -50,8 +50,9 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     const isGuest = currentUserRole === 'guest';
     
     const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
+    // 🔥 Added 'worker' to display roles
     const displayRoles = (cat?.viewPermissions || docItem.viewPermissions || [])
-        .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'engineer' || r === 'architect'));
+        .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'engineer' || r === 'architect' || r === 'worker'));
 
     return (
       <div className="relative min-h-screen">
@@ -75,7 +76,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-gray-950/40 backdrop-blur-md animate-fade-in">
             <div className="bg-white dark:bg-gray-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-white/10 max-w-xl w-full text-center relative overflow-hidden">
               
-              {/* 🔥 Close Button Icon */}
               <button 
                 onClick={() => navigate('/')}
                 className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
