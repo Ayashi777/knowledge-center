@@ -22,7 +22,8 @@
     "status": "Статус",
     "error": "Сталася помилка",
     "all": "Всі",
-    "linkCopied": "Посилання скопійовано!"
+    "linkCopied": "Посилання скопійовано!",
+    "toHome": "На головну"
   },
   "roles": {
     "guest": "Гість",
@@ -199,7 +200,7 @@
     "buttonSubmit": "Надіслати заявку",
     "successTitle": "Заявку надіслано!",
     "successDescription": "Ви успішно зареєструвалися. Наразі у вас статус \"Гість\". Адміністратор розгляне вашу заявку та надасть розширений доступ найближчим часом.",
-    "buttonClose": "Увійти в систему"
+    "buttonClose": "На головну"
   },
   "userEditorModal": {
     "title": "Редагування користувача",
@@ -208,7 +209,7 @@
     "emailChangeWarning": "Зміна email оновить логін користувача. Потрібна обережність.",
     "labelCompany": "Компанія",
     "labelPhone": "Телефон",
-    "labelRole": "Роль",
+    "labelRole": "Role",
     "successMessage": "Дані користувача успішно оновлено"
   },
   "editorModal": {
@@ -216,7 +217,8 @@
     "editTitle": "Редагувати документ",
     "labelTitle": "Назва",
     "internalIdLabel": "Внутрішній ID (напр. SPEC-054)",
-    "labelDescription": "Короткий опис",
+    "labelDescription": "Короткий опис (для карток)",
+    "labelExtendedDescription": "Розширений опис (для сторінки)",
     "labelCategory": "Категорія",
     "labelTags": "Теги",
     "placeholderTags": "наприклад, безпека, оновлення, звіт",

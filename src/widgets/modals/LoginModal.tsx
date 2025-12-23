@@ -91,6 +91,11 @@ export const LoginModal: React.FC<{
         }
     };
 
+    const handleGoHome = () => {
+        // Force refresh to ensure Auth state is clean and redirects work
+        window.location.href = '/';
+    };
+
     // 🔥 Client-only roles for registration
     const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
 
@@ -157,7 +162,7 @@ export const LoginModal: React.FC<{
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasLower ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasLower ? 'check' : 'x-mark'} className="w-3 h-3" />Мала літера</div>
                                     </div>
                                 </div>
-                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label><input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)}`} /></div>
+                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordPasswordConfirm') || t('registrationModal.fieldPasswordConfirm')}</label><input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)}`} /></div>
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
                                     <button type="button" onClick={() => setView('login')} className="flex-1 py-4 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700">{t('common.cancel')}</button>
@@ -172,7 +177,7 @@ export const LoginModal: React.FC<{
                             <div className="w-24 h-24 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-8 text-green-600 shadow-inner"><Icon name="check" className="w-12 h-12" /></div>
                             <h2 className="text-3xl font-black mb-4 text-gray-900 dark:text-white">{t('registrationModal.successTitle')}</h2>
                             <p className="text-gray-500 mb-10 leading-relaxed px-6">{t('registrationModal.successDescription')}</p>
-                            <button onClick={onClose} className="w-full max-w-xs py-5 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-sm">{t('registrationModal.buttonClose')}</button>
+                            <button onClick={handleGoHome} className="w-full max-w-xs py-5 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-sm">{t('registrationModal.buttonClose')}</button>
                         </div>
                     )}
                 </div>
@@ -187,7 +192,7 @@ export const LoginModal: React.FC<{
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{t(`roles.${info.role}`)}</p>
-                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t(`roles.${info.role}Desc`)}</p>
+                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t(`roles.${roleInfo.find(r => r.role === info.role)?.role}Desc`)}</p>
                                 </div>
                             </div>
                         ))}
