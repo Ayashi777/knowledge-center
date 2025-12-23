@@ -11,7 +11,7 @@ interface DocumentGridItemProps {
   onRequireLogin: () => void;
   isGuest: boolean;
   tagById?: Map<string, Tag>;
-  categories?: Category[]; // 🔥 Added to fetch category-level permissions
+  categories?: Category[];
 }
 
 export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({ 
@@ -24,12 +24,15 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({
 }) => {
   const { t, lang } = useI18n();
 
-  // Find category to get its permissions
   const cat = categories.find(c => c.nameKey === doc.categoryKey);
   
-  // Combine document and category permissions for display
-  const allPerms = Array.from(new Set([...(doc.viewPermissions || []), ...(cat?.viewPermissions || [])]));
-  const displayRoles = allPerms.filter(role => BUSINESS_ROLES.includes(role as UserRole));
+  // Permissions logic
+  const viewPerms = Array.from(new Set([...(doc.viewPermissions || []), ...(cat?.viewPermissions || [])]));
+  const displayViewRoles = viewPerms.filter(role => BUSINESS_ROLES.includes(role as UserRole));
+  
+  // 🔥 Download permissions
+  const downloadPerms = doc.downloadPermissions || [];
+  const displayDownloadRoles = downloadPerms.filter(role => BUSINESS_ROLES.includes(role as UserRole));
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,35 +90,46 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({
                 <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest rounded-md border border-blue-100 dark:border-blue-800/50 truncate max-w-[120px]">
                     {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
                 </span>
-                {/* 🔥 Business Roles Badges */}
-                {displayRoles.map(role => (
+                {displayViewRoles.map(role => (
                     <span key={role} className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
                         • {t(`roles.${role}`)}
                     </span>
                 ))}
             </div>
             
-            {/* 🔥 line-clamp-2 handles long titles */}
             <h3 className="font-bold text-[15px] text-slate-900 dark:text-white leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors h-[2.4em]">
                 {doc.titleKey ? t(doc.titleKey) : doc.title}
             </h3>
           </div>
 
-          <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 dark:border-white/5 pt-4">
-             <button 
-                onClick={handleDownload}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-             >
-                <Icon name="download" className="w-3.5 h-3.5" />
-                {t('common.download')}
-             </button>
+          <div className="mt-auto flex flex-col gap-3 border-t border-slate-100 dark:border-white/5 pt-4">
+             {/* 🔥 Download Permission Roles Display */}
+             {displayDownloadRoles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                    {displayDownloadRoles.map(role => (
+                        <span key={role} className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-[7px] font-black uppercase tracking-widest rounded-sm border border-transparent dark:border-white/5">
+                            ↓ {t(`roles.${role}`)}
+                        </span>
+                    ))}
+                </div>
+             )}
 
-             <button 
-                onClick={handleShare}
-                className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-             >
-                <Icon name="external-link" className="w-3.5 h-3.5" />
-             </button>
+             <div className="flex items-center justify-between gap-2">
+                <button 
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                    <Icon name="download" className="w-3.5 h-3.5" />
+                    {t('common.download')}
+                </button>
+
+                <button 
+                    onClick={handleShare}
+                    className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                    <Icon name="external-link" className="w-3.5 h-3.5" />
+                </button>
+             </div>
           </div>
       </div>
     </div>
