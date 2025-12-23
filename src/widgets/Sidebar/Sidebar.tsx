@@ -36,12 +36,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // 🔥 Publicly selectable roles for filtering
   const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
 
+  // Check if any filters are active
+  const hasActiveFilters = 
+    (selectedCategory && selectedCategory !== 'all') || 
+    selectedTags.length > 0 || 
+    (selectedRole && selectedRole !== 'all');
+
   return (
     <aside className="w-full lg:w-72 shrink-0 space-y-8">
-      {/* Search/Filters header for mobile maybe? */}
+      {/* Search/Filters header for mobile */}
       <div className="flex items-center justify-between lg:hidden">
         <h2 className="text-lg font-bold">{t('sidebar.filters')}</h2>
-        <button onClick={onClearFilters} className="text-sm text-blue-600 font-medium">{t('sidebar.clear')}</button>
+        {hasActiveFilters && (
+          <button onClick={onClearFilters} className="text-sm text-red-600 font-medium flex items-center gap-1">
+            <Icon name="x-mark" className="w-4 h-4" />
+            {t('dashboard.clearFilters')}
+          </button>
+        )}
       </div>
 
       {/* Categories */}
@@ -50,12 +61,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
             {t('sidebar.categories')}
           </h3>
-          <button 
-            onClick={onClearFilters}
-            className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tighter hover:underline"
-          >
-            {t('sidebar.allDocs')}
-          </button>
         </div>
         <div className="grid grid-cols-1 gap-1">
           {visibleCategories.map((cat) => (
@@ -128,6 +133,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </div>
       </section>
+
+      {/* Reset Filters Button - Made less transparent */}
+      {hasActiveFilters && (
+        <button
+          onClick={onClearFilters}
+          className="w-full py-4 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-200 dark:border-red-800/50 shadow-md active:scale-[0.98]"
+        >
+          <Icon name="x-mark" className="w-3.5 h-3.5" />
+          {t('dashboard.clearFilters')}
+        </button>
+      )}
       
       {/* Help Card */}
       <div className="p-5 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
