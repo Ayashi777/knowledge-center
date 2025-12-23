@@ -11,6 +11,7 @@ interface DocumentHeaderProps {
   tagIds: string[];
   tagById: Map<string, Tag>;
   viewPermissions?: UserRole[];
+  currentUserRole?: UserRole; // 🔥 Added currentUserRole
 }
 
 /**
@@ -35,6 +36,17 @@ const BLUEPRINT_STYLE = `
       linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
   }
+  
+  @keyframes role-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  }
+  .active-role-badge {
+    animation: role-pulse 2s infinite;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background-color: #2563eb !important; /* Brighter blue */
+  }
 `;
 
 export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ 
@@ -42,7 +54,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   updatedAt, 
   tagIds, 
   tagById,
-  viewPermissions = []
+  viewPermissions = [],
+  currentUserRole
 }) => {
   const { t, lang } = useI18n();
 
@@ -71,14 +84,21 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
       <div className="relative z-10 p-8 md:p-12">
         {/* Role Badges */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {displayRoles.map(role => (
-            <span 
-              key={role} 
-              className="px-3 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-blue-500/20"
-            >
-              {t(`roles.${role}`)}
-            </span>
-          ))}
+          {displayRoles.map(role => {
+            const isActive = role === currentUserRole;
+            return (
+              <span 
+                key={role} 
+                className={`px-3 py-1 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg transition-all duration-300 ${
+                  isActive 
+                    ? 'active-role-badge scale-110 z-20 shadow-blue-500/40' 
+                    : 'bg-blue-600/60 dark:bg-blue-900/40 opacity-70 shadow-blue-500/10'
+                }`}
+              >
+                {t(`roles.${role}`)}
+              </span>
+            );
+          })}
           {displayRoles.length === 0 && viewPermissions.length > 0 && (
              null
           )}

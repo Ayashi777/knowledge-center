@@ -89,7 +89,8 @@ export const DocumentView: React.FC<{
     onUpdateContent: (docId: string, lang: Language, newContent: DocumentContent) => Promise<void>;
     onCategoryClick: (categoryKey: string) => void;
     allTags?: Tag[];
-}> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [] }) => {
+    hasAccess?: boolean;
+}> = ({ doc, onClose, onRequireLogin, currentUserRole, onUpdateContent, onCategoryClick, allTags = [], hasAccess = true }) => {
     const { t, lang: currentLang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
     
@@ -118,12 +119,17 @@ export const DocumentView: React.FC<{
     }, [doc.content, currentLang, getInitialContent]);
 
     const loadFiles = useCallback(async () => {
+        // 🔥 Don't load files if no access
+        if (!hasAccess) {
+            setIsLoadingFiles(false);
+            return;
+        }
         setIsLoadingFiles(true);
         try {
             const docFiles = await StorageApi.listDocumentFiles(doc.id);
             setFiles(docFiles);
         } finally { setIsLoadingFiles(false); }
-    }, [doc.id]);
+    }, [doc.id, hasAccess]);
 
     useEffect(() => { loadFiles(); }, [loadFiles]);
 
@@ -292,7 +298,7 @@ export const DocumentView: React.FC<{
 
                 <main className="flex-grow min-w-0 flex flex-col items-center">
                     <div className="w-full max-w-[850px] mb-8">
-                         <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} viewPermissions={doc.viewPermissions} />
+                         <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} viewPermissions={doc.viewPermissions} currentUserRole={currentUserRole} />
                     </div>
                     <div className="w-full">
                         {isEditingContent ? (
