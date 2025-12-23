@@ -213,6 +213,7 @@
     "createTitle": "Створити документ",
     "editTitle": "Редагувати документ",
     "labelTitle": "Назва",
+    "internalIdLabel": "Внутрішній ID (напр. SPEC-054)",
     "labelCategory": "Категорія",
     "labelTags": "Теги",
     "placeholderTags": "наприклад, безпека, оновлення, звіт",

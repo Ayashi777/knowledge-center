@@ -34,6 +34,18 @@ export interface Category {
   viewPermissions?: UserRole[];
 }
 
+export interface UserRequest {
+    uid: string;
+    name: string;
+    company: string;
+    email: string;
+    phone: string;
+    requestedRole: UserRole;
+    status: 'pending' | 'approved' | 'denied';
+    date: string | Timestamp;
+    id: string;
+}
+
 export interface Tag {
   id: string;
   name: string;
@@ -68,6 +80,7 @@ export interface Document {
   };
   viewPermissions?: UserRole[];
   downloadPermissions?: UserRole[];
+  internalId?: string; // 🔥 Нове поле для адміна (наприклад, SPEC-054)
 }
 
 export type SortBy = 'recent' | 'alpha';

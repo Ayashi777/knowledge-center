@@ -6,6 +6,13 @@ import { formatRelativeTime, getCategoryName } from '../../lib/utils/format';
 import { BUSINESS_ROLES } from '../../config/constants';
 import { canViewDocument } from '../../lib/permissions/permissions';
 
+const ROLE_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
+  foreman: { bg: 'bg-orange-500/10', text: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' },
+  designer: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  architect: { bg: 'bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-500' },
+  default: { bg: 'bg-slate-500/10', text: 'text-slate-500', dot: 'bg-slate-500' }
+};
+
 interface DocumentGridItemProps {
   doc: Document;
   onClick: () => void;
@@ -27,126 +34,113 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({
 
   const hasAccess = canViewDocument(currentUserRole, doc, categories);
   const isGuest = currentUserRole === 'guest';
-  
-  // Logic for allowed roles
   const displayViewRoles = BUSINESS_ROLES.filter(role => canViewDocument(role, doc, categories));
-  
-  // Download permissions
-  const downloadPerms = doc.downloadPermissions || [];
-  const displayDownloadRoles = downloadPerms.filter(role => BUSINESS_ROLES.includes(role as UserRole));
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(window.location.origin + `/doc/${doc.id}`);
-    alert(t('common.linkCopied') || 'Посилання скопійовано!');
-  };
-
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isGuest) {
-      onRequireLogin();
-    } else {
-      onClick(); 
-    }
-  };
 
   return (
     <div
       onClick={onClick}
-      className={`group flex flex-col bg-white dark:bg-slate-900/40 rounded-[1.5rem] border transition-all duration-500 cursor-pointer overflow-hidden shadow-sm ${
-        !hasAccess 
-          ? 'border-slate-200 dark:border-white/5 opacity-80' 
-          : 'border-slate-200 dark:border-white/5 hover:border-blue-500/40 hover:shadow-[0_20px_40px_-15px_rgba(59,130,246,0.15)]'
+      className={`group flex flex-col bg-white dark:bg-[#0f172a] rounded-[2rem] border transition-all duration-500 cursor-pointer overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1.5 ${
+        !hasAccess ? 'border-slate-200 dark:border-white/5' : 'border-slate-200 dark:border-white/10 hover:border-blue-500/50'
       }`}
     >
-      {/* Visual Preview Section */}
-      <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-950 overflow-hidden shrink-0">
-         <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.08]" 
-              style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 0)', backgroundSize: '20px 20px', color: 'inherit' }} />
+      {/* 1. Blueprint Thumbnail Area */}
+      <div className="relative aspect-[16/10] bg-[#020617] overflow-hidden shrink-0 border-b border-white/5">
+         {/* Blueprint Grid */}
+         <div className="absolute inset-0 opacity-[0.15]" 
+              style={{ 
+                backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)', 
+                backgroundSize: '20px 20px' 
+              }} 
+         />
          
-         <div className="absolute inset-6 border border-dashed border-slate-300 dark:border-white/10 rounded-lg flex flex-col p-4">
-            <div className="flex justify-between opacity-40 mb-4">
-                <div className="w-8 h-2 bg-current rounded-full" />
-                <div className="w-4 h-4 border border-current rounded-sm" />
-            </div>
-            <div className="space-y-2 opacity-20">
-                <div className="h-1 bg-current rounded-full w-full" />
-                <div className="h-1 bg-current rounded-full w-[90%]" />
-            </div>
-         </div>
-
-         <div className="absolute top-4 right-4 z-10">
-             <div className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded shadow-lg transform rotate-3 uppercase">PDF</div>
-         </div>
-
-         {!hasAccess && (
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[4px] flex flex-col items-center justify-center transition-all duration-500">
-                <div className="bg-white/90 dark:bg-slate-800/90 p-4 rounded-[2rem] shadow-2xl border border-white/20 mb-3 transform group-hover:scale-110 transition-transform">
-                    <Icon name="lock-closed" className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+         {/* Technical Drawing Element */}
+         <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative w-24 h-24">
+                <div className="absolute inset-0 border-2 border-blue-500/20 rounded-xl rotate-45 animate-pulse" />
+                <div className="absolute inset-2 border border-blue-400/30 rounded-lg -rotate-12 transition-transform group-hover:rotate-0 duration-700" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <Icon name="document-text" className="w-10 h-10 text-blue-500 opacity-80" />
                 </div>
-                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] drop-shadow-md">
-                    {t('common.locked')}
+            </div>
+         </div>
+
+         {/* Top Left: Internal ID Label (Only if exists) */}
+         {doc.internalId && (
+            <div className="absolute top-5 left-5">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 backdrop-blur-sm">
+                    {doc.internalId}
                 </span>
+            </div>
+         )}
+
+         {/* Top Right: Role Badges */}
+         <div className="absolute top-5 right-5 flex flex-col gap-1.5 items-end">
+            {displayViewRoles.map(role => (
+                <div key={role} className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 shadow-lg">
+                    <span className={`w-1.5 h-1.5 rounded-full ${ROLE_CONFIG[role]?.dot || ROLE_CONFIG.default.dot}`} />
+                    <span className="text-[8px] font-bold text-white uppercase tracking-wider">{t(`roles.${role}`)}</span>
+                </div>
+            ))}
+         </div>
+
+         {/* Locked State Overlay */}
+         {!hasAccess && (
+            <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 mb-3">
+                    <Icon name="lock-closed" className="w-6 h-6 text-white opacity-80" />
+                </div>
+                <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">{t('common.locked')}</span>
             </div>
          )}
       </div>
 
-      {/* NEW: Role Labels positioned after preview, before content */}
-      <div className="px-5 pt-4 flex flex-wrap gap-1.5 -mb-2">
-         {displayViewRoles.map(role => (
-            <span 
-              key={role} 
-              className="px-2.5 py-1 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[9px] font-black uppercase tracking-widest rounded-full border border-slate-200 dark:border-white/10 shadow-sm"
-            >
-              {t(`roles.${role}`)}
-            </span>
-         ))}
-      </div>
-
-      {/* Info Section */}
-      <div className="p-5 flex flex-col flex-grow">
-          <div className="mb-4">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest rounded-md border border-blue-100 dark:border-blue-800/50 truncate max-w-[120px]">
+      {/* 2. Information Area */}
+      <div className="p-6 flex flex-col flex-grow">
+          {/* Metadata Row */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
+                <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
                     {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
                 </span>
             </div>
-            
-            <h3 className={`font-bold text-[15px] leading-tight line-clamp-2 transition-colors h-[2.4em] ${
+            <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+                {formatRelativeTime(doc.updatedAt, lang)}
+            </div>
+          </div>
+          
+          {/* Title and Description */}
+          <div className="flex-grow">
+            <h3 className={`text-lg font-black leading-tight mb-2 transition-colors ${
                 !hasAccess ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white group-hover:text-blue-600'
             }`}>
                 {doc.titleKey ? t(doc.titleKey) : doc.title}
             </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                {doc.description || t('dashboard.noDescription') || 'Технічний опис документа доступний після перегляду.'}
+            </p>
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 border-t border-slate-100 dark:border-white/5 pt-4">
-             {/* 🔥 Download Permission Roles Display */}
-             {displayDownloadRoles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-1">
-                    {displayDownloadRoles.map(role => (
-                        <span key={role} className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-[7px] font-black uppercase tracking-widest rounded-sm border border-transparent dark:border-white/5">
-                            ↓ {t(`roles.${role}`)}
-                        </span>
-                    ))}
-                </div>
-             )}
+          {/* 3. Action Row */}
+          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+             <button 
+                onClick={(e) => { e.stopPropagation(); onClick(); }}
+                className={`flex items-center gap-3 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                    !hasAccess 
+                    ? 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 hover:scale-[1.02]'
+                }`}
+             >
+                <Icon name={!hasAccess ? 'lock-closed' : 'eye'} className="w-4 h-4" />
+                {!hasAccess ? t('common.locked') : t('docView.preview')}
+             </button>
 
-             <div className="flex items-center justify-between gap-2">
-                <button 
-                    onClick={handleDownload}
-                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                    <Icon name="download" className="w-3.5 h-3.5" />
-                    {t('common.download')}
-                </button>
-
-                <button 
-                    onClick={handleShare}
-                    className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                    <Icon name="external-link" className="w-3.5 h-3.5" />
-                </button>
-             </div>
+             <button 
+                onClick={(e) => { e.stopPropagation(); /* logic for share */ }}
+                className="p-2.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+             >
+                <Icon name="external-link" className="w-4 h-4" />
+             </button>
           </div>
       </div>
     </div>
@@ -163,78 +157,60 @@ export const DocumentListItem: React.FC<{
   categories?: Category[];
 }> = memo(({ doc, onClick, onEdit, onDelete, showAdminControls, hasAccess = true, categories = [] }) => {
   const { t, lang } = useI18n();
-
   const displayViewRoles = BUSINESS_ROLES.filter(role => canViewDocument(role, doc, categories));
 
   return (
     <div 
         onClick={onClick}
-        className={`group flex items-center gap-4 bg-white dark:bg-slate-900/40 p-4 rounded-xl border transition-all cursor-pointer ${
-            !hasAccess 
-                ? 'border-slate-100 dark:border-white/5 opacity-70' 
-                : 'border-slate-100 dark:border-white/5 hover:border-blue-500/20 hover:shadow-md'
+        className={`group flex items-center gap-6 bg-white dark:bg-[#0f172a] p-5 rounded-3xl border transition-all cursor-pointer hover:shadow-xl ${
+            !hasAccess ? 'border-slate-100 dark:border-white/5 opacity-80' : 'border-slate-100 dark:border-white/10 hover:border-blue-500/20'
         }`}
     >
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 ${
           !hasAccess 
-            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent' 
-            : 'bg-slate-50 dark:bg-white/5 text-blue-500 border-slate-100 dark:border-white/5 group-hover:bg-blue-600 group-hover:text-white'
+            ? 'bg-slate-800 text-slate-500' 
+            : 'bg-slate-100 dark:bg-white/5 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
       }`}>
-         <Icon name={!hasAccess ? 'lock-closed' : 'document-text'} className="w-5 h-5" />
+         <Icon name={!hasAccess ? 'lock-closed' : 'document-text'} className="w-7 h-7" />
       </div>
 
       <div className="flex-grow min-w-0">
-        <h3 className={`font-bold text-[15px] truncate transition-colors ${
-            !hasAccess ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white group-hover:text-blue-600'
+        <div className="flex items-center gap-2 mb-1">
+             {displayViewRoles.map(role => (
+                <span key={role} className={`w-2 h-2 rounded-full ${ROLE_CONFIG[role]?.dot || ROLE_CONFIG.default.dot}`} title={t(`roles.${role}`)} />
+             ))}
+             <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest ml-1">
+                {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
+             </span>
+             {doc.internalId && (
+                <span className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] ml-2 border border-slate-200 dark:border-white/5 px-1.5 rounded">
+                    {doc.internalId}
+                </span>
+             )}
+        </div>
+        <h3 className={`font-black text-lg truncate transition-colors ${
+            !hasAccess ? 'text-slate-500' : 'text-slate-900 dark:text-white group-hover:text-blue-600'
         }`}>
           {doc.titleKey ? t(doc.titleKey) : doc.title}
         </h3>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest truncate max-w-[150px]">
-            {doc.categoryKey ? getCategoryName(doc.categoryKey, t) : '---'}
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium">
-             {formatRelativeTime(doc.updatedAt, lang)}
-          </span>
-          {!hasAccess && (
-             <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                {t('common.locked')}
-             </span>
-          )}
-          {displayViewRoles.length > 0 && (
-             <div className="flex items-center gap-1.5">
-                {displayViewRoles.map(role => (
-                    <span 
-                      key={role} 
-                      className="px-1.5 py-0.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[7px] font-black uppercase tracking-widest rounded-md border border-slate-200 dark:border-white/5 shadow-sm"
-                    >
-                      {t(`roles.${role}`)}
-                    </span>
-                ))}
-             </div>
-          )}
+        <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+            {formatRelativeTime(doc.updatedAt, lang)}
         </div>
       </div>
 
-      <div className="shrink-0 flex items-center gap-2">
+      <div className="shrink-0 flex items-center gap-3">
         {showAdminControls && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-              className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
-            >
-              <Icon name="pencil" className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <button onClick={(e) => { e.stopPropagation(); onEdit?.(); }} className="p-3 text-slate-400 hover:text-blue-600 rounded-xl transition-all">
+              <Icon name="pencil" className="w-5 h-5" />
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-              className="p-2 text-slate-400 hover:text-red-600 transition-colors"
-            >
-              <Icon name="trash" className="w-4 h-4" />
+            <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="p-3 text-slate-400 hover:text-red-600 rounded-xl transition-all">
+              <Icon name="trash" className="w-5 h-5" />
             </button>
           </div>
         )}
-        <div className={`p-2 transition-colors ${!hasAccess ? 'text-slate-300' : 'text-slate-300 group-hover:text-blue-500'}`}>
-            <Icon name="chevron-right" className="w-5 h-5" />
+        <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all">
+            <Icon name="chevron-right" className="w-6 h-6" />
         </div>
       </div>
     </div>
@@ -244,25 +220,23 @@ export const DocumentListItem: React.FC<{
 export const DocumentSkeleton: React.FC<{ viewMode: 'grid' | 'list' }> = ({ viewMode }) => {
     if (viewMode === 'list') {
         return (
-            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/20 p-4 rounded-xl border border-transparent animate-pulse">
-                <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-800" />
-                <div className="flex-grow space-y-2">
-                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
-                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+            <div className="flex items-center gap-6 bg-slate-50 dark:bg-slate-900/20 p-5 rounded-3xl animate-pulse">
+                <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                <div className="flex-grow space-y-3">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col bg-slate-50 dark:bg-slate-900/20 rounded-[1.5rem] p-0 border border-transparent animate-pulse overflow-hidden">
-            <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-800" />
-            <div className="p-5 space-y-4">
-                <div className="space-y-2">
-                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
-                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
-                </div>
-                <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-full" />
+        <div className="flex flex-col bg-slate-50 dark:bg-slate-900/20 rounded-[2.5rem] animate-pulse overflow-hidden">
+            <div className="aspect-[16/10] bg-slate-200 dark:bg-slate-800" />
+            <div className="p-7 space-y-5">
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                <div className="h-7 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+                <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl w-full" />
             </div>
         </div>
     );

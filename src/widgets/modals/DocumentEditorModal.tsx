@@ -17,6 +17,7 @@ export const DocumentEditorModal: React.FC<{
     
     const initialTitle = doc?.title || (doc?.titleKey ? t(doc.titleKey) : '');
     const [title, setTitle] = useState(initialTitle);
+    const [internalId, setInternalId] = useState(doc?.internalId || '');
     const [category, setCategory] = useState(doc?.categoryKey || availableCategories[0]?.nameKey || '');
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(doc?.tagIds || []);
     const [viewPermissions, setViewPermissions] = useState<UserRole[]>(doc?.viewPermissions || []);
@@ -43,6 +44,7 @@ export const DocumentEditorModal: React.FC<{
         onSave({
             ...doc,
             title: title.trim(),
+            internalId: internalId.trim(),
             categoryKey: category,
             tagIds: selectedTagIds,
             viewPermissions: viewPermissions,
@@ -85,6 +87,18 @@ export const DocumentEditorModal: React.FC<{
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                 {t('editorModal.internalIdLabel') || 'Внутрішній ID (напр. SPEC-054)'}
+                             </label>
+                             <input
+                                 type="text"
+                                 value={internalId}
+                                 onChange={e => setInternalId(e.target.value)}
+                                 placeholder="SPEC-001"
+                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                             />
+                        </div>
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTitle')}*</label>
                             <input
