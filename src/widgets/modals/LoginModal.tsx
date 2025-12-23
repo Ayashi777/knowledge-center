@@ -254,7 +254,7 @@ export const LoginModal: React.FC<{
                                 </div>
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
-                                    <button type="submit" disabled={!isFormValid || isLoading} className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed opacity-50'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
+                                    <button type="submit" disabled={!isFormValid || isLoading} className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid && !isLoading ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-blue-600/30 text-white/70 cursor-not-allowed'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
                                 </div>
                             </form>
                         </div>
