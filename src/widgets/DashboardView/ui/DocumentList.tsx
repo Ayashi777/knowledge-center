@@ -1,18 +1,21 @@
 import React, { useMemo } from 'react';
-import { Document, ViewMode, Tag } from '@shared/types';
+import { Document, ViewMode, Tag, UserRole, Category } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
-import { DocumentGridItem, DocumentListItem } from '@shared/ui/DocumentComponents';
+import { DocumentGridItem, DocumentListItem, DocumentSkeleton } from '@shared/ui/DocumentComponents';
+import { Icon } from '@shared/ui/icons';
 
 interface DocumentListProps {
     docs: Document[];
     viewMode: ViewMode;
     onSelectDoc: (doc: Document) => void;
     onRequireLogin: () => void;
-    isGuest: boolean;
+    currentUserRole: UserRole;
     showAdminControls: boolean;
     onEditDoc: (doc: Document) => void;
     onDeleteDoc: (id: string) => void;
     allTags?: Tag[];
+    categories?: Category[];
+    isLoading?: boolean;
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({
@@ -20,11 +23,13 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     viewMode,
     onSelectDoc,
     onRequireLogin,
-    isGuest,
+    currentUserRole,
     showAdminControls,
     onEditDoc,
     onDeleteDoc,
     allTags = [],
+    categories = [],
+    isLoading = false
 }) => {
     const { t } = useI18n();
 
@@ -34,30 +39,43 @@ export const DocumentList: React.FC<DocumentListProps> = ({
         return m;
     }, [allTags]);
 
+    if (isLoading) {
+        return (
+            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8" : "space-y-6"}>
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                    <DocumentSkeleton key={i} viewMode={viewMode} />
+                ))}
+            </div>
+        );
+    }
+
     if (docs.length === 0) {
         return (
-            <div className="text-center py-10 px-4 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg">
-                <p className="text-gray-500 dark:text-gray-400">{t('dashboard.noResults')}</p>
-                <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">{t('dashboard.noResultsDescription')}</p>
+            <div className="text-center py-24 px-6 bg-gray-50 dark:bg-slate-900/10 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-white/5 animate-fade-in">
+                <div className="w-24 h-24 bg-white dark:bg-white/5 shadow-2xl rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-blue-500">
+                    <Icon name="search" className="w-10 h-10" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">{t('dashboard.noResults')}</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">{t('dashboard.noResultsDescription')}</p>
             </div>
         );
     }
 
     return viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             {docs.map((doc) => (
                 <DocumentGridItem 
                     key={doc.id} 
                     doc={doc} 
                     onClick={() => onSelectDoc(doc)} 
                     onRequireLogin={onRequireLogin} 
-                    isGuest={isGuest} 
+                    isGuest={currentUserRole === 'guest'} 
                     tagById={tagById}
                 />
             ))}
         </div>
     ) : (
-        <div className="space-y-3">
+        <div className="space-y-6">
             {docs.map((doc) => (
                 <DocumentListItem
                     key={doc.id}
