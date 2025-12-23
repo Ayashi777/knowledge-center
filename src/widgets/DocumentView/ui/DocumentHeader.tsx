@@ -46,10 +46,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
 }) => {
   const { t, lang } = useI18n();
 
-  // 🔥 Filter out system roles, keep only business roles
-  const businessRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+  // 🔥 Filter out system roles, keep only business roles + guest
+  const displayableRoles: UserRole[] = ['guest', 'foreman', 'designer', 'architect'];
   const displayRoles = useMemo(() => 
-    viewPermissions.filter(role => businessRoles.includes(role)),
+    viewPermissions.filter(role => displayableRoles.includes(role)),
     [viewPermissions]
   );
 
@@ -80,7 +80,6 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             </span>
           ))}
           {displayRoles.length === 0 && viewPermissions.length > 0 && (
-             /* If there are permissions but none are business roles, we show nothing or custom logic */
              null
           )}
           {viewPermissions.length === 0 && (
