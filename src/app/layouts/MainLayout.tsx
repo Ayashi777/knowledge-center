@@ -4,7 +4,6 @@ import { useI18n } from '@app/providers/i18n/i18n';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useTheme } from '@shared/hooks/useTheme';
 import { ThemeSwitcher } from '@shared/ui/ThemeSwitcher';
-import { LanguageSwitcher } from '@shared/ui/LanguageSwitcher';
 import { UserAccessControl } from '@shared/ui/UserAccessControl';
 
 interface LayoutProps {
@@ -36,7 +35,9 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <LanguageSwitcher />
+                    {/* 🔥 Language Switcher Hidden for now */}
+                    {/* <LanguageSwitcher /> */}
+                    
                     <UserAccessControl
                         user={user}
                         role={role}

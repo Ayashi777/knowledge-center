@@ -15,6 +15,7 @@ export const LoginModal: React.FC<{
     // Login form state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     
     // Request form state
     const [reqName, setReqName] = useState('');
@@ -24,6 +25,8 @@ export const LoginModal: React.FC<{
     const [reqPasswordConfirm, setReqPasswordConfirm] = useState('');
     const [reqPhone, setReqPhone] = useState('');
     const [reqRoleType, setReqRoleType] = useState<UserRole | ''>(''); 
+    const [showReqPassword, setShowReqPassword] = useState(false);
+    const [showReqPasswordConfirm, setShowReqPasswordConfirm] = useState(false);
     
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -92,14 +95,13 @@ export const LoginModal: React.FC<{
     };
 
     const handleGoHome = () => {
-        // Force refresh to ensure Auth state is clean and redirects work
         window.location.href = '/';
     };
 
-    // 🔥 Client-only roles for registration
+    // Client-only roles for registration
     const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
 
-    // 🔥 Roles with icons for the sidebar
+    // Roles with icons for the sidebar
     const roleInfo = [
         { role: 'foreman', icon: 'construction' },
         { role: 'designer', icon: 'it' },
@@ -125,8 +127,30 @@ export const LoginModal: React.FC<{
                                 <p className="text-gray-500 text-sm">{t('loginModal.subtitle')}</p>
                             </div>
                             <form onSubmit={handleLoginSubmit} className="space-y-5">
-                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label><input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)} className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`} placeholder="name@company.com" /></div>
-                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label><input type="password" required value={password} onChange={e => setPassword(e.target.value)} className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`} placeholder="••••••••" /></div>
+                                <div>
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label>
+                                    <input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)} className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`} placeholder="name@company.com" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            required 
+                                            value={password} 
+                                            onChange={e => setPassword(e.target.value)} 
+                                            className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500 pr-12`} 
+                                            placeholder="••••••••" 
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                        >
+                                            <Icon name={showPassword ? 'eye-off' : 'eye'} className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
                                 {error && <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-xs text-red-600 font-bold">{error}</div>}
                                 <button type="submit" disabled={isLoading} className={`w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50 cursor-wait' : ''}`}>{isLoading ? t('loginModal.processing') : t('loginModal.submitButton')}</button>
                             </form>
@@ -154,7 +178,23 @@ export const LoginModal: React.FC<{
                                 <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label><input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} placeholder="+380..." className={`${inputBase} ${getStatusClass(isPhoneValid, reqPhone)}`} />{!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold tracking-tight">Формат: +380XXXXXXXXX</p>}</div>
                                 <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label><input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} placeholder="email@example.com" className={`${inputBase} ${getStatusClass(isEmailValid, reqEmail)}`} /></div>
                                 <div className="sm:col-span-2">
-                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label><input required type="password" value={reqPassword} onChange={e => setReqPassword(e.target.value)} className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)}`} />
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
+                                    <div className="relative">
+                                        <input 
+                                            required 
+                                            type={showReqPassword ? "text" : "password"} 
+                                            value={reqPassword} 
+                                            onChange={e => setReqPassword(e.target.value)} 
+                                            className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)} pr-12`} 
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowReqPassword(!showReqPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                        >
+                                            <Icon name={showReqPassword ? 'eye-off' : 'eye'} className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2 bg-gray-50/50 dark:bg-black/20 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasMinLen ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasMinLen ? 'check' : 'x-mark'} className="w-3 h-3" />8+ символів</div>
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasNumber ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasNumber ? 'check' : 'x-mark'} className="w-3 h-3" />Цифра</div>
@@ -162,7 +202,25 @@ export const LoginModal: React.FC<{
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasLower ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasLower ? 'check' : 'x-mark'} className="w-3 h-3" />Мала літера</div>
                                     </div>
                                 </div>
-                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordPasswordConfirm') || t('registrationModal.fieldPasswordConfirm')}</label><input required type="password" value={reqPasswordConfirm} onChange={e => setReqPasswordConfirm(e.target.value)} className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)}`} /></div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordPasswordConfirm') || t('registrationModal.fieldPasswordConfirm')}</label>
+                                    <div className="relative">
+                                        <input 
+                                            required 
+                                            type={showReqPasswordConfirm ? "text" : "password"} 
+                                            value={reqPasswordConfirm} 
+                                            onChange={e => setReqPasswordConfirm(e.target.value)} 
+                                            className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)} pr-12`} 
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowReqPasswordConfirm(!showReqPasswordConfirm)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                        >
+                                            <Icon name={showReqPasswordConfirm ? 'eye-off' : 'eye'} className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
                                 {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
                                     <button type="button" onClick={() => setView('login')} className="flex-1 py-4 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700">{t('common.cancel')}</button>
@@ -192,7 +250,7 @@ export const LoginModal: React.FC<{
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{t(`roles.${info.role}`)}</p>
-                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t(`roles.${roleInfo.find(r => r.role === info.role)?.role}Desc`)}</p>
+                                    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t(`roles.${info.role}Desc`)}</p>
                                 </div>
                             </div>
                         ))}
