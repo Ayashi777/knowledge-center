@@ -5,7 +5,8 @@ const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
 
 const isSystemAsset = (name: string) => {
   const n = name.toLowerCase();
-  return n.includes('/.system/') || n.startsWith('thumbnail') || n.startsWith('cover_');
+  // 🔥 Improved detection of thumbnails
+  return n.includes('/.system/') || n.includes('thumbnail.') || n.startsWith('thumbnail') || n.startsWith('cover_');
 };
 
 export const StorageApi = {
@@ -53,7 +54,8 @@ export const StorageApi = {
             // Overwrite with modern items (they take priority)
             modernItems.forEach(item => fileMap.set(item.name, item));
 
-            return Array.from(fileMap.values());
+            // 🔥 Filter out empty/invalid items and check again for system assets
+            return Array.from(fileMap.values()).filter(f => !isSystemAsset(f.name));
         } catch (e) {
             console.error('Storage list failed', e);
             return [];

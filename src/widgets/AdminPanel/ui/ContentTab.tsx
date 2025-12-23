@@ -2,6 +2,7 @@ import React from 'react';
 import { Category, Document } from '@shared/types';
 import { Icon } from '@shared/ui/icons';
 import { useI18n } from '@app/providers/i18n/i18n';
+import { getCategoryName } from '@shared/lib/utils/format';
 
 interface ContentTabProps {
     categories: Category[];
@@ -43,7 +44,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                                     <Icon name={(cat.iconName as any) || 'folder'} className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-gray-900 dark:text-white">{t(`categories.${cat.nameKey}`)}</p>
+                                    <p className="font-bold text-gray-900 dark:text-white">{getCategoryName(cat.nameKey, t)}</p>
                                     <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{cat.viewPermissions?.join(', ')}</p>
                                 </div>
                             </div>
@@ -68,7 +69,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                         <div key={doc.id} className="group flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-transparent hover:border-blue-200 dark:hover:border-blue-900 transition-all">
                             <div className="min-w-0 flex-grow">
                                 <p className="font-bold text-gray-900 dark:text-white truncate pr-4">{doc.titleKey ? t(doc.titleKey) : doc.title}</p>
-                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{doc.categoryKey}</p>
+                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{getCategoryName(doc.categoryKey, t)}</p>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                 <button onClick={() => onEditDocument(doc)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Icon name="pencil" className="w-4 h-4" /></button>

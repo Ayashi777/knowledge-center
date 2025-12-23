@@ -123,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   : 'bg-white border-gray-100 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 hover:border-gray-300'
               }`}
             >
-              #{tag.id}
+              #{tag.name || tag.id}
             </button>
           ))}
         </div>

@@ -7,11 +7,12 @@ import { useI18n } from '@app/providers/i18n/i18n';
 
 interface DocumentHeaderProps {
   title: string;
+  extendedDescription?: string; // 🔥 Added
   updatedAt: Timestamp;
   tagIds: string[];
   tagById: Map<string, Tag>;
   viewPermissions?: UserRole[];
-  currentUserRole?: UserRole; // 🔥 Added currentUserRole
+  currentUserRole?: UserRole;
 }
 
 /**
@@ -51,6 +52,7 @@ const BLUEPRINT_STYLE = `
 
 export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ 
   title, 
+  extendedDescription,
   updatedAt, 
   tagIds, 
   tagById,
@@ -59,7 +61,6 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
 }) => {
   const { t, lang } = useI18n();
 
-  // 🔥 Filter out system roles, keep only business roles + guest
   const displayableRoles: UserRole[] = ['guest', 'foreman', 'designer', 'architect'];
   const displayRoles = useMemo(() => 
     viewPermissions.filter(role => displayableRoles.includes(role)),
@@ -70,10 +71,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
     <div className="relative mb-12 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm animate-fade-in">
       <style>{BLUEPRINT_STYLE}</style>
       
-      {/* 🔥 Blueprint Grid Overlay */}
       <div className="absolute inset-0 blueprint-bg opacity-100" />
       
-      {/* Decorative Blueprint Corner Mark */}
       <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none">
           <div className="border-t-2 border-r-2 border-blue-500 w-12 h-12" />
       </div>
@@ -99,9 +98,6 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
               </span>
             );
           })}
-          {displayRoles.length === 0 && viewPermissions.length > 0 && (
-             null
-          )}
           {viewPermissions.length === 0 && (
             <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-full">
               {t('roles.public')}
@@ -109,9 +105,18 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
           )}
         </div>
 
-        <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white mb-8 tracking-tight leading-[0.95] max-w-4xl">
+        <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-[0.95] max-w-4xl">
           {title}
         </h1>
+
+        {/* 🔥 Extended Description */}
+        {extendedDescription && (
+            <div className="max-w-3xl mb-8">
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                    {extendedDescription}
+                </p>
+            </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-8 text-gray-500 dark:text-gray-400 border-t border-gray-200/50 dark:border-gray-700/50 pt-8">
           <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.15em]">

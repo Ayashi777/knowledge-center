@@ -69,7 +69,8 @@ export interface Document {
   id: string;
   titleKey?: string;
   title?: string;
-  description?: string;
+  description?: string; // Це буде короткий опис для карток
+  extendedDescription?: string; // 🔥 Нове поле: Розширений опис для сторінки документа
   thumbnailUrl?: string;
   updatedAt: Timestamp; // Strict Firebase Timestamp
   createdAt?: Timestamp;
@@ -80,7 +81,7 @@ export interface Document {
   };
   viewPermissions?: UserRole[];
   downloadPermissions?: UserRole[];
-  internalId?: string; // 🔥 Нове поле для адміна (наприклад, SPEC-054)
+  internalId?: string;
 }
 
 export type SortBy = 'recent' | 'alpha';

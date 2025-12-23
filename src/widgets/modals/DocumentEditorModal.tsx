@@ -18,6 +18,8 @@ export const DocumentEditorModal: React.FC<{
     const initialTitle = doc?.title || (doc?.titleKey ? t(doc.titleKey) : '');
     const [title, setTitle] = useState(initialTitle);
     const [internalId, setInternalId] = useState(doc?.internalId || '');
+    const [description, setDescription] = useState(doc?.description || '');
+    const [extendedDescription, setExtendedDescription] = useState(doc?.extendedDescription || '');
     const [category, setCategory] = useState(doc?.categoryKey || availableCategories[0]?.nameKey || '');
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(doc?.tagIds || []);
     const [viewPermissions, setViewPermissions] = useState<UserRole[]>(doc?.viewPermissions || []);
@@ -45,6 +47,8 @@ export const DocumentEditorModal: React.FC<{
             ...doc,
             title: title.trim(),
             internalId: internalId.trim(),
+            description: description.trim(),
+            extendedDescription: extendedDescription.trim(),
             categoryKey: category,
             tagIds: selectedTagIds,
             viewPermissions: viewPermissions,
@@ -120,6 +124,29 @@ export const DocumentEditorModal: React.FC<{
                                     <option key={cat.id} value={cat.nameKey}>{getCategoryName(cat.nameKey, t)}</option>
                                 ))}
                             </select>
+                        </div>
+                        
+                        <div>
+                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                 {t('editorModal.labelDescription') || 'Короткий опис (для карток)'}
+                             </label>
+                             <textarea
+                                 value={description}
+                                 onChange={e => setDescription(e.target.value)}
+                                 rows={2}
+                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold resize-none"
+                             />
+                        </div>
+                        <div>
+                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                 {t('editorModal.labelExtendedDescription') || 'Розширений опис (для сторінки)'}
+                             </label>
+                             <textarea
+                                 value={extendedDescription}
+                                 onChange={e => setExtendedDescription(e.target.value)}
+                                 rows={2}
+                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold resize-none"
+                             />
                         </div>
                     </div>
 

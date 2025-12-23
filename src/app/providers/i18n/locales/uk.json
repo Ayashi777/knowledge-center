@@ -21,7 +21,8 @@
     "deny": "Відхилити",
     "status": "Статус",
     "error": "Сталася помилка",
-    "all": "Всі"
+    "all": "Всі",
+    "linkCopied": "Посилання скопійовано!"
   },
   "roles": {
     "guest": "Гість",
@@ -125,7 +126,8 @@
     "filterByTag": "Фільтр за тегами",
     "clearFilters": "Очистити",
     "noResults": "Документів не знайдено",
-    "noResultsDescription": "Спробуйте змінити параметри пошуку або скинути фільтри."
+    "noResultsDescription": "Спробуйте змінити параметри пошуку або скинути фільтри.",
+    "noDescription": "Опис наразі відсутній"
   },
   "docView": {
     "preview": "Попередній перегляд",
@@ -214,6 +216,7 @@
     "editTitle": "Редагувати документ",
     "labelTitle": "Назва",
     "internalIdLabel": "Внутрішній ID (напр. SPEC-054)",
+    "labelDescription": "Короткий опис",
     "labelCategory": "Категорія",
     "labelTags": "Теги",
     "placeholderTags": "наприклад, безпека, оновлення, звіт",

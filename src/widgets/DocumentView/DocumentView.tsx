@@ -298,7 +298,7 @@ export const DocumentView: React.FC<{
 
                 <main className="flex-grow min-w-0 flex flex-col items-center">
                     <div className="w-full max-w-[850px] mb-8">
-                         <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} viewPermissions={doc.viewPermissions} currentUserRole={currentUserRole} />
+                         <DocumentHeader title={doc.titleKey ? t(doc.titleKey) : doc.title || ''} extendedDescription={doc.extendedDescription} updatedAt={doc.updatedAt} tagIds={doc.tagIds || []} tagById={tagById} viewPermissions={doc.viewPermissions} currentUserRole={currentUserRole} />
                     </div>
                     <div className="w-full">
                         {isEditingContent ? (
