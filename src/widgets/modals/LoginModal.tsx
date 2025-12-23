@@ -234,7 +234,7 @@ export const LoginModal: React.FC<{
                                     </div>
                                 </div>
                                 <div className="sm:col-span-2">
-                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordPasswordConfirm') || t('registrationModal.fieldPasswordConfirm')}</label>
+                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
                                     <div className="relative">
                                         <input 
                                             required 
