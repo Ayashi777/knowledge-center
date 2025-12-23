@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { UserRole } from '@shared/types';
+import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { useCategories } from '@entities/category/model/useCategories';
 import { useTags } from '@entities/tag/model/useTags';
 import { useDocuments } from '@entities/document/model/useDocuments';
@@ -151,7 +152,10 @@ export const useDocumentManagement = () => {
         visibleCategories: categories,
         
         actions: {
-            // ... (keep actions)
+            createDocument: DocumentsApi.saveMetadata,
+            updateDocument: DocumentsApi.saveMetadata,
+            updateContent: DocumentsApi.updateContent,
+            deleteDocument: DocumentsApi.delete
         }
     };
 };

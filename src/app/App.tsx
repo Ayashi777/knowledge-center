@@ -27,7 +27,6 @@ const AppContent: React.FC = () => {
   const { openModal } = useModal();
 
   const {
-    documents,
     allDocuments,
     categories,
     isLoading: isDocsLoading,
