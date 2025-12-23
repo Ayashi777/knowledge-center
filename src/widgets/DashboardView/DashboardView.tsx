@@ -70,7 +70,6 @@ export const DashboardView: React.FC<{
 }) => {
     const { t } = useI18n();
     const { role: currentUserRole } = useAuth();
-    const isGuest = currentUserRole === 'guest';
 
     return (
         <>
@@ -119,11 +118,12 @@ export const DashboardView: React.FC<{
                         viewMode={viewMode}
                         onSelectDoc={onSelectDoc}
                         onRequireLogin={onRequireLogin}
-                        isGuest={isGuest}
+                        currentUserRole={currentUserRole}
                         showAdminControls={showAdminControls}
                         onEditDoc={onEditDoc}
                         onDeleteDoc={onDeleteDoc}
                         allTags={allTags}
+                        categories={visibleCategories}
                     />
 
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />

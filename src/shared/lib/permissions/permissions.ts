@@ -1,4 +1,5 @@
 import { UserRole, Category, Document } from '@shared/types';
+import { normalizeCategoryKey } from '../utils/format';
 
 /**
  * Перевіряє, чи має роль доступ до категорії
@@ -6,8 +7,10 @@ import { UserRole, Category, Document } from '@shared/types';
 export const canViewCategory = (role: UserRole, category: Category): boolean => {
     if (!category) return false;
     if (role === 'admin') return true;
-    // Якщо дозволи не вказані — категорія публічна
+    
+    // Якщо дозволи не вказані або порожні — категорія публічна
     if (!category.viewPermissions || category.viewPermissions.length === 0) return true;
+    
     return category.viewPermissions.includes(role);
 };
 
@@ -18,18 +21,21 @@ export const canViewDocument = (role: UserRole, doc: Document, categories: Categ
     if (!doc || !categories) return false;
     if (role === 'admin') return true;
 
-    // 1. Перевірка на рівні документа
+    // 1. Перевірка на рівні документа (якщо є специфічні дозволи на документ)
     if (doc.viewPermissions && doc.viewPermissions.length > 0) {
         if (!doc.viewPermissions.includes(role)) return false;
     }
 
     // 2. Перевірка на рівні категорії
-    const category = (categories || []).find(c => c.nameKey === doc.categoryKey);
+    const normalizedDocCatKey = normalizeCategoryKey(doc.categoryKey);
+    const category = (categories || []).find(c => normalizeCategoryKey(c.nameKey) === normalizedDocCatKey);
+    
     if (category) {
         return canViewCategory(role, category);
     }
 
-    // Якщо категорії немає — за замовчуванням приховуємо (безпечний підхід)
+    // Якщо категорії не знайдено, але ми не адмін — приховуємо для безпеки
+    // (Хоча зазвичай категорія має бути)
     return false;
 };
 

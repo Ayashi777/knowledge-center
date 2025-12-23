@@ -6,6 +6,7 @@ import { Icon } from '@shared/ui/icons';
 import { DocumentView } from '@widgets/DocumentView';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useDocumentManagement } from '@/shared/hooks/useDocumentManagement';
+import { canViewDocument } from '@shared/lib/permissions/permissions';
 
 interface DocumentPageProps {
     documents: Document[];
@@ -46,11 +47,14 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
 
     if (!docItem) return <Navigate to="/" />;
 
-    const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
-    const hasAccess = currentUserRole === 'admin' || cat?.viewPermissions?.includes(currentUserRole);
+    const hasAccess = canViewDocument(currentUserRole, docItem, categories);
 
-    const isGuest = !!currentUser && currentUserRole === 'guest';
-    const displayRoles = (cat?.viewPermissions || []).filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'designer' || r === 'architect'));
+    const isGuest = currentUserRole === 'guest';
+    
+    // Find category to get allowed roles for display
+    const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
+    const displayRoles = (cat?.viewPermissions || docItem.viewPermissions || [])
+        .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'designer' || r === 'architect'));
 
     return (
       <div className="relative min-h-screen">
@@ -77,7 +81,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
             <div className="bg-white dark:bg-gray-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-white/10 max-w-xl w-full text-center">
               <div className="mx-auto mb-8 w-20 h-20 rounded-3xl bg-blue-600/10 flex items-center justify-center">
                 <Icon
-                  name={isGuest ? 'clock' : 'lock-closed'}
+                  name={isGuest ? 'lock-closed' : 'clock'}
                   className="w-10 h-10 text-blue-600 dark:text-blue-400"
                 />
               </div>
@@ -85,36 +89,11 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
               {isGuest ? (
                 <>
                   <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
-                    {t('docView.accessPendingTitle')}
-                  </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
-                    {t('docView.accessPendingDescription')}
-                  </p>
-                  <button
-                    onClick={() => navigate('/')}
-                    className="w-full py-5 bg-blue-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all"
-                  >
-                    {t('docView.backToList')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
                     {t('docView.accessDenied')}
                   </h1>
-                  
-                  {displayRoles.length > 0 ? (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
-                      {t('docView.accessRequiredForRoles', {
-                        roles: displayRoles.map((r) => t(`roles.${r}`)).join(', ')
-                      })}
-                    </p>
-                  ) : (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
-                      {t('docView.accessRequiredGeneric')}
-                    </p>
-                  )}
-
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                    {t('docView.accessRequiredGeneric')}
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button
                       onClick={onLoginClick}
@@ -129,15 +108,40 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
                       {t('registrationModal.title')}
                     </button>
                   </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+                    {t('docView.accessPendingTitle')}
+                  </h1>
+                  
+                  {displayRoles.length > 0 ? (
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                      {t('docView.accessRequiredForRoles', {
+                        roles: displayRoles.map((r) => t(`roles.${r}`)).join(', ')
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                      {t('docView.accessPendingDescription')}
+                    </p>
+                  )}
 
                   <button
                     onClick={() => navigate('/')}
-                    className="mt-8 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                    className="w-full py-5 bg-blue-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all"
                   >
                     {t('docView.backToList')}
                   </button>
                 </>
               )}
+
+              <button
+                onClick={() => navigate('/')}
+                className="mt-8 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+              >
+                {t('docView.backToList')}
+              </button>
             </div>
           </div>
         )}

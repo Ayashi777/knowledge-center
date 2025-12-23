@@ -3,6 +3,7 @@ import { Document, ViewMode, Tag, UserRole, Category } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { DocumentGridItem, DocumentListItem, DocumentSkeleton } from '@shared/ui/DocumentComponents';
 import { Icon } from '@shared/ui/icons';
+import { canViewDocument } from '@shared/lib/permissions/permissions';
 
 interface DocumentListProps {
     docs: Document[];
@@ -69,8 +70,9 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     doc={doc} 
                     onClick={() => onSelectDoc(doc)} 
                     onRequireLogin={onRequireLogin} 
-                    isGuest={currentUserRole === 'guest'} 
+                    currentUserRole={currentUserRole}
                     tagById={tagById}
+                    categories={categories}
                 />
             ))}
         </div>
@@ -84,6 +86,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     onEdit={() => onEditDoc(doc)}
                     onDelete={() => onDeleteDoc(doc.id)}
                     showAdminControls={showAdminControls}
+                    hasAccess={canViewDocument(currentUserRole, doc, categories)}
+                    categories={categories}
                 />
             ))}
         </div>
