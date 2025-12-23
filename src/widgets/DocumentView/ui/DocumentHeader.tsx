@@ -46,6 +46,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
 }) => {
   const { t, lang } = useI18n();
 
+  // 🔥 Filter out system roles, keep only business roles
+  const businessRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+  const displayRoles = useMemo(() => 
+    viewPermissions.filter(role => businessRoles.includes(role)),
+    [viewPermissions]
+  );
+
   return (
     <div className="relative mb-12 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm animate-fade-in">
       <style>{BLUEPRINT_STYLE}</style>
@@ -64,7 +71,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
       <div className="relative z-10 p-8 md:p-12">
         {/* Role Badges */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {viewPermissions.map(role => (
+          {displayRoles.map(role => (
             <span 
               key={role} 
               className="px-3 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-blue-500/20"
@@ -72,6 +79,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
               {t(`roles.${role}`)}
             </span>
           ))}
+          {displayRoles.length === 0 && viewPermissions.length > 0 && (
+             /* If there are permissions but none are business roles, we show nothing or custom logic */
+             null
+          )}
           {viewPermissions.length === 0 && (
             <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-full">
               {t('roles.public')}

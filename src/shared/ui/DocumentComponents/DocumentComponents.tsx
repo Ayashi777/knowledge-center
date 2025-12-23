@@ -22,13 +22,8 @@ export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({
   const { t, lang } = useI18n();
 
   const handleItemClick = (e: React.MouseEvent) => {
-    // If user clicked a button or a specific interactive element inside, we might want to prevent this
-    // But here we just decide between login or open
-    if (isGuest) {
-      onRequireLogin();
-    } else {
-      onClick();
-    }
+    // 🔥 Видаляємо перевірку isGuest, щоб дозволити перехід на сторінку документа всім
+    onClick();
   };
 
   return (

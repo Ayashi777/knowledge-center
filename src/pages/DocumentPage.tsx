@@ -49,99 +49,98 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
     const hasAccess = currentUserRole === 'admin' || cat?.viewPermissions?.includes(currentUserRole);
 
-    if (hasAccess) {
-      return (
-        <DocumentView
-          doc={docItem}
-          allTags={allTags}
-          onClose={() => navigate('/')}
-          onRequireLogin={onRequireLogin}
-          currentUserRole={currentUserRole}
-          onUpdateContent={onUpdateContent}
-          onCategoryClick={(key) => {
-            onCategorySelect(key);
-            navigate('/');
-          }}
-        />
-      );
-    }
-
-    // Filter out 'admin' from public display roles
-    const displayRoles = (cat?.viewPermissions || []).filter(r => r !== 'admin' && r !== 'guest');
     const isGuest = !!currentUser && currentUserRole === 'guest';
+    const displayRoles = (cat?.viewPermissions || []).filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'designer' || r === 'architect'));
 
     return (
-      <div className="pt-32 text-center animate-fade-in px-4">
-        <div className="text-center w-full max-w-lg mx-auto">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
-            <Icon
-              name={isGuest ? 'clock' : 'lock-closed'}
-              className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
-            />
-          </div>
-
-          {isGuest ? (
-            <>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {t('docView.accessPendingTitle')}
-              </h1>
-
-              <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                {t('docView.accessPendingDescription')}
-              </p>
-
-              <div className="mt-8">
-                <button
-                  onClick={() => navigate('/')}
-                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {t('docView.backToList')}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {t('docView.accessDenied')}
-              </h1>
-
-              {displayRoles.length > 0 ? (
-                <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                  {t('docView.accessRequiredForRoles', {
-                    roles: displayRoles.map((r) => t(`roles.${r}`)).join(', ')
-                  })}
-                </p>
-              ) : (
-                <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                  {t('docView.accessRequiredGeneric')}
-                </p>
-              )}
-
-              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                <button
-                  onClick={onLoginClick}
-                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {t('header.login')}
-                </button>
-
-                <button
-                  onClick={onRegisterClick}
-                  className="px-8 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  {t('registrationModal.title')}
-                </button>
-              </div>
-
-              <button
-                onClick={() => navigate('/')}
-                className="mt-10 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                {t('docView.backToList')}
-              </button>
-            </>
-          )}
+      <div className="relative min-h-screen">
+        {/* Document content with blur if no access */}
+        <div className={!hasAccess ? "blur-2xl pointer-events-none select-none transition-all duration-700 opacity-50" : "transition-all duration-700"}>
+          <DocumentView
+            doc={docItem}
+            allTags={allTags}
+            onClose={() => navigate('/')}
+            onRequireLogin={onRequireLogin}
+            currentUserRole={currentUserRole}
+            onUpdateContent={onUpdateContent}
+            onCategoryClick={(key) => {
+              onCategorySelect(key);
+              navigate('/');
+            }}
+            hasAccess={hasAccess}
+          />
         </div>
+
+        {/* Access Restriction Overlay */}
+        {!hasAccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-gray-950/40 backdrop-blur-md animate-fade-in">
+            <div className="bg-white dark:bg-gray-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-white/10 max-w-xl w-full text-center">
+              <div className="mx-auto mb-8 w-20 h-20 rounded-3xl bg-blue-600/10 flex items-center justify-center">
+                <Icon
+                  name={isGuest ? 'clock' : 'lock-closed'}
+                  className="w-10 h-10 text-blue-600 dark:text-blue-400"
+                />
+              </div>
+
+              {isGuest ? (
+                <>
+                  <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+                    {t('docView.accessPendingTitle')}
+                  </h1>
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                    {t('docView.accessPendingDescription')}
+                  </p>
+                  <button
+                    onClick={() => navigate('/')}
+                    className="w-full py-5 bg-blue-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all"
+                  >
+                    {t('docView.backToList')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+                    {t('docView.accessDenied')}
+                  </h1>
+                  
+                  {displayRoles.length > 0 ? (
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                      {t('docView.accessRequiredForRoles', {
+                        roles: displayRoles.map((r) => t(`roles.${r}`)).join(', ')
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+                      {t('docView.accessRequiredGeneric')}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      onClick={onLoginClick}
+                      className="py-5 bg-blue-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all"
+                    >
+                      {t('header.login')}
+                    </button>
+                    <button
+                      onClick={onRegisterClick}
+                      className="py-5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                    >
+                      {t('registrationModal.title')}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/')}
+                    className="mt-8 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                  >
+                    {t('docView.backToList')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
 };
