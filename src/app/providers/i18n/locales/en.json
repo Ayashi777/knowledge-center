@@ -21,15 +21,16 @@
     "deny": "Deny",
     "status": "Status",
     "error": "An error occurred",
-    "all": "All"
+    "all": "All",
+    "toHome": "To Home"
   },
   "roles": {
     "guest": "Guest",
     "guestDesc": "Basic access to public materials.",
     "foreman": "Foreman",
     "foremanDesc": "View building norms and safety protocols.",
-    "designer": "Designer",
-    "designerDesc": "Access to technical drawings and logistics.",
+    "engineer": "Design Engineer",
+    "engineerDesc": "Access to technical drawings and logistics.",
     "architect": "Architect",
     "architectDesc": "Access to architectural plans and material specs.",
     "admin": "Admin",
@@ -125,7 +126,8 @@
     "filterByTag": "Filter by tags",
     "clearFilters": "Clear",
     "noResults": "No documents found",
-    "noResultsDescription": "Try changing search parameters or clearing filters."
+    "noResultsDescription": "Try changing search parameters or clearing filters.",
+    "noDescription": "Description currently unavailable"
   },
   "docView": {
     "preview": "Preview",
@@ -197,7 +199,7 @@
     "buttonSubmit": "Submit Request",
     "successTitle": "Request Sent!",
     "successDescription": "You have successfully registered. Currently, your status is \"Guest\". The administrator will review your request and grant extended access soon.",
-    "buttonClose": "Login to System"
+    "buttonClose": "To Home"
   },
   "userEditorModal": {
     "title": "Edit User",
@@ -213,6 +215,9 @@
     "createTitle": "Create Document",
     "editTitle": "Edit Document",
     "labelTitle": "Title",
+    "internalIdLabel": "Internal ID (e.g. SPEC-054)",
+    "labelDescription": "Short Description (for cards)",
+    "labelExtendedDescription": "Extended Description (for page)",
     "labelCategory": "Category",
     "labelTags": "Tags",
     "placeholderTags": "e.g., safety, update, report",

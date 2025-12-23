@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Document, Category, UserRole } from '@shared/types';
 import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { normalizeCategoryKey } from '@shared/lib/utils/format';
@@ -8,18 +8,18 @@ import { useAuth } from '@app/providers/AuthProvider';
 interface UseDocumentsProps {
     categories: Category[];
     searchTerm: string;
-    selectedCategoryKey: string | null;
+    selectedCategoryKeys: string[];
     selectedTagIds: string[];
-    selectedRoleFilter: UserRole | 'all';
+    selectedRoles: UserRole[];
     sortBy: 'recent' | 'alpha';
 }
 
 export const useDocuments = ({
     categories,
     searchTerm,
-    selectedCategoryKey,
+    selectedCategoryKeys,
     selectedTagIds,
-    selectedRoleFilter,
+    selectedRoles,
     sortBy
 }: UseDocumentsProps) => {
     const { t } = useI18n();
@@ -28,16 +28,15 @@ export const useDocuments = ({
     const [rawDocuments, setRawDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 🔥 Server-side filtering + Real-time sync
+    // 🔥 Fetch documents. For multi-select, we handle filtering on the client 
+    // to avoid complex Firestore index requirements for dynamic 'array-contains-any' combinations.
     useEffect(() => {
         setIsLoading(true);
         
-        // We only filter by Category on server side for now to keep real-time complex filters working
         const unsubscribe = DocumentsApi.subscribeFiltered(
             { 
-                categoryKey: selectedCategoryKey && selectedCategoryKey !== 'all' ? selectedCategoryKey : undefined,
                 sortBy: sortBy,
-                limitCount: 200 // Reasonable limit for performance
+                limitCount: 500 
             },
             (fetchedDocs) => {
                 setRawDocuments(fetchedDocs);
@@ -50,7 +49,7 @@ export const useDocuments = ({
         );
 
         return () => unsubscribe();
-    }, [selectedCategoryKey, sortBy]);
+    }, [sortBy]);
 
     const categoryMap = useMemo(() => {
         const map = new Map<string, Category>();
@@ -60,8 +59,7 @@ export const useDocuments = ({
         return map;
     }, [categories]);
 
-    // 🔥 Client-side Refinement (Search, Tags, Roles)
-    // This provides instant feedback without hitting Firestore for every keystroke
+    // 🔥 Multi-select Filtering Logic
     const filteredAndSorted = useMemo(() => {
         let result = rawDocuments.filter(document => {
             const documentCategoryKey = normalizeCategoryKey(document.categoryKey);
@@ -70,7 +68,39 @@ export const useDocuments = ({
             const isValidCategory = categories.some(cat => normalizeCategoryKey(cat.nameKey) === documentCategoryKey);
             if (!isValidCategory && currentUserRole !== 'admin') return false;
 
-            // 2. Search Refinement
+            // 2. Multi-Category Filter (OR logic)
+            if (selectedCategoryKeys.length > 0) {
+                const isMatch = selectedCategoryKeys.some(key => 
+                    normalizeCategoryKey(key) === documentCategoryKey
+                );
+                if (!isMatch) return false;
+            }
+
+            // 3. Multi-Role Filter (OR logic)
+            if (selectedRoles.length > 0) {
+                const category = categoryMap.get(documentCategoryKey);
+                const isMatch = selectedRoles.some(role => {
+                    const hasDocAccess = document.viewPermissions?.includes(role);
+                    const hasCategoryAccess = category?.viewPermissions?.includes(role);
+                    
+                    // If document has its own permissions, they take priority
+                    if (document.viewPermissions && document.viewPermissions.length > 0) {
+                        return hasDocAccess;
+                    }
+                    // Otherwise check category
+                    return hasCategoryAccess;
+                });
+                
+                if (!isMatch) return false;
+            }
+
+            // 4. Tags Filter (AND logic)
+            if (selectedTagIds.length > 0) {
+                const matchesTags = selectedTagIds.every(tagId => document.tagIds?.includes(tagId));
+                if (!matchesTags) return false;
+            }
+
+            // 5. Search Refinement
             if (searchTerm) {
                 const displayTitle = document.titleKey ? t(document.titleKey) : document.title || '';
                 const matchesSearch = displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -78,25 +108,10 @@ export const useDocuments = ({
                 if (!matchesSearch) return false;
             }
 
-            // 3. Tags Refinement
-            if (selectedTagIds.length > 0) {
-                const matchesTags = selectedTagIds.every(tagId => document.tagIds?.includes(tagId));
-                if (!matchesTags) return false;
-            }
-
-            // 4. Role Refinement
-            if (selectedRoleFilter !== 'all') {
-                const category = categoryMap.get(documentCategoryKey);
-                // Check if role has access to category OR specifically to this document
-                const hasCategoryAccess = category?.viewPermissions?.includes(selectedRoleFilter as UserRole);
-                const hasDocAccess = document.viewPermissions?.includes(selectedRoleFilter as UserRole);
-                if (!hasCategoryAccess && !hasDocAccess) return false;
-            }
-
             return true;
         });
 
-        // 5. Final Client Sorting (to ensure UI is 100% sync)
+        // 6. Final Client Sorting
         return result.sort((a, b) => {
             if (sortBy === 'recent') {
                 return (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0);
@@ -106,7 +121,7 @@ export const useDocuments = ({
                 return titleA.localeCompare(titleB);
             }
         });
-    }, [rawDocuments, categories, searchTerm, selectedTagIds, selectedRoleFilter, sortBy, t, categoryMap, currentUserRole]);
+    }, [rawDocuments, categories, searchTerm, selectedTagIds, selectedCategoryKeys, selectedRoles, sortBy, t, categoryMap, currentUserRole]);
 
     return {
         documents: filteredAndSorted,

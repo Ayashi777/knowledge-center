@@ -99,12 +99,12 @@ export const LoginModal: React.FC<{
     };
 
     // Client-only roles for registration
-    const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+    const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect'];
 
     // Roles with icons for the sidebar
     const roleInfo = [
         { role: 'foreman', icon: 'construction' },
-        { role: 'designer', icon: 'it' },
+        { role: 'engineer', icon: 'it' },
         { role: 'architect', icon: 'view-boards' }
     ];
 

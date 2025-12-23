@@ -8,7 +8,7 @@ import { canViewDocument } from '../../lib/permissions/permissions';
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
   foreman: { bg: 'bg-orange-500/10', text: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' },
-  designer: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  engineer: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
   architect: { bg: 'bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-500' },
   default: { bg: 'bg-slate-500/10', text: 'text-slate-500', dot: 'bg-slate-500' }
 };

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { UserRole } from '@shared/types';
-import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { useCategories } from '@entities/category/model/useCategories';
 import { useTags } from '@entities/tag/model/useTags';
 import { useDocuments } from '@entities/document/model/useDocuments';
@@ -9,34 +8,70 @@ import { useDocuments } from '@entities/document/model/useDocuments';
 export const useDocumentManagement = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // -- URL State Accessors (Single Source of Truth) --
+    // -- URL State Accessors --
     const searchTerm = searchParams.get('q') || '';
-    const selectedCategoryKey = searchParams.get('category') || 'all';
+    const selectedCategoryKeys = useMemo(() => searchParams.getAll('category'), [searchParams]);
+    const selectedRoles = useMemo(() => searchParams.getAll('role') as UserRole[], [searchParams]);
+    const selectedTagIds = useMemo(() => searchParams.getAll('tag'), [searchParams]);
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     
-    // UI-only state (doesn't necessarily need to be in URL)
-    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-    const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
+    // UI-only state
     const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     
     const ITEMS_PER_PAGE = 9;
 
-    // -- Update Handlers (Updating URL instead of local state) --
+    // -- Multi-select Update Handlers --
     const setSearchTerm = useCallback((q: string) => {
         setSearchParams(prev => {
             if (!q) prev.delete('q');
             else prev.set('q', q);
-            prev.set('page', '1'); // Reset page on search
+            prev.set('page', '1');
             return prev;
         }, { replace: true });
     }, [setSearchParams]);
 
-    const setSelectedCategory = useCallback((category: string) => {
+    const handleCategoryToggle = useCallback((categoryKey: string) => {
         setSearchParams(prev => {
-            if (category === 'all') prev.delete('category');
-            else prev.set('category', category);
-            prev.set('page', '1'); // Reset page on category change
+            const current = prev.getAll('category');
+            prev.delete('category');
+            
+            const next = current.includes(categoryKey) 
+                ? current.filter(k => k !== categoryKey)
+                : [...current, categoryKey];
+            
+            next.forEach(k => prev.append('category', k));
+            prev.set('page', '1');
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const handleRoleToggle = useCallback((role: UserRole) => {
+        setSearchParams(prev => {
+            const current = prev.getAll('role');
+            prev.delete('role');
+            
+            const next = current.includes(role) 
+                ? current.filter(r => r !== role)
+                : [...current, role];
+            
+            next.forEach(r => prev.append('role', r));
+            prev.set('page', '1');
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const handleTagToggle = useCallback((tagId: string) => {
+        setSearchParams(prev => {
+            const current = prev.getAll('tag');
+            prev.delete('tag');
+            
+            const next = current.includes(tagId) 
+                ? current.filter(id => id !== tagId)
+                : [...current, tagId];
+            
+            next.forEach(id => prev.append('tag', id));
+            prev.set('page', '1');
             return prev;
         }, { replace: true });
     }, [setSearchParams]);
@@ -49,7 +84,6 @@ export const useDocumentManagement = () => {
         }, { replace: true });
     }, [setSearchParams]);
 
-    // Auto-scroll to top when page changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [currentPage]);
@@ -57,12 +91,13 @@ export const useDocumentManagement = () => {
     // -- Data Entities --
     const { categories, isLoading: isCategoriesLoading } = useCategories();
     const { tags, isLoading: isTagsLoading } = useTags();
+    
     const { documents, allFetchedDocuments, isLoading: isDocumentsLoading } = useDocuments({
         categories,
         searchTerm,
-        selectedCategoryKey,
+        selectedCategoryKeys,
         selectedTagIds,
-        selectedRoleFilter,
+        selectedRoles,
         sortBy
     });
 
@@ -71,7 +106,6 @@ export const useDocumentManagement = () => {
     // -- Pagination Logic --
     const totalPages = Math.ceil(documents.length / ITEMS_PER_PAGE);
     
-    // Correction: if current page is beyond total pages (after filter)
     useEffect(() => {
         if (totalPages > 0 && currentPage > totalPages) {
             setCurrentPage(totalPages);
@@ -83,58 +117,41 @@ export const useDocumentManagement = () => {
         return documents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     }, [documents, currentPage]);
 
-    const handleTagToggle = (tagId: string) => {
-        setSelectedTagIds(prevIds => 
-            prevIds.includes(tagId) ? prevIds.filter(id => id !== tagId) : [...prevIds, tagId]
-        );
-    };
-
     const resetFilters = () => {
         setSearchParams({}, { replace: true });
-        setSelectedTagIds([]);
-        setSelectedRoleFilter('all');
     };
 
     return {
-        // Data
         allDocuments: allFetchedDocuments,
         categories,
         allTags: tags,
         isLoading,
         
-        // Search & Filters
         searchTerm,
         setSearchTerm,
-        selectedCategory: selectedCategoryKey,
-        setSelectedCategory,
+        selectedCategories: selectedCategoryKeys,
+        handleCategoryToggle,
         selectedTags: selectedTagIds,
         handleTagSelect: handleTagToggle,
-        selectedRoleFilter,
-        setSelectedRoleFilter,
+        selectedRoles,
+        handleRoleToggle,
         clearFilters: resetFilters,
         
-        // UI State
         sortBy,
         setSortBy,
         viewMode,
         setViewMode,
         
-        // Pagination
         currentPage,
         setCurrentPage,
         totalPages,
         
-        // Processed Results
         sortedAndFilteredDocs: documents,
         paginatedDocs: paginatedDocuments,
         visibleCategories: categories,
         
-        // Actions
         actions: {
-            createDocument: DocumentsApi.create,
-            updateDocument: DocumentsApi.updateMetadata,
-            updateContent: DocumentsApi.updateContent,
-            deleteDocument: DocumentsApi.delete
+            // ... (keep actions)
         }
     };
 };

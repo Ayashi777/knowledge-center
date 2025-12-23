@@ -54,7 +54,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({
     // Find category to get allowed roles for display
     const cat = (categories || []).find((c) => c.nameKey === docItem.categoryKey);
     const displayRoles = (cat?.viewPermissions || docItem.viewPermissions || [])
-        .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'designer' || r === 'architect'));
+        .filter(r => r !== 'admin' && r !== 'guest' && (r === 'foreman' || r === 'engineer' || r === 'architect'));
 
     return (
       <div className="relative min-h-screen">

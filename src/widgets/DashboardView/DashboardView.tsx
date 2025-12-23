@@ -22,8 +22,8 @@ export const DashboardView: React.FC<{
     onEditDoc: (doc: Document) => void;
     onDeleteDoc: (id: string) => void;
     onAddNewDoc: () => void;
-    selectedCategory: string | null;
-    onCategorySelect: (categoryName: string | null) => void;
+    selectedCategories: string[]; // 🔥 Multi-select
+    handleCategoryToggle: (categoryName: string) => void;
     visibleCategories: Category[];
     allTags: Tag[];
     selectedTags: string[];
@@ -32,8 +32,8 @@ export const DashboardView: React.FC<{
     setViewMode: (mode: ViewMode) => void;
     sortBy: SortBy;
     setSortBy: (sort: SortBy) => void;
-    selectedRole: UserRole | 'all';
-    onRoleSelect: (role: UserRole | 'all') => void;
+    selectedRoles: UserRole[]; // 🔥 Multi-select
+    handleRoleToggle: (role: UserRole) => void;
     onClearFilters: () => void;
     currentPage: number;
     totalPages: number;
@@ -50,8 +50,8 @@ export const DashboardView: React.FC<{
     onEditDoc,
     onDeleteDoc,
     onAddNewDoc,
-    selectedCategory,
-    onCategorySelect,
+    selectedCategories,
+    handleCategoryToggle,
     visibleCategories,
     allTags,
     selectedTags,
@@ -60,8 +60,8 @@ export const DashboardView: React.FC<{
     setViewMode,
     sortBy,
     setSortBy,
-    selectedRole,
-    onRoleSelect,
+    selectedRoles,
+    handleRoleToggle,
     onClearFilters,
     currentPage,
     totalPages,
@@ -78,16 +78,16 @@ export const DashboardView: React.FC<{
             <div className="flex flex-col lg:flex-row gap-8">
                 <Sidebar
                     visibleCategories={visibleCategories}
-                    selectedCategory={selectedCategory}
-                    onCategorySelect={onCategorySelect}
+                    selectedCategories={selectedCategories}
+                    onCategoryToggle={handleCategoryToggle}
                     allTags={allTags}
                     selectedTags={selectedTags}
                     onTagSelect={onTagSelect}
                     showAdminControls={showAdminControls}
                     onEditCategory={onEditCategory}
                     onClearFilters={onClearFilters}
-                    selectedRole={selectedRole}
-                    onRoleSelect={onRoleSelect}
+                    selectedRoles={selectedRoles}
+                    onRoleToggle={handleRoleToggle}
                 />
 
                 <main className="flex-grow">

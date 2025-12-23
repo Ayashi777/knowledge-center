@@ -6,41 +6,39 @@ import { getCategoryName, normalizeCategoryKey } from '@shared/lib/utils/format'
 
 interface SidebarProps {
   visibleCategories: Category[];
-  selectedCategory: string | null;
-  onCategorySelect: (key: string | null) => void;
+  selectedCategories: string[]; // 🔥 Changed to array
+  onCategoryToggle: (key: string) => void; // 🔥 Changed to toggle
   allTags: Tag[];
   selectedTags: string[];
   onTagSelect: (tagId: string) => void;
   showAdminControls: boolean;
   onEditCategory: (cat: Category) => void;
   onClearFilters: () => void;
-  selectedRole: UserRole | 'all';
-  onRoleSelect: (role: UserRole | 'all') => void;
+  selectedRoles: UserRole[]; // 🔥 Changed to array
+  onRoleToggle: (role: UserRole) => void; // 🔥 Changed to toggle
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   visibleCategories,
-  selectedCategory,
-  onCategorySelect,
+  selectedCategories,
+  onCategoryToggle,
   allTags,
   selectedTags,
   onTagSelect,
   showAdminControls,
   onEditCategory,
   onClearFilters,
-  selectedRole,
-  onRoleSelect,
+  selectedRoles,
+  onRoleToggle,
 }) => {
   const { t } = useI18n();
 
-  // 🔥 Publicly selectable roles for filtering
-  const selectableRoles: UserRole[] = ['foreman', 'designer', 'architect'];
+  const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect'];
 
-  // Check if any filters are active
   const hasActiveFilters = 
-    (selectedCategory && selectedCategory !== 'all') || 
+    selectedCategories.length > 0 || 
     selectedTags.length > 0 || 
-    (selectedRole && selectedRole !== 'all');
+    selectedRoles.length > 0;
 
   return (
     <aside className="w-full lg:w-72 shrink-0 space-y-8">
@@ -63,52 +61,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </h3>
         </div>
         <div className="grid grid-cols-1 gap-1">
-          {visibleCategories.map((cat) => (
-            <div key={cat.id} className="group flex items-center gap-1">
-              <button
-                onClick={() => onCategorySelect(cat.nameKey)}
-                className={`flex-grow flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group-active:scale-[0.98] ${
-                  normalizeCategoryKey(selectedCategory) === normalizeCategoryKey(cat.nameKey)
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
-                }`}
-              >
-                <Icon name={cat.iconName as any || 'folder'} className="w-5 h-5 shrink-0" />
-                <span className="font-bold text-sm truncate">{getCategoryName(cat.nameKey, t)}</span>
-              </button>
-              
-              {showAdminControls && (
-                <button 
-                  onClick={() => onEditCategory(cat)}
-                  className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-all"
+          {visibleCategories.map((cat) => {
+            const isSelected = selectedCategories.some(k => normalizeCategoryKey(k) === normalizeCategoryKey(cat.nameKey));
+            return (
+              <div key={cat.id} className="group flex items-center gap-1">
+                <button
+                  onClick={() => onCategoryToggle(cat.nameKey)}
+                  className={`flex-grow flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group-active:scale-[0.98] ${
+                    isSelected
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
+                  }`}
                 >
-                  <Icon name="pencil" className="w-4 h-4" />
+                  <Icon name={cat.iconName as any || 'folder'} className="w-5 h-5 shrink-0" />
+                  <span className="font-bold text-sm truncate">{getCategoryName(cat.nameKey, t)}</span>
                 </button>
-              )}
-            </div>
-          ))}
+                
+                {showAdminControls && (
+                  <button 
+                    onClick={() => onEditCategory(cat)}
+                    className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-all"
+                  >
+                    <Icon name="pencil" className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Roles Filter (UI only) */}
+      {/* Roles Filter (Multi-select) */}
       <section className="pt-4 border-t border-gray-100 dark:border-gray-800">
         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
           {t('sidebar.forWhom')}
         </h3>
         <div className="flex flex-wrap gap-2">
-          {selectableRoles.map((role) => (
-            <button
-              key={role}
-              onClick={() => onRoleSelect(selectedRole === role ? 'all' : role as UserRole)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                selectedRole === role
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              {t(`roles.${role}`)}
-            </button>
-          ))}
+          {selectableRoles.map((role) => {
+            const isSelected = selectedRoles.includes(role);
+            return (
+              <button
+                key={role}
+                onClick={() => onRoleToggle(role)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  isSelected
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md ring-2 ring-blue-500/20'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                {t(`roles.${role}`)}
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -134,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </section>
 
-      {/* Reset Filters Button - Made less transparent */}
+      {/* Reset Filters Button */}
       {hasActiveFilters && (
         <button
           onClick={onClearFilters}

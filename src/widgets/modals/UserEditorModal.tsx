@@ -10,7 +10,7 @@ export const UserEditorModal: React.FC<{ user: UserProfile, onSave: (user: Parti
     const [email, setEmail] = useState(user.email || '');
     const [role, setRole] = useState(user.role);
 
-    const roles: UserRole[] = ['guest', 'foreman', 'designer', 'architect', 'admin'];
+    const roles: UserRole[] = ['guest', 'foreman', 'engineer', 'architect', 'admin'];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

@@ -14,7 +14,7 @@ const normalizeRole = (raw: any): UserRole => {
   const valid: UserRole[] = [
     'guest', 
     'foreman', 
-    'designer', 
+    'engineer', 
     'architect', 
     'admin', 
     'employee', 

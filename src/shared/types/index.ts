@@ -6,7 +6,7 @@ export type Language = 'uk' | 'it' | 'en';
 export type UserRole = 
   | 'guest' 
   | 'foreman' 
-  | 'designer' 
+  | 'engineer' // 🔥 Було designer
   | 'architect' 
   | 'admin' 
   | 'employee' 
@@ -69,10 +69,10 @@ export interface Document {
   id: string;
   titleKey?: string;
   title?: string;
-  description?: string; // Це буде короткий опис для карток
-  extendedDescription?: string; // 🔥 Нове поле: Розширений опис для сторінки документа
+  description?: string;
+  extendedDescription?: string;
   thumbnailUrl?: string;
-  updatedAt: Timestamp; // Strict Firebase Timestamp
+  updatedAt: Timestamp;
   createdAt?: Timestamp;
   categoryKey: string;
   tagIds?: string[];

@@ -61,7 +61,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
 }) => {
   const { t, lang } = useI18n();
 
-  const displayableRoles: UserRole[] = ['guest', 'foreman', 'designer', 'architect'];
+  const displayableRoles: UserRole[] = ['guest', 'foreman', 'engineer', 'architect'];
   const displayRoles = useMemo(() => 
     viewPermissions.filter(role => displayableRoles.includes(role)),
     [viewPermissions]

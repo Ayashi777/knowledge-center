@@ -28,13 +28,13 @@ const AppContent: React.FC = () => {
 
   const {
     documents,
-    allDocuments, // 🔥 These are all raw documents from Firestore
+    allDocuments,
     categories,
     isLoading: isDocsLoading,
     searchTerm,
     setSearchTerm,
-    selectedCategory,
-    setSelectedCategory,
+    selectedCategories,
+    handleCategoryToggle,
     selectedTags,
     handleTagSelect,
     sortBy,
@@ -48,8 +48,8 @@ const AppContent: React.FC = () => {
     visibleCategories,
     allTags,
     sortedAndFilteredDocs,
-    selectedRoleFilter,
-    setSelectedRoleFilter,
+    selectedRoles,
+    handleRoleToggle,
     clearFilters,
   } = useDocumentManagement();
 
@@ -125,8 +125,8 @@ const AppContent: React.FC = () => {
                 onEditDoc={handleEditDoc}
                 onDeleteDoc={handleDeleteDocument}
                 onAddNewDoc={handleAddNewDoc}
-                selectedCategory={selectedCategory}
-                onCategorySelect={setSelectedCategory}
+                selectedCategories={selectedCategories}
+                handleCategoryToggle={handleCategoryToggle}
                 visibleCategories={visibleCategories}
                 allTags={allTags}
                 selectedTags={selectedTags}
@@ -136,8 +136,8 @@ const AppContent: React.FC = () => {
                 setViewMode={setViewMode}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
-                selectedRole={selectedRoleFilter}
-                onRoleSelect={setSelectedRoleFilter}
+                selectedRoles={selectedRoles}
+                handleRoleToggle={handleRoleToggle}
                 onClearFilters={clearFilters}
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -150,13 +150,13 @@ const AppContent: React.FC = () => {
             path="/doc/:id" 
             element={
               <DocumentPage 
-                 documents={allDocuments} // 🔥 Use allDocuments to prevent 404/Crash if filters are active
+                 documents={allDocuments} 
                  categories={categories}
                  onUpdateContent={handleUpdateContent}
                  onRequireLogin={handleRequireLoginDownload}
                  onLoginClick={handleLoginClick}
                  onRegisterClick={handleRegisterClick}
-                 onCategorySelect={setSelectedCategory}
+                 onCategorySelect={handleCategoryToggle}
               />
             } 
           />
@@ -167,7 +167,7 @@ const AppContent: React.FC = () => {
                 <AdminPage 
                   isDocsLoading={isDocsLoading}
                   categories={categories}
-                  documents={allDocuments} // 🔥 Admin sees EVERYTHING in admin panel
+                  documents={allDocuments} 
                   allTags={allTags}
                   onUpdateCategory={handleEditCategory}
                   onDeleteCategory={handleDeleteCategory}
