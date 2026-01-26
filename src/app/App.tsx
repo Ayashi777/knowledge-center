@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   Routes,
   Route,
@@ -13,6 +13,8 @@ import { GlobalModals } from '@app/providers/ModalProvider/GlobalModals';
 import { DashboardView } from '@widgets/DashboardView';
 import { DocumentPage } from '@pages/DocumentPage';
 import { AdminPage } from '@pages/AdminPage';
+import { LandingPage } from '@pages/LandingPage/LandingPage';
+import { ServicesPage } from '@pages/ServicesPage/ServicesPage';
 import { MainLayout } from './layouts/MainLayout';
 
 import { useAuth } from './providers/AuthProvider';
@@ -23,8 +25,12 @@ import { Document, Category } from '@shared/types';
 const AppContent: React.FC = () => {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
-  const { role: currentUserRole } = useAuth();
+  const { role: currentUserRole, user } = useAuth();
   const { openModal } = useModal();
+  const [showLandingManually, setShowLandingManually] = useState(true);
+
+  // If user is logged in and not a guest, or if they explicitly chose to explore
+  const isAuthorized = user && currentUserRole !== 'guest';
 
   const {
     allDocuments,
@@ -106,6 +112,11 @@ const AppContent: React.FC = () => {
       });
   }, [openModal]);
 
+  const handleExploreClick = useCallback(() => {
+    setShowLandingManually(false);
+    navigate('/database');
+  }, [navigate]);
+
   const showAdminControls = currentUserRole === 'admin';
 
   return (
@@ -114,37 +125,52 @@ const AppContent: React.FC = () => {
           <Route
             path="/"
             element={
-              <DashboardView
-                onSelectDoc={handleSelectDoc}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                docs={paginatedDocs}
-                totalDocsCount={sortedAndFilteredDocs.length}
-                showAdminControls={showAdminControls}
-                onEditDoc={handleEditDoc}
-                onDeleteDoc={handleDeleteDocument}
-                onAddNewDoc={handleAddNewDoc}
-                selectedCategories={selectedCategories}
-                handleCategoryToggle={handleCategoryToggle}
-                visibleCategories={visibleCategories}
-                allTags={allTags}
-                selectedTags={selectedTags}
-                onTagSelect={handleTagSelect}
-                onRequireLogin={handleRequireLogin}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                selectedRoles={selectedRoles}
-                handleRoleToggle={handleRoleToggle}
-                onClearFilters={clearFilters}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                onEditCategory={handleEditCategory}
-              />
+              (!isAuthorized && showLandingManually) ? (
+                <LandingPage 
+                  onLoginClick={handleLoginClick}
+                  onRegisterClick={handleRegisterClick}
+                  onExploreClick={handleExploreClick}
+                />
+              ) : (
+                <Navigate to="/database" replace />
+              )
             }
           />
+          <Route 
+            path="/database"
+            element={
+                <DashboardView
+                  onSelectDoc={handleSelectDoc}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  docs={paginatedDocs}
+                  totalDocsCount={sortedAndFilteredDocs.length}
+                  showAdminControls={showAdminControls}
+                  onEditDoc={handleEditDoc}
+                  onDeleteDoc={handleDeleteDocument}
+                  onAddNewDoc={handleAddNewDoc}
+                  selectedCategories={selectedCategories}
+                  handleCategoryToggle={handleCategoryToggle}
+                  visibleCategories={visibleCategories}
+                  allTags={allTags}
+                  selectedTags={selectedTags}
+                  onTagSelect={handleTagSelect}
+                  onRequireLogin={handleRequireLogin}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  selectedRoles={selectedRoles}
+                  handleRoleToggle={handleRoleToggle}
+                  onClearFilters={clearFilters}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  onEditCategory={handleEditCategory}
+                />
+            }
+          />
+          <Route path="/services" element={<ServicesPage />} />
           <Route 
             path="/doc/:id" 
             element={

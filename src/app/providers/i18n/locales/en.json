@@ -24,6 +24,88 @@
     "all": "All",
     "toHome": "To Home"
   },
+  "landing": {
+    "hero": {
+      "title": "Unified technical documentation ecosystem for construction professionals",
+      "subtitle": "Get instant access to up-to-date standards, nodes, certificates, and BIM models according to your role in the project",
+      "cta_login": "Sign In",
+      "cta_register": "Apply for Access",
+      "cta_guest": "View as Guest"
+    },
+    "for_whom": {
+      "title": "Who is this resource for?",
+      "architect": {
+        "title": "Architects",
+        "desc": "Download BIM models, drawings, and material libraries."
+      },
+      "engineer": {
+        "title": "Design Engineers",
+        "desc": "Technical specifications, construction norms, test protocols."
+      },
+      "builder": {
+        "title": "Foremen",
+        "desc": "Installation instructions, certificates of conformity, solution maps."
+      },
+      "partner": {
+        "title": "Partners",
+        "desc": "Direct contact with technical support and calculation tools."
+      }
+    },
+    "content": {
+      "title": "Content Types",
+      "bim": {
+        "title": "BIM & CAD",
+        "desc": "Revit family library, DWG nodes."
+      },
+      "docs": {
+        "title": "Documentation",
+        "desc": "Object passports, ISO/DSTU certificates."
+      },
+      "edu": {
+        "title": "Training",
+        "desc": "Video instructions, webinars, and manuals."
+      }
+    },
+    "how_it_works": {
+      "title": "Access Logic",
+      "step1": {
+        "title": "Registration",
+        "desc": "Create an account"
+      },
+      "step2": {
+        "title": "Role Selection",
+        "desc": "Specify your specialization"
+      },
+      "step3": {
+        "title": "Confirmation",
+        "desc": "Admin review up to 24 hours"
+      },
+      "step4": {
+        "title": "Full Access",
+        "desc": "Work with the knowledge base"
+      }
+    },
+    "why": {
+      "title": "Why is this important?",
+      "realtime": {
+        "title": "Up-to-date",
+        "desc": "We update the database in real-time. You are always sure of the latest version."
+      },
+      "centralized": {
+        "title": "Centralization",
+        "desc": "No more searching through folders and messengers. Everything in one place."
+      },
+      "verified": {
+        "title": "Verified Solutions",
+        "desc": "Only certified nodes and materials from the manufacturer."
+      }
+    },
+    "support": {
+      "title": "Technical Support",
+      "desc": "Didn't find the required node or document? Write to us — we will prepare it for you.",
+      "cta": "Contact an Engineer"
+    }
+  },
   "roles": {
     "guest": "Guest",
     "guestDesc": "Basic access to public materials.",
