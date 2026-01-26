@@ -75,13 +75,13 @@ export const ProjectsSection: React.FC = () => {
               onClick={prevProject}
               className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all text-gray-600 dark:text-gray-400"
             >
-              <Icon name="arrow-left" className="w-5 h-5" />
+              <Icon name="chevron-left" className="w-5 h-5" />
             </button>
             <button 
               onClick={nextProject}
               className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all text-gray-600 dark:text-gray-400"
             >
-              <Icon name="arrow-right" className="w-5 h-5" />
+              <Icon name="chevron-right" className="w-5 h-5" />
             </button>
           </div>
         </div>
