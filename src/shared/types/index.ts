@@ -65,6 +65,89 @@ export interface DocumentContent {
   html: string;
 }
 
+export interface LocalizedText {
+  uk: string;
+  en: string;
+}
+
+export interface ServiceFields {
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  sortOrder: number;
+  isPublished: boolean;
+}
+
+export interface ProductCategory extends ServiceFields {
+  id: string;
+  title: LocalizedText;
+  description?: LocalizedText;
+  slug?: string;
+}
+
+export interface Product extends ServiceFields {
+  id: string;
+  categoryId: string; // -> productCategories.id
+  title: LocalizedText;
+  description?: LocalizedText;
+  sku?: string;
+}
+
+export interface Brand extends ServiceFields {
+  id: string;
+  productId: string; // -> products.id
+  title: LocalizedText;
+  description?: LocalizedText;
+  logoUrl?: string;
+}
+
+export enum BrandSectionType {
+  Benefits = 'benefits',
+  Documents = 'documents',
+  Catalog = 'catalog',
+  SystemCalculation = 'systemCalculation',
+  Assortment = 'assortment',
+  Objects = 'objects',
+  UseCases = 'useCases'
+}
+
+export type ContentBlock =
+  | {
+      type: 'text';
+      value: LocalizedText;
+    }
+  | {
+      type: 'image';
+      url: string;
+      alt?: LocalizedText;
+    }
+  | {
+      type: 'file';
+      url: string;
+      name: LocalizedText;
+      mimeType?: string;
+    }
+  | {
+      type: 'link';
+      url: string;
+      label: LocalizedText;
+    };
+
+export interface BrandSection extends ServiceFields {
+  id: string;
+  brandId: string; // -> brands.id
+  type: BrandSectionType;
+  title: LocalizedText;
+  description?: LocalizedText;
+}
+
+export interface BrandSectionItem extends ServiceFields {
+  id: string;
+  sectionId: string; // -> brandSections.id
+  title: LocalizedText;
+  description?: LocalizedText;
+  blocks: ContentBlock[];
+}
+
 export interface Document {
   id: string;
   titleKey?: string;
