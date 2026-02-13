@@ -11,7 +11,6 @@ import { useModal } from '@app/providers/ModalProvider/ModalProvider';
 import { GlobalModals } from '@app/providers/ModalProvider/GlobalModals';
 
 import { DashboardView } from '@widgets/DashboardView';
-import { DocumentPage } from '@pages/DocumentPage';
 import { AdminPage } from '@pages/AdminPage';
 import { LandingPage } from '@pages/LandingPage/LandingPage';
 import { ServicesPage } from '@pages/ServicesPage/ServicesPage';
@@ -29,7 +28,6 @@ const AppContent: React.FC = () => {
   const { openModal } = useModal();
   const [showLandingManually, setShowLandingManually] = useState(true);
 
-  // If user is logged in and not a guest, or if they explicitly chose to explore
   const isAuthorized = user && currentUserRole !== 'guest';
 
   const {
@@ -59,7 +57,6 @@ const AppContent: React.FC = () => {
   } = useDocumentManagement();
 
   const {
-    handleUpdateContent,
     handleDeleteCategory,
     handleDeleteDocument
   } = useAdminActions();
@@ -69,10 +66,9 @@ const AppContent: React.FC = () => {
     document.title = t('title');
   }, [lang, t]);
 
-  // -- Memoized Callbacks --
   const handleSelectDoc = useCallback((docItem: Document) => {
-    navigate(`/doc/${docItem.id}`);
-  }, [navigate]);
+    openModal('view-doc', docItem);
+  }, [openModal]);
 
   const handleEditDoc = useCallback((doc: Document) => {
     openModal('edit-doc', doc);
@@ -85,10 +81,6 @@ const AppContent: React.FC = () => {
 
   const handleRequireLogin = useCallback(() => {
     openModal('login', 'login', 'view');
-  }, [openModal]);
-
-  const handleRequireLoginDownload = useCallback(() => {
-    openModal('login', 'login', 'download');
   }, [openModal]);
 
   const handleRegisterClick = useCallback(() => {
@@ -172,20 +164,6 @@ const AppContent: React.FC = () => {
           />
           <Route path="/services" element={<ServicesPage />} />
           <Route 
-            path="/doc/:id" 
-            element={
-              <DocumentPage 
-                 documents={allDocuments} 
-                 categories={categories}
-                 onUpdateContent={handleUpdateContent}
-                 onRequireLogin={handleRequireLoginDownload}
-                 onLoginClick={handleLoginClick}
-                 onRegisterClick={handleRegisterClick}
-                 onCategorySelect={handleCategoryToggle}
-              />
-            } 
-          />
-          <Route 
             path="/admin" 
             element={
               currentUserRole === 'admin' ? (
@@ -213,6 +191,7 @@ const AppContent: React.FC = () => {
         <GlobalModals 
             availableCategories={categories}
             availableTags={allTags}
+            onRequireLogin={handleRequireLogin}
         />
     </MainLayout>
   );

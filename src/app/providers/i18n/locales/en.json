@@ -330,5 +330,14 @@
     "freudenberg": "Freudenberg",
     "typar": "Typar",
     "ЦСП": "ЦСП"
+  },
+  "support": {
+    "callback": "Callback Request",
+    "context": {
+      "home": "Need help navigating the Knowledge Center?",
+      "database": "Looking for specific documentation? We can help find it.",
+      "services": "Need a technical consultation for your project?",
+      "default": "How can we assist you today?"
+    }
   }
 }

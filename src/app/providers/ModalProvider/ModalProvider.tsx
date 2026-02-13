@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Document, Category } from '@shared/types';
 
-type ModalType = 'login' | 'edit-doc' | 'edit-category' | null;
+type ModalType = 'login' | 'edit-doc' | 'edit-category' | 'view-doc' | null;
 
 interface ModalState {
     type: ModalType;

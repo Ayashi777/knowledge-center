@@ -6,6 +6,7 @@ import { useTheme } from '@shared/hooks/useTheme';
 import { ThemeSwitcher } from '@shared/ui/ThemeSwitcher';
 import { UserAccessControl } from '@shared/ui/UserAccessControl';
 import { Icon } from '@shared/ui/icons';
+import { SupportSidebar } from '@widgets/SupportSidebar/ui/SupportSidebar';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -109,6 +110,8 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
             <main className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen pt-24">
                 {children}
             </main>
+
+            <SupportSidebar />
 
             <footer className="mt-20 text-center text-gray-400 dark:text-gray-600 font-mono text-[9px] uppercase tracking-widest pb-12">
                 <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>

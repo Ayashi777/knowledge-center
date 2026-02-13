@@ -94,6 +94,8 @@ export const DocumentView: React.FC<{
     const { t, lang: currentLang } = useI18n();
     const [isEditingContent, setIsEditingContent] = useState(false);
     
+    const isVideoCategory = doc.categoryKey === 'video' || doc.categoryKey === 'categories.video';
+
     const getInitialContent = useCallback(() => {
         if (!doc.content) return emptyContentTemplate;
         if (doc.content[currentLang]?.html) return doc.content[currentLang]!;
@@ -119,7 +121,6 @@ export const DocumentView: React.FC<{
     }, [doc.content, currentLang, getInitialContent]);
 
     const loadFiles = useCallback(async () => {
-        // 🔥 Don't load files if no access
         if (!hasAccess) {
             setIsLoadingFiles(false);
             return;
@@ -137,7 +138,6 @@ export const DocumentView: React.FC<{
         const html = editableContent.html || '';
         if (!html) return { viewHtml: '', tocItems: [] };
         
-        // 🔥 Critical: Allow ID in sanitized HTML for ScrollSpy
         const sanitizedHtml = DOMPurify.sanitize(html, { ADD_ATTR: ['id'] });
         
         const parser = new DOMParser();
@@ -156,15 +156,13 @@ export const DocumentView: React.FC<{
         return { viewHtml: htmlDoc.body.innerHTML, tocItems: toc };
     }, [editableContent.html]);
 
-    // 🔥 Real-time Scroll Listener for reliable ScrollSpy
     useEffect(() => {
         if (isEditingContent || tocItems.length === 0) return;
 
         const handleScroll = () => {
-            const offset = 150; // Consider fixed header + margin
+            const offset = 150; 
             const scrollPosition = window.scrollY + offset;
 
-            // Find the section we are currently in
             let currentId = tocItems[0].id;
             
             for (const item of tocItems) {
@@ -180,7 +178,6 @@ export const DocumentView: React.FC<{
         };
 
         window.addEventListener('scroll', handleScroll);
-        // Run once on load
         setTimeout(handleScroll, 500); 
 
         return () => window.removeEventListener('scroll', handleScroll);
@@ -241,6 +238,24 @@ export const DocumentView: React.FC<{
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
                 <aside className="lg:w-80 shrink-0 sticky top-28 h-auto max-h-[85vh] overflow-y-auto pr-2 custom-scrollbar">
                     <div className="space-y-10">
+                        {isVideoCategory && (
+                            <div className="bg-blue-600 text-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/30 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <Icon name="academic-cap" className="w-10 h-10 mb-6 text-blue-100" />
+                                    <h4 className="text-xl font-black uppercase leading-tight mb-4 tracking-tighter">
+                                        Замовити навчання
+                                    </h4>
+                                    <p className="text-blue-100 text-xs font-bold leading-relaxed mb-8 opacity-80">
+                                        Проводимо індивідуальні та групові воркшопи по технічним вузлам та матеріалам.
+                                    </p>
+                                    <button className="w-full py-4 bg-white text-blue-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-50 transition-all shadow-lg active:scale-95">
+                                        Записатися
+                                    </button>
+                                </div>
+                                <Icon name="academic-cap" className="absolute -bottom-10 -right-10 w-40 h-40 text-white/10 rotate-12" />
+                            </div>
+                        )}
+
                         {tocItems.length > 0 && (
                             <div className="bg-white/50 dark:bg-gray-800/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm toc-animate shadow-sm">
                                 <h4 className="font-black text-gray-900 dark:text-white mb-6 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">

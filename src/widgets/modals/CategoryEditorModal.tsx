@@ -41,7 +41,7 @@ export const CategoryEditorModal: React.FC<{
         );
     };
 
-    const icons: IconName[] = ['folder', 'document-text', 'construction', 'electrical', 'safety', 'logistics', 'it', 'hr', 'finance', 'legal'];
+    const icons: IconName[] = ['folder', 'document-text', 'video-camera', 'construction', 'electrical', 'safety', 'logistics', 'it', 'hr', 'finance', 'legal'];
 
     // For categories, we still show all roles because an admin might want to create a private category for staff
     const rolesForPermissions = ALL_ROLES.filter(r => r !== 'admin');

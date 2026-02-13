@@ -21,6 +21,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const faqItems = t('landing.faq.items', { returnObjects: true }) as { q: string, a: string }[];
 
+  const sectors = [
+    { key: 'industrial', icon: 'building-office' },
+    { key: 'residential', icon: 'home-modern' },
+    { key: 'commercial', icon: 'shopping-bag' },
+    { key: 'infrastructure', icon: 'truck' },
+    { key: 'renovation', icon: 'sparkles' },
+    { key: 'energy', icon: 'globe-alt' },
+  ];
+
   return (
     <div className="flex flex-col gap-0 pb-24">
       {/* 1. Hero Section */}
@@ -57,33 +66,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="mt-8 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2 mx-auto font-medium"
             >
               <span>{t('landing.hero.cta_guest')}</span>
-              <Icon name="arrow-right" className="w-4 h-4" />
+              <Icon name="chevron-right" className="w-4 h-4" />
             </button>
           </div>
         </div>
-        {/* Abstract background elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-10 pointer-events-none">
            <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500 rounded-full blur-[120px]"></div>
            <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[150px]"></div>
         </div>
       </section>
 
-      {/* Brands/Trust Bar */}
-      <section className="py-12 border-y border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
-        <div className="max-w-7xl mx-auto px-4">
-            <p className="text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em] mb-8">
-                {t('landing.brands.title')}
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-80 dark:opacity-90 grayscale hover:grayscale-0 transition-all duration-700">
-                {['ArmoPlit', 'Edilmodulo', 'Fixit', 'Typar', 'Freudenberg', 'SITA'].map(brand => (
-                    <span key={brand} className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tighter">{brand}</span>
-                ))}
-            </div>
-        </div>
-      </section>
-
-      {/* 2. For Whom Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-24">
+      {/* 2. For Whom Section (Moved UP) */}
+      <section id="for-whom-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-24 border-t border-gray-50 dark:border-gray-800/50">
         <h2 className="text-3xl font-bold text-center mb-16 text-gray-900 dark:text-white uppercase tracking-wider">
           {t('landing.for_whom.title')}
         </h2>
@@ -109,8 +103,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
+      {/* 3. Construction Sectors Section (Moved DOWN) */}
+      <section className="py-24 border-y border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="text-center max-w-3xl mx-auto mb-20">
+                <h2 className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.4em] mb-4">
+                    {t('landing.sectors.title')}
+                </h2>
+                <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white leading-relaxed px-4">
+                    {t('landing.sectors.subtitle')}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-y-12 gap-x-6">
+                {sectors.map((item) => (
+                    <div key={item.key} className="flex flex-col items-center text-center group cursor-default">
+                        <div className="w-24 h-24 md:w-28 md:h-28 bg-slate-50 dark:bg-gray-800 rounded-[2.5rem] flex items-center justify-center text-gray-400 dark:text-gray-500 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-sm group-hover:shadow-2xl group-hover:shadow-blue-500/40 group-hover:-translate-y-2">
+                            <Icon name={item.icon as any} className="w-12 h-12 md:w-14 md:h-14" />
+                        </div>
+                        <span className="text-[10px] md:text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-tight group-hover:text-gray-900 dark:group-hover:text-white transition-colors px-2">
+                            {t(`landing.sectors.${item.key}`)}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+      </section>
+
       <DatabaseTeaser />
-      <ServicesTeaser />
+      
+      <div id="tech-team-section">
+        <ServicesTeaser />
+      </div>
+
       <ProjectsSection />
 
       {/* FAQ Section */}
@@ -127,7 +152,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                         <span className="font-bold text-gray-900 dark:text-white">{item.q}</span>
                         <Icon 
-                            name={openFaq === idx ? 'expand_less' : 'expand_more'} 
+                            name={openFaq === idx ? 'chevron-up' : 'chevron-down'} 
                             className={`w-6 h-6 text-blue-600 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} 
                         />
                     </button>
@@ -158,8 +183,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {t('landing.final_cta.button')}
                 </button>
             </div>
-            <Icon name="groups" className="absolute -bottom-20 -left-20 w-96 h-96 text-white opacity-10 pointer-events-none" />
-            <Icon name="rocket_launch" className="absolute -top-20 -right-20 w-64 h-64 text-white opacity-10 pointer-events-none" />
+            <Icon name="users" className="absolute -bottom-20 -left-20 w-96 h-96 text-white opacity-10 pointer-events-none" />
+            <Icon name="plus" className="absolute -top-20 -right-20 w-64 h-64 text-white opacity-10 pointer-events-none" />
         </div>
       </section>
     </div>
