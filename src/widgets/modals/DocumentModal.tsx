@@ -5,7 +5,7 @@ import { Document, UserRole, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { StorageApi } from '@shared/api/storage/storage.api';
-import { getCategoryName, formatTimestamp } from '@shared/lib/utils/format';
+import { getCategoryName, formatRelativeTime } from '@shared/lib/utils/format';
 import { DocumentFileList } from '@/widgets/DocumentView/ui/DocumentFileList';
 
 const QUILL_CONTENT_STYLES = `
@@ -92,7 +92,7 @@ export const DocumentModal: React.FC<{
         const sanitizedHtml = DOMPurify.sanitize(content);
         const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title;
         const catName = getCategoryName(doc.categoryKey, t);
-        const updated = formatTimestamp(doc.updatedAt, t);
+        const updated = formatRelativeTime(doc.updatedAt, lang);
 
         const tagById = new Map<string, Tag>();
         allTags.forEach((tg) => tagById.set(tg.id, tg));
