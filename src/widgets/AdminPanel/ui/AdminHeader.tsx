@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '@shared/ui/icons';
+import { Button } from '@shared/ui/primitives';
 
 interface AdminHeaderProps {
     onClose: () => void;
@@ -7,16 +8,16 @@ interface AdminHeaderProps {
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onClose }) => {
     return (
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between border-b border-border p-6">
             <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-fg">
                     Панель керування
                 </h2>
-                <p className="text-sm text-gray-500 font-medium italic">Адміністрування контенту та користувачів</p>
+                <p className="text-sm font-medium italic text-muted-fg">Адміністрування контенту та користувачів</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
+            <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
                 <Icon name="x-mark" className="w-6 h-6" />
-            </button>
+            </Button>
         </div>
     );
 };

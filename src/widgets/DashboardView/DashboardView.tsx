@@ -5,6 +5,7 @@ import { Icon } from '@shared/ui/icons';
 import { Sidebar } from '@widgets/Sidebar';
 import { Pagination } from '@shared/ui/Pagination';
 import { useAuth } from '@app/providers/AuthProvider';
+import { Button } from '@shared/ui/primitives';
 
 // Sub-components
 import { DashboardHeader } from './ui/DashboardHeader';
@@ -101,13 +102,13 @@ export const DashboardView: React.FC<{
 
 					{showAdminControls && (
 						<div className="mb-4 text-right">
-							<button
+							<Button
 								onClick={onAddNewDoc}
-								className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold whitespace-nowrap"
+								className="h-10 whitespace-nowrap rounded-md px-4 text-sm font-semibold"
 							>
 								<Icon name="plus" className="h-5 w-5" />
 								<span>{t('common.add')}</span>
-							</button>
+							</Button>
 						</div>
 					)}
 

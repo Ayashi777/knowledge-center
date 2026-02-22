@@ -1,5 +1,6 @@
 import React from 'react';
 import { useI18n } from '@app/providers/i18n/i18n';
+import { Button } from './primitives';
 
 export const Pagination: React.FC<{
     currentPage: number;
@@ -15,42 +16,43 @@ export const Pagination: React.FC<{
 
     return (
         <nav className="flex items-center justify-center gap-2 sm:gap-4 mt-8" aria-label="Pagination">
-            <button
+            <Button
                 onClick={handlePrev}
                 disabled={currentPage === 1}
-                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                variant="outline"
+                className="h-10 rounded-md px-3 text-sm font-medium text-fg sm:px-4"
             >
                 {t('pagination.prev')}
-            </button>
+            </Button>
 
             <div className="hidden sm:flex items-center gap-2">
                 {pageNumbers.map((number) => (
-                    <button
+                    <Button
                         key={number}
                         onClick={() => onPageChange(number)}
                         aria-current={currentPage === number ? 'page' : undefined}
-                        className={`px-4 py-2 text-sm font-medium border rounded-md ${
-                            currentPage === number
-                                ? 'bg-blue-600 border-blue-600 text-white dark:bg-blue-500 dark:border-blue-500'
-                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+                        variant={currentPage === number ? 'primary' : 'outline'}
+                        className={`h-10 rounded-md px-4 text-sm font-medium ${
+                            currentPage === number ? '' : 'text-fg'
                         }`}
                     >
                         {number}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
-            <span className="sm:hidden text-sm text-gray-600 dark:text-gray-400">
+            <span className="sm:hidden text-sm text-muted-fg">
                 {currentPage} / {totalPages}
             </span>
 
-            <button
+            <Button
                 onClick={handleNext}
                 disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                variant="outline"
+                className="h-10 rounded-md px-3 text-sm font-medium text-fg sm:px-4"
             >
                 {t('pagination.next')}
-            </button>
+            </Button>
         </nav>
     );
 };

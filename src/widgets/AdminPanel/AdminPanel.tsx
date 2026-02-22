@@ -134,7 +134,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const pendingRequestsCount = (requests || []).filter(r => r.status === 'pending').length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden animate-slide-up">
+    <div className="animate-slide-up overflow-hidden rounded-3xl border border-border bg-surface shadow-soft">
       <AdminHeader onClose={onClose} />
       <AdminTabs 
         activeTab={activeTab} 
@@ -167,8 +167,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {(activeTab === 'users' || activeTab === 'requests') && isLoading ? (
             <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-500 font-bold uppercase text-xs tracking-widest">{t('common.loading')}</span>
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                <span className="ml-3 text-xs font-bold uppercase tracking-widest text-muted-fg">{t('common.loading')}</span>
             </div>
         ) : (
             <>

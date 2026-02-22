@@ -42,12 +42,12 @@ export const DocumentList: React.FC<DocumentListProps> = ({
 
     if (docs.length === 0) {
         return (
-            <div className="text-center py-24 px-6 bg-gray-50 dark:bg-slate-900/10 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-white/5 animate-fade-in">
-                <div className="w-24 h-24 bg-white dark:bg-white/5 shadow-2xl rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-blue-500">
+            <div className="animate-fade-in rounded-[2.5rem] border border-dashed border-border bg-muted/25 px-6 py-24 text-center">
+                <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-surface text-primary shadow-soft">
                     <Icon name="search" className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">{t('dashboard.noResults')}</h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">{t('dashboard.noResultsDescription')}</p>
+                <h3 className="mb-3 text-2xl font-black tracking-tight text-fg">{t('dashboard.noResults')}</h3>
+                <p className="mx-auto max-w-md leading-relaxed text-muted-fg">{t('dashboard.noResultsDescription')}</p>
             </div>
         );
     }

@@ -3,6 +3,7 @@ import { Category, UserRole, Tag } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { getCategoryName, normalizeCategoryKey } from '@shared/lib/utils/format';
+import { Button, Card } from '@shared/ui/primitives';
 
 interface SidebarProps {
   visibleCategories: Category[];
@@ -46,17 +47,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex items-center justify-between lg:hidden">
         <h2 className="text-lg font-bold">{t('sidebar.filters')}</h2>
         {hasActiveFilters && (
-          <button onClick={onClearFilters} className="text-sm text-red-600 font-medium flex items-center gap-1">
+          <Button onClick={onClearFilters} variant="ghost" className="h-auto p-0 text-sm font-medium text-danger">
             <Icon name="x-mark" className="w-4 h-4" />
             {t('dashboard.clearFilters')}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Categories */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <h3 className="text-xs font-black uppercase tracking-widest text-muted-fg">
             {t('sidebar.categories')}
           </h3>
         </div>
@@ -65,25 +66,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const isSelected = selectedCategories.some(k => normalizeCategoryKey(k) === normalizeCategoryKey(cat.nameKey));
             return (
               <div key={cat.id} className="group flex items-center gap-1">
-                <button
+                <Button
                   onClick={() => onCategoryToggle(cat.nameKey)}
-                  className={`flex-grow flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group-active:scale-[0.98] ${
+                  variant={isSelected ? 'primary' : 'ghost'}
+                  className={`h-auto flex-grow justify-start gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 group-active:scale-[0.98] ${
                     isSelected
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
+                      ? ''
+                      : 'text-muted-fg hover:bg-surface hover:shadow-sm'
                   }`}
                 >
                   <Icon name={cat.iconName as any || 'folder'} className="w-5 h-5 shrink-0" />
                   <span className="font-bold text-sm truncate">{getCategoryName(cat.nameKey, t)}</span>
-                </button>
+                </Button>
                 
                 {showAdminControls && (
-                  <button 
+                  <Button
                     onClick={() => onEditCategory(cat)}
-                    className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-all"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-fg opacity-0 transition-all group-hover:opacity-100 hover:text-primary"
                   >
                     <Icon name="pencil" className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -92,77 +96,80 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </section>
 
       {/* Roles Filter (Multi-select) */}
-      <section className="pt-4 border-t border-gray-100 dark:border-gray-800">
-        <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+      <section className="border-t border-border pt-4">
+        <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
           {t('sidebar.forWhom')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {selectableRoles.map((role) => {
             const isSelected = selectedRoles.includes(role);
             return (
-              <button
+              <Button
                 key={role}
                 onClick={() => onRoleToggle(role)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                variant={isSelected ? 'primary' : 'outline'}
+                className={`h-auto rounded-lg px-3 py-1.5 text-xs font-bold ${
                   isSelected
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md ring-2 ring-blue-500/20'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? ''
+                    : 'text-muted-fg'
                 }`}
               >
                 {t(`roles.${role}`)}
-              </button>
+              </Button>
             );
           })}
         </div>
       </section>
 
       {/* Tags */}
-      <section className="pt-4 border-t border-gray-100 dark:border-gray-800">
-        <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+      <section className="border-t border-border pt-4">
+        <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
           {t('sidebar.tags')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {allTags.map((tag) => (
-            <button
+            <Button
               key={tag.id}
               onClick={() => onTagSelect(tag.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+              variant={selectedTags.includes(tag.id) ? 'primary' : 'outline'}
+              className={`h-auto rounded-lg border px-3 py-1.5 text-xs font-bold ${
                 selectedTags.includes(tag.id)
-                  ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300 shadow-sm'
-                  : 'bg-white border-gray-100 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 hover:border-gray-300'
+                  ? ''
+                  : 'text-muted-fg'
               }`}
             >
               #{tag.name || tag.id}
-            </button>
+            </Button>
           ))}
         </div>
       </section>
 
       {/* Reset Filters Button */}
       {hasActiveFilters && (
-        <button
+        <Button
           onClick={onClearFilters}
-          className="w-full py-4 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-200 dark:border-red-800/50 shadow-md active:scale-[0.98]"
+          variant="outline"
+          className="h-12 w-full rounded-2xl border-danger/30 bg-danger/10 text-[10px] font-black uppercase tracking-widest text-danger hover:bg-danger/15 active:scale-[0.98]"
         >
           <Icon name="x-mark" className="w-3.5 h-3.5" />
           {t('dashboard.clearFilters')}
-        </button>
+        </Button>
       )}
       
       {/* Help Card */}
-      <div className="p-5 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+      <Card className="group relative overflow-hidden rounded-2xl border-primary/30 bg-gradient-to-br from-primary to-accent p-5 text-primary-fg shadow-soft">
         <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
             <Icon name="info-circle" className="w-32 h-32" />
         </div>
         <h4 className="font-black text-lg mb-2 relative z-10 uppercase tracking-tight">{t('sidebar.helpTitle')}</h4>
-        <p className="text-blue-100 text-sm mb-4 relative z-10 leading-snug">{t('sidebar.helpDescription')}</p>
+        <p className="text-sm mb-4 relative z-10 leading-snug text-primary-fg/80">{t('sidebar.helpDescription')}</p>
         <a 
           href="mailto:support@example.com" 
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-colors relative z-10"
+          className="relative z-10 inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:brightness-95"
         >
           {t('sidebar.contactUs')}
         </a>
-      </div>
+      </Card>
     </aside>
   );
 };
