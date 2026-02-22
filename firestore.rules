@@ -15,6 +15,20 @@ service cloud.firestore {
     function getUserRole() {
       return getUserData().role;
     }
+
+    function isValidRole(role) {
+      return role in [
+        'guest',
+        'foreman',
+        'engineer',
+        'architect',
+        'admin',
+        'employee',
+        'worker',
+        'dispatcher',
+        'hr'
+      ];
+    }
     
     function isAdmin() {
       return isAuthenticated() && getUserRole() == 'admin';
@@ -23,16 +37,68 @@ service cloud.firestore {
     // --- Users Collection ---
     match /users/{userId} {
       allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
-      allow update: if isAdmin() || (request.auth.uid == userId && request.resource.data.role == resource.data.role);
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'name',
+          'displayName',
+          'company',
+          'phone',
+          'requestedRole'
+        ])
+      );
+      allow create: if isAuthenticated() &&
+                    request.auth.uid == userId &&
+                    request.resource.data.uid == userId &&
+                    request.resource.data.email is string &&
+                    request.resource.data.role == 'guest' &&
+                    request.resource.data.keys().hasOnly([
+                      'uid',
+                      'email',
+                      'role',
+                      'name',
+                      'displayName',
+                      'company',
+                      'phone',
+                      'requestedRole',
+                      'createdAt'
+                    ]);
       allow delete: if isAdmin();
     }
 
     // --- Access Requests ---
     match /requests/{requestId} {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
-      allow create: if isAuthenticated();
-      allow update: if isAdmin();
+      allow create: if isAuthenticated() &&
+                    request.resource.data.uid == request.auth.uid &&
+                    request.resource.data.status == 'pending' &&
+                    request.resource.data.email is string &&
+                    request.resource.data.requestedRole is string &&
+                    isValidRole(request.resource.data.requestedRole) &&
+                    request.resource.data.keys().hasOnly([
+                      'uid',
+                      'name',
+                      'company',
+                      'email',
+                      'phone',
+                      'requestedRole',
+                      'status',
+                      'date'
+                    ]);
+      allow update: if isAdmin() &&
+                    request.resource.data.diff(resource.data).changedKeys().hasOnly([
+                      'status',
+                      'assignedRole'
+                    ]) &&
+                    request.resource.data.status in ['approved', 'denied'] &&
+                    (
+                      !('assignedRole' in request.resource.data) ||
+                      isValidRole(request.resource.data.assignedRole)
+                    );
       allow delete: if isAdmin();
     }
 
@@ -58,7 +124,14 @@ service cloud.firestore {
                     resource.data.viewPermissions.size() == 0 || 
                     (isAuthenticated() && getUserRole() in resource.data.viewPermissions));
       
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() &&
+                            request.resource.data.categoryKey is string &&
+                            (
+                              !('viewPermissions' in request.resource.data) ||
+                              (request.resource.data.viewPermissions is list &&
+                               request.resource.data.viewPermissions.size() > 0)
+                            );
+      allow delete: if isAdmin();
     }
 
     // --- Product Categories ---

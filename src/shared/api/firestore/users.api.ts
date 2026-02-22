@@ -6,7 +6,8 @@ import {
     deleteDoc, 
     onSnapshot 
 } from "firebase/firestore";
-import { db } from "@shared/api/firebase/firebase";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@shared/api/firebase/firebase";
 import { UserProfile, UserRole } from "@shared/types";
 
 export interface AccessRequest {
@@ -37,6 +38,11 @@ export const UsersApi = {
 
     updateUser: async (uid: string, data: Partial<UserProfile>): Promise<void> => {
         await updateDoc(doc(db, "users", uid), data);
+    },
+
+    updateUserEmailAsAdmin: async (uid: string, email: string): Promise<void> => {
+        const callable = httpsCallable(functions, "adminUpdateUserEmail");
+        await callable({ uid, email });
     },
 
     deleteUser: async (uid: string): Promise<void> => {

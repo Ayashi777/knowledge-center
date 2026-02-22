@@ -84,20 +84,20 @@ export const DocumentsApi = {
     // 🔥 Improved Save: Handles both create and update with merge
     saveMetadata: async (id: string, metadata: Partial<Document>): Promise<void> => {
         const docRef = doc(db, COLLECTION_NAME, id);
+        const existingDoc = await getDoc(docRef);
+        const isCreate = !existingDoc.exists();
         
         const payload = prepareDataForFirestore({
             ...metadata,
             id,
             updatedAt: serverTimestamp(),
-            // Only set createdAt if it's a new document (using serverTimestamp conditionally)
+            createdAt: isCreate ? serverTimestamp() : metadata.createdAt,
         });
 
         // Use setDoc with merge: true to avoid crashes if document doesn't exist yet
         await setDoc(docRef, payload, { merge: true });
         
-        // If it was a create, we might want to ensure createdAt exists
-        // (Firestore doesn't have a simple "set if not exists" for a single field inside setDoc merge)
-        // But for our needs, updatedAt is the primary field.
+        // We explicitly set createdAt on first write to keep chronological sorting stable.
     },
 
     // 🔥 Deep Deep Optimization: Using dot notation to update only specific language content

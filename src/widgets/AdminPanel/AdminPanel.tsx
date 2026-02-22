@@ -122,8 +122,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleSaveUser = async (userData: Partial<UserProfile>) => {
     try {
       if (userData.uid) {
+        const existingUser = users.find(u => u.uid === userData.uid);
         const { uid, ...data } = userData;
-        await UsersApi.updateUser(uid, data);
+
+        if (data.email && data.email !== (existingUser?.email || '')) {
+          await UsersApi.updateUserEmailAsAdmin(uid, data.email);
+        }
+
+        const { email, ...profileData } = data;
+        await UsersApi.updateUser(uid, profileData);
       }
       setEditingUser(null);
     } catch (error) {
