@@ -1,0 +1,52 @@
+:root {
+  --font-heading: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", monospace;
+
+  --background: 214 44% 98%;
+  --foreground: 225 26% 14%;
+  --surface: 0 0% 100%;
+  --surface-elevated: 210 20% 99%;
+  --muted: 216 28% 94%;
+  --muted-foreground: 220 16% 39%;
+  --border: 214 30% 88%;
+
+  --primary: 204 88% 46%;
+  --primary-foreground: 210 40% 98%;
+  --accent: 18 91% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --success: 146 73% 34%;
+  --warning: 39 92% 50%;
+  --danger: 0 78% 57%;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --shadow-soft: 0 16px 40px -24px hsl(214 40% 24% / 0.35);
+  --shadow-focus: 0 0 0 3px hsl(204 88% 46% / 0.22);
+}
+
+.dark {
+  --background: 222 37% 9%;
+  --foreground: 210 35% 96%;
+  --surface: 222 28% 13%;
+  --surface-elevated: 223 24% 16%;
+  --muted: 222 22% 20%;
+  --muted-foreground: 217 18% 70%;
+  --border: 223 18% 28%;
+
+  --primary: 197 93% 58%;
+  --primary-foreground: 222 45% 12%;
+  --accent: 23 94% 57%;
+  --accent-foreground: 19 100% 12%;
+
+  --success: 145 72% 45%;
+  --warning: 41 95% 58%;
+  --danger: 0 84% 64%;
+
+  --shadow-soft: 0 16px 40px -28px hsl(222 80% 2% / 0.9);
+  --shadow-focus: 0 0 0 3px hsl(197 93% 58% / 0.24);
+}

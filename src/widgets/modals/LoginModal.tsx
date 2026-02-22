@@ -3,6 +3,7 @@ import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { AuthApi } from "@shared/api/firebase/auth";
+import { Button, Input, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 export const LoginModal: React.FC<{ 
     onClose: () => void, 
@@ -110,78 +111,86 @@ export const LoginModal: React.FC<{
     ];
 
     const getStatusClass = (valid: boolean, value: string) => {
-        if (!value) return "border-gray-200 dark:border-gray-700";
-        return valid ? "border-green-500 ring-1 ring-green-500/30" : "border-red-500 ring-1 ring-red-500/30";
+        if (!value) return "border-border";
+        return valid ? "border-success ring-1 ring-success/30" : "border-danger ring-1 ring-danger/30";
     };
 
-    const inputBase = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-inset outline-none dark:text-white text-sm font-semibold transition-all";
+    const inputBase = "w-full rounded-md border bg-surface px-3 py-2.5 text-sm font-semibold text-fg transition-all placeholder:text-muted-fg focus-visible:outline-none focus-visible:shadow-focus";
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-white/10 relative" onClick={e => e.stopPropagation()}>
+        <ModalOverlay className="z-50" onClick={onClose}>
+            <ModalPanel className="max-w-4xl border-border bg-surface md:flex md:flex-row" onClick={e => e.stopPropagation()}>
                 
                 <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 pointer-events-none z-10">
                     <div className="pointer-events-auto">
                         {(view === 'request' || view === 'success') && (
-                            <button 
+                            <Button
                                 onClick={() => setView('login')}
-                                className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-fg"
                                 title={t('common.back')}
                             >
                                 <Icon name="chevron-left" className="w-6 h-6" />
-                            </button>
+                            </Button>
                         )}
                     </div>
                     <div className="pointer-events-auto">
-                        <button 
+                        <Button
                             onClick={onClose}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-fg hover:text-danger"
                             title={t('common.cancel')}
                         >
                             <Icon name="x-mark" className="w-6 h-6" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex-1 p-8 md:p-12 md:pt-20 bg-white dark:bg-gray-800 flex flex-col justify-center min-h-[500px]">
+                <div className="flex min-h-[500px] flex-1 flex-col justify-center bg-surface p-8 md:p-12 md:pt-20">
                     {view === 'login' && (
                         <div className="animate-fade-in">
                             <div className="mb-10 pt-4">
-                                <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{t('loginModal.welcome')}</h2>
-                                <p className="text-gray-500 text-sm">{t('loginModal.subtitle')}</p>
+                                <h2 className="mb-2 text-3xl font-black text-fg">{t('loginModal.welcome')}</h2>
+                                <p className="text-sm text-muted-fg">{t('loginModal.subtitle')}</p>
                             </div>
                             <form onSubmit={handleLoginSubmit} className="space-y-5">
                                 <div>
-                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.emailLabel')}</label>
-                                    <input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)} className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500`} placeholder="name@company.com" />
+                                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('loginModal.emailLabel')}</label>
+                                    <Input autoFocus type="email" required value={email} onChange={e => setEmail(e.target.value)} className={inputBase} placeholder="name@company.com" />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{t('loginModal.passwordLabel')}</label>
+                                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('loginModal.passwordLabel')}</label>
                                     <div className="relative">
-                                        <input 
+                                        <Input
                                             type={showPassword ? "text" : "password"} 
                                             required 
                                             value={password} 
                                             onChange={e => setPassword(e.target.value)} 
-                                            className={`${inputBase} border-gray-200 dark:border-gray-700 focus:ring-blue-500 pr-12`} 
+                                            className={`${inputBase} pr-12`}
                                             placeholder="••••••••" 
                                         />
-                                        <button 
+                                        <Button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-fg hover:text-primary"
                                         >
                                             <Icon name={showPassword ? 'eye-off' : 'eye'} className="w-5 h-5" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
-                                {error && <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-xs text-red-600 font-bold">{error}</div>}
-                                <button type="submit" disabled={isLoading} className={`w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all ${isLoading ? 'opacity-50 cursor-wait' : ''}`}>{isLoading ? t('loginModal.processing') : t('loginModal.submitButton')}</button>
+                                {error && <div className="rounded-xl border border-danger/20 bg-danger/10 p-4 text-xs font-bold text-danger">{error}</div>}
+                                <Button type="submit" disabled={isLoading} className="h-12 w-full rounded-xl text-sm font-black uppercase tracking-widest">
+                                    {isLoading ? t('loginModal.processing') : t('loginModal.submitButton')}
+                                </Button>
                             </form>
                             <div className="mt-8 text-center">
-                                <button onClick={() => setView('request')} className="text-sm font-bold text-blue-600 hover:underline">
+                                <Button onClick={() => setView('request')} variant="ghost" className="text-sm font-bold text-primary">
                                     {t('loginModal.noAccount')}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -204,29 +213,31 @@ export const LoginModal: React.FC<{
                                         ))}
                                     </div>
                                 </div>
-                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label><input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} placeholder={t('registrationModal.placeholderName')} className={`${inputBase} ${reqName ? 'border-green-500/50' : 'border-gray-200 dark:border-gray-700'}`} /></div>
-                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label><input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} placeholder={t('registrationModal.placeholderCompany')} className={`${inputBase} ${reqCompany ? 'border-green-500/50' : 'border-gray-200 dark:border-gray-700'}`} /></div>
-                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label><input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} placeholder="+380..." className={`${inputBase} ${getStatusClass(isPhoneValid, reqPhone)}`} />{!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold tracking-tight">Формат: +380XXXXXXXXX</p>}</div>
-                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label><input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} placeholder="email@example.com" className={`${inputBase} ${getStatusClass(isEmailValid, reqEmail)}`} /></div>
+                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldName')}</label><Input required type="text" value={reqName} onChange={e => setReqName(e.target.value)} placeholder={t('registrationModal.placeholderName')} className={`${inputBase} ${reqName ? 'border-success/50' : 'border-border'}`} /></div>
+                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldCompany')}</label><Input required type="text" value={reqCompany} onChange={e => setReqCompany(e.target.value)} placeholder={t('registrationModal.placeholderCompany')} className={`${inputBase} ${reqCompany ? 'border-success/50' : 'border-border'}`} /></div>
+                                <div><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPhone')}</label><Input required type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value)} placeholder="+380..." className={`${inputBase} ${getStatusClass(isPhoneValid, reqPhone)}`} />{!isPhoneValid && reqPhone && <p className="text-[9px] text-red-500 mt-1 font-bold tracking-tight">Формат: +380XXXXXXXXX</p>}</div>
+                                <div className="sm:col-span-2"><label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldEmail')}</label><Input required type="email" value={reqEmail} onChange={e => setReqEmail(e.target.value)} placeholder="email@example.com" className={`${inputBase} ${getStatusClass(isEmailValid, reqEmail)}`} /></div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPassword')}</label>
                                     <div className="relative">
-                                        <input 
+                                        <Input
                                             required 
                                             type={showReqPassword ? "text" : "password"} 
                                             value={reqPassword} 
                                             onChange={e => setReqPassword(e.target.value)} 
                                             className={`${inputBase} ${getStatusClass(isPasswordValid, reqPassword)} pr-12`} 
                                         />
-                                        <button 
+                                        <Button
                                             type="button"
                                             onClick={() => setShowReqPassword(!showReqPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-fg hover:text-primary"
                                         >
                                             <Icon name={showReqPassword ? 'eye-off' : 'eye'} className="w-5 h-5" />
-                                        </button>
+                                        </Button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2 bg-gray-50/50 dark:bg-black/20 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-xl border border-border bg-muted/30 p-3">
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasMinLen ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasMinLen ? 'check' : 'x-mark'} className="w-3 h-3" />8+ символів</div>
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasNumber ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasNumber ? 'check' : 'x-mark'} className="w-3 h-3" />Цифра</div>
                                         <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter transition-all ${hasUpper ? 'text-green-500 scale-105' : 'text-gray-400'}`}><Icon name={hasUpper ? 'check' : 'x-mark'} className="w-3 h-3" />Велика літера</div>
@@ -236,25 +247,27 @@ export const LoginModal: React.FC<{
                                 <div className="sm:col-span-2">
                                     <label className="block text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">{t('registrationModal.fieldPasswordConfirm')}</label>
                                     <div className="relative">
-                                        <input 
+                                        <Input
                                             required 
                                             type={showReqPasswordConfirm ? "text" : "password"} 
                                             value={reqPasswordConfirm} 
                                             onChange={e => setReqPasswordConfirm(e.target.value)} 
                                             className={`${inputBase} ${getStatusClass(isPasswordMatch, reqPasswordConfirm)} pr-12`} 
                                         />
-                                        <button 
+                                        <Button
                                             type="button"
                                             onClick={() => setShowReqPasswordConfirm(!showReqPasswordConfirm)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-fg hover:text-primary"
                                         >
                                             <Icon name={showReqPasswordConfirm ? 'eye-off' : 'eye'} className="w-5 h-5" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
-                                {error && <div className="sm:col-span-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-xl border border-red-100 dark:border-red-800">{error}</div>}
+                                {error && <div className="sm:col-span-2 rounded-xl border border-danger/20 bg-danger/10 p-3 text-xs font-bold text-danger">{error}</div>}
                                 <div className="sm:col-span-2 flex gap-3 pt-2">
-                                    <button type="submit" disabled={!isFormValid || isLoading} className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl ${isFormValid && !isLoading ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20' : 'bg-blue-600/30 text-white/70 cursor-not-allowed'}`}>{isLoading ? '...' : t('registrationModal.buttonSubmit')}</button>
+                                    <Button type="submit" disabled={!isFormValid || isLoading} className="h-11 w-full rounded-xl text-sm font-black uppercase tracking-widest">{isLoading ? '...' : t('registrationModal.buttonSubmit')}</Button>
                                 </div>
                             </form>
                         </div>
@@ -265,7 +278,7 @@ export const LoginModal: React.FC<{
                             <div className="w-24 h-24 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-8 text-green-600 shadow-inner"><Icon name="check" className="w-12 h-12" /></div>
                             <h2 className="text-3xl font-black mb-4 text-gray-900 dark:text-white">{t('registrationModal.successTitle')}</h2>
                             <p className="text-gray-500 mb-10 leading-relaxed px-6">{t('registrationModal.successDescription')}</p>
-                            <button onClick={handleGoHome} className="w-full max-w-xs py-5 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-sm">{t('registrationModal.buttonClose')}</button>
+                            <Button onClick={handleGoHome} className="h-12 w-full max-w-xs rounded-2xl text-sm font-black uppercase tracking-widest">{t('registrationModal.buttonClose')}</Button>
                         </div>
                     )}
                 </div>
@@ -298,7 +311,7 @@ export const LoginModal: React.FC<{
                     </div>
                 </div>
 
-            </div>
-        </div>
+            </ModalPanel>
+        </ModalOverlay>
     );
 };

@@ -5,6 +5,7 @@ import { StorageApi } from '@shared/api/storage/storage.api';
 import { Icon } from '@shared/ui/icons';
 import { getCategoryName } from '@shared/lib/utils/format';
 import { ALL_ROLES } from '@shared/config/constants';
+import { Button, Input, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 export const DocumentEditorModal: React.FC<{
     doc: Partial<Document> | null,
@@ -77,16 +78,18 @@ export const DocumentEditorModal: React.FC<{
         }
     };
 
+    const inputClass = 'w-full rounded-md border border-border bg-surface px-4 py-3 text-sm font-semibold text-fg outline-none transition-all focus-visible:shadow-focus';
+
     return (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl p-8 border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <ModalOverlay className="z-[60] bg-black/60" onClick={onClose}>
+            <ModalPanel className="max-h-[90vh] max-w-2xl overflow-y-auto rounded-3xl border-border bg-surface p-8" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-fg">
                         {doc?.id ? t('editorModal.editTitle') : t('editorModal.createTitle')}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-                        <Icon name="x-mark" className="w-6 h-6 text-gray-400" />
-                    </button>
+                    <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
+                        <Icon name="x-mark" className="w-6 h-6" />
+                    </Button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,21 +98,21 @@ export const DocumentEditorModal: React.FC<{
                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
                                  {t('editorModal.internalIdLabel') || 'Внутрішній ID (напр. SPEC-054)'}
                              </label>
-                             <input
+                             <Input
                                  type="text"
                                  value={internalId}
                                  onChange={e => setInternalId(e.target.value)}
                                  placeholder="SPEC-001"
-                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                                 className={inputClass}
                              />
                         </div>
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTitle')}*</label>
-                            <input
+                            <Input
                                 type="text"
                                 value={title}
                                 onChange={e => setTitle(e.target.value)}
-                                className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                                className={inputClass}
                                 required
                             />
                         </div>
@@ -118,7 +121,7 @@ export const DocumentEditorModal: React.FC<{
                             <select
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
-                                className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold appearance-none"
+                                className={`${inputClass} appearance-none`}
                             >
                                 {availableCategories.map(cat => (
                                     <option key={cat.id} value={cat.nameKey}>{getCategoryName(cat.nameKey, t)}</option>
@@ -134,7 +137,7 @@ export const DocumentEditorModal: React.FC<{
                                  value={description}
                                  onChange={e => setDescription(e.target.value)}
                                  rows={2}
-                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold resize-none"
+                                className={`${inputClass} resize-none`}
                              />
                         </div>
                         <div>
@@ -145,29 +148,30 @@ export const DocumentEditorModal: React.FC<{
                                  value={extendedDescription}
                                  onChange={e => setExtendedDescription(e.target.value)}
                                  rows={2}
-                                 className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold resize-none"
+                                className={`${inputClass} resize-none`}
                              />
                         </div>
                     </div>
 
-                    <div className={`p-6 rounded-3xl border transition-all ${viewPermissions.length === 0 ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-blue-50/50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/30'}`}>
-                        <label className={`block text-[10px] font-black uppercase tracking-widest mb-4 ${viewPermissions.length === 0 ? 'text-red-600' : 'text-blue-600 dark:text-blue-400'}`}>
+                    <div className={`rounded-3xl border p-6 transition-all ${viewPermissions.length === 0 ? 'border-danger/30 bg-danger/10' : 'border-primary/20 bg-primary/10'}`}>
+                        <label className={`mb-4 block text-[10px] font-black uppercase tracking-widest ${viewPermissions.length === 0 ? 'text-danger' : 'text-primary'}`}>
                             {t('editorModal.labelPermissions')}* {viewPermissions.length === 0 && "(Виберіть хоча б одну роль)"}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {ALL_ROLES.filter(r => r !== 'admin').map(role => (
-                                <button
+                                <Button
                                     key={role}
                                     type="button"
                                     onClick={() => togglePermission(role)}
-                                    className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border-2 ${
+                                    variant={viewPermissions.includes(role) ? 'primary' : 'outline'}
+                                    className={`h-auto rounded-xl border-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider ${
                                         viewPermissions.includes(role)
-                                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
-                                            : 'bg-white dark:bg-gray-800 border-blue-100 dark:border-gray-700 text-blue-400'
+                                            ? ''
+                                            : 'text-primary'
                                     }`}
                                 >
                                     {t(`roles.${role}`)}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
@@ -176,16 +180,15 @@ export const DocumentEditorModal: React.FC<{
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTags')}</label>
                         <div className="flex flex-wrap gap-2">
                             {availableTags.map(tag => (
-                                <button
+                                <Button
                                     key={tag.id}
                                     type="button"
+                                    variant={selectedTagIds.includes(tag.id) ? 'primary' : 'outline'}
                                     onClick={() => setSelectedTagIds(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border-2 transition-all ${
-                                        selectedTagIds.includes(tag.id) ? 'bg-gray-800 dark:bg-white border-gray-800 dark:border-white text-white dark:text-gray-800' : 'bg-transparent border-gray-200 text-gray-400'
-                                    }`}
+                                    className="h-auto rounded-lg border-2 px-3 py-1.5 text-[10px] font-bold"
                                 >
                                     {tag.name}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
@@ -193,46 +196,43 @@ export const DocumentEditorModal: React.FC<{
                     <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('adminDocs.cover')} (URL)</label>
                         <div className="flex gap-3">
-                            <input
+                            <Input
                                 type="text"
                                 value={thumbnailUrl}
                                 onChange={e => setThumbnailUrl(e.target.value)}
-                                className="flex-1 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-xs font-bold"
+                                className="flex-1 text-xs font-bold"
                                 placeholder="https://..."
                             />
                             {doc?.id && (
-                                <button 
+                                <Button
                                     type="button" 
                                     onClick={() => thumbInputRef.current?.click()} 
                                     disabled={isUploadingThumb}
-                                    className="px-6 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center min-w-[64px]"
+                                    variant="outline"
+                                    className="min-w-[64px] rounded-2xl px-6"
                                 >
                                     <Icon 
                                         name={isUploadingThumb ? 'loading' : 'plus'} 
-                                        className={`w-6 h-6 ${isUploadingThumb ? 'text-blue-600' : 'text-gray-500'}`} 
+                                        className={`w-6 h-6 ${isUploadingThumb ? 'text-primary' : 'text-muted-fg'}`}
                                     />
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="flex-1 py-4 font-black uppercase text-[10px] tracking-widest text-gray-400">{t('common.cancel')}</button>
-                        <button 
+                        <Button type="button" variant="ghost" onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('common.cancel')}</Button>
+                        <Button
                             type="submit" 
                             disabled={!isFormValid}
-                            className={`flex-1 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all ${
-                                isFormValid 
-                                ? 'bg-blue-600 text-white shadow-blue-500/20' 
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                            }`}
+                            className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                         >
                             {t('common.save')}
-                        </button>
+                        </Button>
                     </div>
                 </form>
                 <input type="file" ref={thumbInputRef} onChange={handleThumbUpload} className="hidden" accept="image/*" />
-            </div>
-        </div>
+            </ModalPanel>
+        </ModalOverlay>
     );
 };

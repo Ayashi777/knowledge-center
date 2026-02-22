@@ -6,6 +6,7 @@ import { useTheme } from '@shared/hooks/useTheme';
 import { ThemeSwitcher } from '@shared/ui/ThemeSwitcher';
 import { UserAccessControl } from '@shared/ui/UserAccessControl';
 import { Icon } from '@shared/ui/icons';
+import { Button, Card } from '@shared/ui/primitives';
 import { SupportSidebar } from '@widgets/SupportSidebar/ui/SupportSidebar';
 
 interface LayoutProps {
@@ -46,34 +47,36 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
     };
 
     return (
-        <div className={`min-h-screen bg-slate-50 text-slate-800 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased transition-colors duration-300 ${
-            showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-blue-500/5' : ''
+        <div className={`min-h-screen bg-bg text-fg font-body antialiased transition-colors duration-300 ${
+            showAdminControls ? 'outline outline-4 outline-offset-[-4px] outline-primary/20' : ''
         }`}>
-            <header className="fixed top-0 left-0 right-0 p-4 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+            <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-bg/90 p-4 backdrop-blur-xl">
                 <div className="hidden md:flex justify-between items-center">
                     <div className="flex items-center gap-8">
-                        <button
+                        <Button
                             onClick={() => navigate('/')}
-                            className="text-lg font-black tracking-tighter text-gray-900 dark:text-white flex items-center gap-2"
+                            variant="ghost"
+                            className="h-auto px-0 text-lg font-black tracking-tighter text-fg hover:bg-transparent"
                         >
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs">CE</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-xs font-heading text-primary-fg">CE</div>
                             <span className="hidden lg:block uppercase">ЦЕНТР ЗНАНЬ</span>
-                        </button>
+                        </Button>
 
                         <nav className="hidden md:flex items-center gap-1">
                             {navItems.map((item) => (
-                                <button
+                                <Button
                                     key={item.path}
                                     onClick={() => handleNavClick(item.path)}
-                                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                                    variant={location.pathname === item.path ? 'primary' : 'ghost'}
+                                    className={`rounded-xl font-bold transition-all ${
                                         location.pathname === item.path
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                            ? ''
+                                            : 'text-muted-fg'
                                     }`}
                                 >
                                     <Icon name={item.icon as any} className="w-4 h-4" />
                                     {item.label}
-                                </button>
+                                </Button>
                             ))}
                         </nav>
                     </div>
@@ -92,15 +95,17 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
 
                 {/* Mobile App Bar */}
                 <div className="flex md:hidden items-center justify-between">
-                    <button
+                    <Button
                         onClick={() => (location.pathname === '/' ? navigate('/') : navigate(-1))}
-                        className="p-2 text-gray-600 dark:text-gray-300"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-fg"
                         aria-label="Back"
                     >
                         <Icon name="chevron-left" className="w-6 h-6" />
-                    </button>
+                    </Button>
 
-                    <div className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">
+                    <div className="font-heading text-sm font-black uppercase tracking-widest text-fg">
                         {getMobileTitle()}
                     </div>
 
@@ -122,26 +127,27 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
             <SupportSidebar />
 
             {/* Mobile Tab Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 md:hidden">
+            <Card className="fixed bottom-0 left-0 right-0 z-40 rounded-none border-x-0 border-b-0 bg-bg/90 backdrop-blur-xl md:hidden">
                 <div className={`grid ${mobileTabs.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 px-4 py-3`}>
                     {mobileTabs.map((item) => (
-                        <button
+                        <Button
                             key={item.path}
                             onClick={() => handleNavClick(item.path)}
-                            className={`flex items-center justify-center gap-2 rounded-xl py-2 text-[11px] font-black uppercase tracking-widest ${
+                            variant={location.pathname === item.path ? 'primary' : 'ghost'}
+                            className={`h-auto py-2 text-[11px] font-black uppercase tracking-widest ${
                                 location.pathname === item.path
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-500 dark:text-gray-400'
+                                    ? ''
+                                    : 'text-muted-fg'
                             }`}
                         >
                             <Icon name={item.icon as any} className="w-4 h-4" />
                             {item.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
-            </nav>
+            </Card>
 
-            <footer className="mt-20 text-center text-gray-400 dark:text-gray-600 font-mono text-[9px] uppercase tracking-widest pb-12">
+            <footer className="mt-20 pb-12 text-center font-mono text-[9px] uppercase tracking-widest text-muted-fg">
                 <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
             </footer>
         </div>

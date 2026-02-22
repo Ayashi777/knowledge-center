@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserRole, UserProfile } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
+import { Button, Input, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 export const UserEditorModal: React.FC<{ user: UserProfile, onSave: (user: Partial<UserProfile>) => void, onClose: () => void }> = ({ user, onSave, onClose }) => {
     const { t } = useI18n();
@@ -18,51 +19,51 @@ export const UserEditorModal: React.FC<{ user: UserProfile, onSave: (user: Parti
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full max-w-lg p-8 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6">{t('userEditorModal.title')}</h2>
+        <ModalOverlay className="z-50 bg-black/60" onClick={onClose}>
+            <ModalPanel className="max-w-lg rounded-3xl border-border bg-surface p-8" onClick={e => e.stopPropagation()}>
+                <h2 className="mb-6 text-2xl font-black text-fg">{t('userEditorModal.title')}</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('userEditorModal.labelName')}</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" required />
+                        <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-muted-fg">{t('userEditorModal.labelName')}</label>
+                        <Input type="text" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-2xl px-4 font-semibold" required />
                     </div>
                     <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('userEditorModal.labelCompany')}</label>
-                        <input type="text" value={company} onChange={e => setCompany(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" />
+                        <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-muted-fg">{t('userEditorModal.labelCompany')}</label>
+                        <Input type="text" value={company} onChange={e => setCompany(e.target.value)} className="h-12 rounded-2xl px-4 font-semibold" />
                     </div>
                     <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('userEditorModal.labelPhone')}</label>
-                        <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold" />
+                        <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-muted-fg">{t('userEditorModal.labelPhone')}</label>
+                        <Input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="h-12 rounded-2xl px-4 font-semibold" />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                        <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-muted-fg">
                             {t('loginModal.emailLabel')}
                         </label>
-                        <input
+                        <Input
                             type="email"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            className="h-12 rounded-2xl px-4 font-semibold"
                             required
                         />
-                        <p className="text-[10px] text-amber-600 mt-1 font-bold uppercase">
+                        <p className="mt-1 text-[10px] font-bold uppercase text-warning">
                             * Зміна пошти також оновить логін користувача в системі.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('userEditorModal.labelRole')}</label>
-                        <select value={role} onChange={e => setRole(e.target.value as UserRole)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                        <label className="mb-1.5 block text-xs font-black uppercase tracking-widest text-muted-fg">{t('userEditorModal.labelRole')}</label>
+                        <select value={role} onChange={e => setRole(e.target.value as UserRole)} className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-fg outline-none focus-visible:shadow-focus">
                             {roles.map(r => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}
                         </select>
                     </div>
                     <div className="flex justify-end gap-3 pt-6">
-                        <button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-colors">{t('common.cancel')}</button>
-                        <button type="submit" className="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-widest text-xs">{t('common.save')}</button>
+                        <Button type="button" variant="ghost" onClick={onClose} className="h-11 rounded-2xl px-8 text-muted-fg">{t('common.cancel')}</Button>
+                        <Button type="submit" className="h-11 rounded-2xl px-8 text-xs font-black uppercase tracking-widest">{t('common.save')}</Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalPanel>
+        </ModalOverlay>
     );
 };

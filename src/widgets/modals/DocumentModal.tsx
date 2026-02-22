@@ -4,6 +4,7 @@ import { Document } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { StorageApi } from '@shared/api/storage/storage.api';
+import { Button, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 const PREVIEW_STYLES = `
     .doc-preview {
@@ -41,21 +42,24 @@ const AccessDenied: React.FC<{ doc: Document; onRequireLogin: () => void; onClos
             <div className="w-24 h-24 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-500 dark:text-yellow-400 rounded-[2rem] mx-auto flex items-center justify-center mb-8 shadow-xl shadow-yellow-500/10">
                 <Icon name="lock-closed" className="w-12 h-12" />
             </div>
-            <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-4">{t('docView.accessDenied')}</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-10 font-bold max-w-md mx-auto leading-relaxed">
+            <h3 className="mb-4 text-3xl font-black uppercase tracking-tight text-fg">{t('docView.accessDenied')}</h3>
+            <p className="mx-auto mb-10 max-w-md font-bold leading-relaxed text-muted-fg">
                 {t('docView.accessRequiredForRoles', { roles: requiredRoles })}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button 
+                <Button
                     onClick={onRequireLogin} 
-                    className="w-full sm:w-auto py-5 px-10 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-500/40 hover:bg-blue-700 transition-all hover:-translate-y-1 active:scale-95">
+                    className="h-12 w-full rounded-xl px-8 text-xs font-black uppercase tracking-widest sm:w-auto"
+                >
                     {t('header.login')}
-                </button>
-                <button 
+                </Button>
+                <Button
                     onClick={onClose} 
-                    className="w-full sm:w-auto py-5 px-10 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                    variant="outline"
+                    className="h-12 w-full rounded-xl px-8 text-xs font-black uppercase tracking-widest sm:w-auto"
+                >
                     {t('common.back')}
-                </button>
+                </Button>
             </div>
         </div>
     )
@@ -105,25 +109,25 @@ export const DocumentModal: React.FC<{
     if (!doc) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-[50] flex items-center justify-center p-4 sm:p-6 lg:p-10 backdrop-blur-md animate-fade-in" onClick={onClose}>
+        <ModalOverlay className="z-[50] bg-black/80 p-4 sm:p-6 lg:p-10 backdrop-blur-md" onClick={onClose}>
             <style>{PREVIEW_STYLES}</style>
-            <div 
-                className="bg-white dark:bg-gray-900 rounded-[3rem] shadow-2xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col overflow-hidden border border-white/10 relative"
+            <ModalPanel
+                className="relative flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[3rem] border-border bg-surface"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header with Title and Category */}
-                 <header className="flex-shrink-0 px-10 py-8 flex justify-between items-start border-b border-gray-100 dark:border-gray-800">
+                 <header className="flex flex-shrink-0 items-start justify-between border-b border-border px-10 py-8">
                     <div className="flex-grow min-w-0 pr-12">
-                        <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-tight">
+                        <h2 className="text-3xl font-black tracking-tighter leading-tight text-fg">
                             {title}
                         </h2>
                     </div>
-                    <button onClick={onClose} className="p-3 bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded-2xl transition-all active:scale-90">
+                    <Button onClick={onClose} variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-muted-fg hover:text-danger">
                         <Icon name="x-mark" className="w-6 h-6" />
-                    </button>
+                    </Button>
                 </header>
 
-                <div className="flex-grow overflow-y-auto custom-scrollbar bg-white dark:bg-gray-900">
+                <div className="custom-scrollbar flex-grow overflow-y-auto bg-surface">
                     {!hasAccess ? (
                         <AccessDenied doc={doc} onRequireLogin={onRequireLogin} onClose={onClose} />
                     ) : (
@@ -134,7 +138,7 @@ export const DocumentModal: React.FC<{
                                 ) : primaryFile?.extension === 'pdf' ? (
                                     <iframe title={title || 'Document preview'} src={`${primaryFile.url}#view=FitH`} />
                                 ) : (
-                                    <div className="flex flex-col items-center gap-3 text-gray-400">
+                                    <div className="flex flex-col items-center gap-3 text-muted-fg">
                                         <Icon name="document-text" className="w-12 h-12" />
                                         <span className="text-[10px] font-black uppercase tracking-widest">No preview</span>
                                     </div>
@@ -145,11 +149,11 @@ export const DocumentModal: React.FC<{
                 </div>
 
                 {hasAccess && (
-                     <footer className="flex-shrink-0 px-10 py-8 bg-slate-50/50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800">
+                     <footer className="flex-shrink-0 border-t border-border bg-muted/30 px-10 py-8">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                             <div>
-                                <h4 className="font-black text-gray-900 dark:text-white text-xs uppercase tracking-widest mb-1">{t('docView.downloadFiles')}</h4>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                <h4 className="mb-1 text-xs font-black uppercase tracking-widest text-fg">{t('docView.downloadFiles')}</h4>
+                                <p className="text-[10px] font-bold uppercase tracking-tight text-muted-fg">
                                     {files.length > 0 ? `${files.length} файл(и)` : t('docView.filesEmpty')}
                                 </p>
                             </div>
@@ -160,13 +164,13 @@ export const DocumentModal: React.FC<{
                                         href={primaryFile.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/25 active:scale-95"
+                                        className="flex items-center gap-3 rounded-2xl bg-primary px-6 py-3 text-[10px] font-black uppercase tracking-widest text-primary-fg shadow-soft transition-all hover:brightness-105 active:scale-95"
                                     >
                                         <Icon name="download" className="w-4 h-4" />
                                         <span>{t('common.download') || 'Download'}</span>
                                     </a>
                                 ) : (
-                                    <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest border-2 border-dashed border-gray-100 dark:border-gray-800 px-6 py-3 rounded-2xl">
+                                    <div className="rounded-2xl border-2 border-dashed border-border px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">
                                         {isLoadingFiles ? 'Loading...' : t('docView.filesEmpty')}
                                     </div>
                                 )}
@@ -174,7 +178,7 @@ export const DocumentModal: React.FC<{
                         </div>
                     </footer>
                 )}
-            </div>
-        </div>
+            </ModalPanel>
+        </ModalOverlay>
     );
 };

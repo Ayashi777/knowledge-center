@@ -3,6 +3,7 @@ import { Category, UserRole, IconName } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { ALL_ROLES } from '@shared/config/constants';
+import { Button, Input, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 export const CategoryEditorModal: React.FC<{
     category: Partial<Category> | null,
@@ -47,82 +48,80 @@ export const CategoryEditorModal: React.FC<{
     const rolesForPermissions = ALL_ROLES.filter(r => r !== 'admin');
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg p-8 border border-gray-100 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+        <ModalOverlay className="z-[60] bg-black/60" onClick={onClose}>
+            <ModalPanel className="max-w-lg rounded-3xl border-border bg-surface p-8" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-fg">
                         {category?.id?.toString().startsWith('cat') ? t('categoryEditorModal.createTitle') : t('categoryEditorModal.editTitle')}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-                        <Icon name="x-mark" className="w-6 h-6 text-gray-400" />
-                    </button>
+                    <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
+                        <Icon name="x-mark" className="w-6 h-6" />
+                    </Button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                             {t('categoryEditorModal.labelName')}
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={nameKey}
                             onChange={e => setNameKey(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                            className="h-12 rounded-2xl px-4 font-bold"
                             placeholder={t('categoryEditorModal.placeholderName')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                             {t('categoryEditorModal.labelIcon')}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {icons.map(icon => (
-                                <button
+                                <Button
                                     key={icon}
                                     type="button"
                                     onClick={() => setIconName(icon)}
-                                    className={`p-3 rounded-xl border-2 transition-all ${iconName === icon ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-700 text-gray-400'}`}
+                                    variant={iconName === icon ? 'primary' : 'outline'}
+                                    className="h-11 w-11 rounded-xl border-2 p-0 text-muted-fg"
                                 >
                                     <Icon name={icon} className="w-5 h-5" />
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="p-6 bg-purple-50/50 dark:bg-purple-900/10 rounded-3xl border border-purple-100 dark:border-purple-900/30">
-                        <label className="block text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-4">
+                    <div className="rounded-3xl border border-primary/20 bg-primary/10 p-6">
+                        <label className="mb-4 block text-[10px] font-black uppercase tracking-widest text-primary">
                             {t('categoryEditorModal.labelPermissions')}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {rolesForPermissions.map(role => (
-                                <button
+                                <Button
                                     key={role}
                                     type="button"
                                     onClick={() => togglePermission(role)}
-                                    className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border-2 ${
-                                        viewPermissions.includes(role)
-                                            ? 'bg-purple-600 border-purple-600 text-white'
-                                            : 'bg-white dark:bg-gray-800 border-purple-100 dark:border-gray-700 text-purple-400'
-                                    }`}
+                                    variant={viewPermissions.includes(role) ? 'primary' : 'outline'}
+                                    className="h-auto rounded-xl border-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider"
                                 >
                                     {t(`roles.${role}`)}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="flex-1 py-4 font-black uppercase text-[10px] tracking-widest text-gray-400">
+                        <Button type="button" variant="ghost" onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">
                             {t('common.cancel')}
-                        </button>
-                        <button type="submit" className="flex-1 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">
+                        </Button>
+                        <Button type="submit" className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest">
                             {t('common.save')}
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalPanel>
+        </ModalOverlay>
     );
 };

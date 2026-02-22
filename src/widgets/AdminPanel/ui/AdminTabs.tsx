@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '@shared/ui/icons';
+import { Button } from '@shared/ui/primitives';
 
 type TabId = 'content' | 'users' | 'tags' | 'requests';
 
@@ -18,28 +19,29 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, p
     ] as const;
 
     return (
-        <div className="flex border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
+        <div className="flex border-b border-border bg-muted/30">
             {tabs.map((tab) => (
-                <button
+                <Button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-8 py-4 text-sm font-black uppercase tracking-widest transition-all relative ${
+                    variant="ghost"
+                    className={`relative h-auto rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest transition-all ${
                         activeTab === tab.id
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                            ? 'text-primary'
+                            : 'text-muted-fg hover:text-fg'
                     }`}
                 >
                     <Icon name={tab.icon as any} className="w-4 h-4" />
                     {tab.label}
                     {tab.id === 'requests' && pendingRequestsCount > 0 && (
-                        <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-[10px] rounded-full animate-pulse">
+                        <span className="ml-2 rounded-full bg-danger px-2 py-0.5 text-[10px] text-white animate-pulse">
                             {pendingRequestsCount}
                         </span>
                     )}
                     {activeTab === tab.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+                        <div className="absolute bottom-0 left-0 right-0 h-1 rounded-t-full bg-primary" />
                     )}
-                </button>
+                </Button>
             ))}
         </div>
     );
