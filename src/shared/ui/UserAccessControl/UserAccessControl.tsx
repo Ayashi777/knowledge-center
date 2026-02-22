@@ -5,6 +5,7 @@ import { UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { logout } from '@shared/api/firebase/auth';
+import { Button } from '@shared/ui/primitives';
 
 export const UserAccessControl: React.FC<{
   user: User | null;
@@ -18,20 +19,21 @@ export const UserAccessControl: React.FC<{
     <div className="flex items-center gap-3">
       {/* Desktop/Tablet */}
       <div className="hidden sm:flex flex-col text-right">
-        <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-fg">
           {user ? user.email : t('roles.guest')}
         </span>
         <div className="flex items-center justify-end gap-2">
-          <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">
+          <span className="text-xs font-black uppercase tracking-tighter text-primary">
             {t(`roles.${role}`)}
           </span>
           {user && (
-            <button
+            <Button
               onClick={() => logout()}
-              className="text-[10px] text-red-500 hover:underline font-black uppercase tracking-tighter"
+              variant="ghost"
+              className="h-auto p-0 text-[10px] font-black uppercase tracking-tighter text-danger hover:underline"
             >
               {t('header.logout')}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -39,37 +41,39 @@ export const UserAccessControl: React.FC<{
       {/* Mobile */}
       <div className="sm:hidden flex items-center gap-2">
         {user ? (
-          <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-fg">
             {(user.email || 'U').charAt(0).toUpperCase()}
           </div>
         ) : (
-          <button
+          <Button
             onClick={onLoginClick}
-            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+            size="icon"
+            className="h-9 w-9 rounded-xl"
             aria-label={t('header.login')}
           >
             <Icon name="user" className="w-4 h-4" />
-          </button>
+          </Button>
         )}
       </div>
 
       {role === 'admin' && (
-        <button
+        <Button
           onClick={() => navigate('/admin')}
-          className="hidden sm:flex p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30"
+          size="icon"
+          className="hidden h-10 w-10 rounded-xl sm:flex"
           title={t('header.adminPanel')}
         >
           <Icon name="cog" className="w-5 h-5" />
-        </button>
+        </Button>
       )}
 
       {!user && (
-        <button
+        <Button
           onClick={onLoginClick}
-          className="hidden sm:flex px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest"
+          className="hidden h-10 rounded-xl px-5 text-xs font-black uppercase tracking-widest sm:flex"
         >
           {t('header.login')}
-        </button>
+        </Button>
       )}
     </div>
   );
