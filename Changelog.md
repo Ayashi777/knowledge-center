@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-02-22
+### Added
+- **Security Hardening (Firebase Rules)**: Strengthened `firestore.rules` and `storage.rules` with stricter validation for `users`, `requests`, and document access paths, including role validation and constrained field updates.
+- **Secure Admin Email Update Flow**: Added callable Cloud Function `adminUpdateUserEmail` (admin-only) to safely update user email in both Firebase Auth and Firestore.
+- **Document Lifecycle Controls**: Added document `status` support (`draft`, `published`, `archived`) and integrated status filtering/bulk updates in admin content management.
+- **Download Access Management**: Added explicit `downloadPermissions` controls in admin table filters, columns, and bulk operations.
+- **Data Health Admin Tab**: Introduced a new `Health` tab with diagnostics for data quality issues (missing category/status/tags/permissions, broken tags, archived-without-description) and quick bulk-fix actions.
+- **Saved Content Views**: Added saved filter presets for admin content table with `localStorage` persistence and URL query synchronization.
+
+### Changed
+- **Admin Content UX at Scale**: Reworked content management into an operations-oriented table flow with multi-select and bulk actions suitable for large datasets (many categories/tags/documents).
+- **Safe Delete Workflow**: Category and tag deletion now supports dependency-aware migration logic before deletion to avoid breaking document links.
+- **Document Modal Responsive Layout**: Refined `DocumentModal` into a clearer mobile-first and desktop-friendly experience with larger preview area, improved info layout, and adaptive actions.
+- **Document Editor Modal UX**: Improved mobile usability with responsive spacing and sticky action area for save/cancel flow.
+- **User Role Coverage in Editor**: Updated user editor role options to use the full `ALL_ROLES` set.
+- **Document Metadata Save Consistency**: `createdAt` is now reliably set on first document creation to improve chronology and sorting behavior.
+
+### Fixed
+- **403 Storage Errors in Document View**: Resolved repeated Storage `403 (Forbidden)` requests by aligning UI access checks with Firebase rules and preventing unauthorized file listing attempts.
+- **View vs Download Permission Mismatch**: Separated and synchronized `view` and `download` checks in document modal flow to match backend policy behavior.
+- **Legacy Function Deployment Conflict**: Removed conflicting legacy function alias (`syncuseremail`) that caused Firebase deploy/runtime issues.
+- **Admin Action Reliability**: Added safer operation states (`isSaving`) and clearer success/error feedback across tags/users/requests flows.
+- **Modal Validation and Submit Safety**: Added stronger inline validation, guarded submits, and improved error surfaces in `DocumentEditorModal`, `CategoryEditorModal`, `UserEditorModal`, and `TagEditorModal`.
+
 ## [3.3.0] - 2025-12-22
 ### Added
 - **Contextual Access Screen**: Implemented a new "Pending Access" state on the document view. Logged-in users with the 'Guest' role now see a specific message confirming that their access request is under review, which prevents confusion and improves user feedback.

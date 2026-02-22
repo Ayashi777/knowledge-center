@@ -108,10 +108,10 @@ export const DocumentEditorModal: React.FC<{
     const inputClass = 'w-full rounded-md border border-border bg-surface px-4 py-3 text-sm font-semibold text-fg outline-none transition-all focus-visible:shadow-focus';
 
     return (
-        <ModalOverlay className="z-[60] bg-black/60" onClick={onClose}>
-            <ModalPanel className="max-h-[90vh] max-w-2xl overflow-y-auto rounded-3xl border-border bg-surface p-8" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-fg">
+        <ModalOverlay className="z-[60] bg-black/60 p-2 sm:p-4" onClick={onClose}>
+            <ModalPanel className="max-h-[96vh] w-full max-w-2xl overflow-y-auto rounded-2xl border-border bg-surface p-4 sm:max-h-[90vh] sm:rounded-3xl sm:p-8" onClick={e => e.stopPropagation()}>
+                <div className="mb-5 flex items-center justify-between sm:mb-6">
+                    <h2 className="text-lg font-black uppercase tracking-tight text-fg sm:text-2xl">
                         {doc?.id ? t('editorModal.editTitle') : t('editorModal.createTitle')}
                     </h2>
                     <Button onClick={onClose} disabled={isSubmitting || isUploadingThumb} variant="ghost" size="icon" className="text-muted-fg">
@@ -119,8 +119,8 @@ export const DocumentEditorModal: React.FC<{
                     </Button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                         <div className="md:col-span-2">
                              <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                                  {t('editorModal.internalIdLabel') || 'Внутрішній ID (напр. SPEC-054)'}
@@ -256,12 +256,12 @@ export const DocumentEditorModal: React.FC<{
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4">
-                        <Button type="button" variant="ghost" disabled={isSubmitting || isUploadingThumb} onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('common.cancel')}</Button>
+                    <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border/70 bg-surface/95 pt-4 backdrop-blur sm:static sm:flex-row sm:border-none sm:bg-transparent sm:pt-4">
+                        <Button type="button" variant="ghost" disabled={isSubmitting || isUploadingThumb} onClick={onClose} className="h-12 w-full flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('common.cancel')}</Button>
                         <Button
                             type="submit" 
                             disabled={!isFormValid || isSubmitting || isUploadingThumb}
-                            className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                            className="h-12 w-full flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                         >
                             {isSubmitting ? (t('common.loading') || 'Saving...') : t('common.save')}
                         </Button>
