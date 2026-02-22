@@ -21,16 +21,16 @@ export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, 
     }, [allTags, search]);
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex items-center justify-between mb-8">
+        <div className="animate-fade-in min-w-0">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h3 className="text-xl font-black uppercase tracking-tight text-fg">Керування тегами</h3>
-                    <p className="text-sm italic text-muted-fg">Створення та редагування міток для документів</p>
+                    <h3 className="text-xl font-black tracking-tight text-fg">Керування тегами</h3>
+                    <p className="text-sm text-muted-fg">Створення та редагування міток для документів</p>
                 </div>
                 <Button
                     onClick={onAddTag}
                     disabled={isProcessing}
-                    className="h-11 rounded-xl px-6 text-xs font-black uppercase tracking-widest"
+                    className="h-11 w-full rounded-xl px-6 text-xs font-black uppercase tracking-widest sm:w-auto"
                 >
                     <Icon name="plus" className="w-4 h-4" />
                     Додати тег
@@ -58,7 +58,7 @@ export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, 
                 {filteredTags.map((tag) => (
                     <Card
                         key={tag.id}
-                        className="group relative rounded-2xl border border-transparent bg-muted/35 p-4 text-center shadow-none transition-all hover:border-primary/30"
+                        className="group relative rounded-xl border border-transparent bg-muted/35 p-4 text-center shadow-none transition-all hover:border-primary/30"
                     >
                         <Button
                             onClick={() => onEditTag(tag)}

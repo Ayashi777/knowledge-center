@@ -273,105 +273,109 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const pendingRequestsCount = (requests || []).filter(r => r.status === 'pending').length;
 
   return (
-    <div className="animate-slide-up overflow-hidden rounded-3xl border border-border bg-surface shadow-soft">
+    <div className="animate-slide-up w-full overflow-hidden border-y border-border bg-bg shadow-soft md:border md:rounded-xl">
       <AdminHeader onClose={onClose} />
-      <AdminTabs 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        pendingRequestsCount={pendingRequestsCount}
-        healthIssuesCount={healthIssuesCount}
-      />
+      <div className="grid min-h-[72vh] md:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="border-b border-border bg-surface/60 md:sticky md:top-28 md:h-[calc(100vh-7rem)] md:self-start md:overflow-y-auto md:border-b-0 md:border-r">
+          <AdminTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            pendingRequestsCount={pendingRequestsCount}
+            healthIssuesCount={healthIssuesCount}
+          />
+        </aside>
 
-      <div className="p-8 min-h-[500px]">
-        {notice && (
-          <Card className={`mb-6 rounded-2xl border px-4 py-3 shadow-none ${
-            notice.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-danger/30 bg-danger/10 text-danger'
-          }`}>
-            <p className="text-xs font-black uppercase tracking-wider">{notice.text}</p>
-          </Card>
-        )}
+        <div className="min-w-0 p-4 md:p-8">
+          {notice && (
+            <Card className={`mb-6 rounded-xl border px-4 py-3 shadow-none ${
+              notice.type === 'success'
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-danger/30 bg-danger/10 text-danger'
+            }`}>
+              <p className="text-xs font-semibold tracking-wide">{notice.text}</p>
+            </Card>
+          )}
 
-        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Документи</p>
-            <p className="mt-1 text-2xl font-black text-fg">{documents.length}</p>
-          </Card>
-          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Категорії</p>
-            <p className="mt-1 text-2xl font-black text-fg">{categories.length}</p>
-          </Card>
-          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Теги</p>
-            <p className="mt-1 text-2xl font-black text-fg">{allTags.length}</p>
-          </Card>
-          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Pending заявок</p>
-            <p className="mt-1 text-2xl font-black text-fg">{pendingRequestsCount}</p>
-          </Card>
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Card className="rounded-xl border-border bg-muted/20 p-4 shadow-none">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-fg">Документи</p>
+              <p className="mt-1 text-2xl font-black text-fg">{documents.length}</p>
+            </Card>
+            <Card className="rounded-xl border-border bg-muted/20 p-4 shadow-none">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-fg">Категорії</p>
+              <p className="mt-1 text-2xl font-black text-fg">{categories.length}</p>
+            </Card>
+            <Card className="rounded-xl border-border bg-muted/20 p-4 shadow-none">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-fg">Теги</p>
+              <p className="mt-1 text-2xl font-black text-fg">{allTags.length}</p>
+            </Card>
+            <Card className="rounded-xl border-border bg-muted/20 p-4 shadow-none">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-fg">Pending заявок</p>
+              <p className="mt-1 text-2xl font-black text-fg">{pendingRequestsCount}</p>
+            </Card>
+          </div>
+
+          {activeTab === 'content' && (
+            <ContentTab
+              categories={categories}
+              documents={documents}
+              availableTags={allTags}
+              onAddCategory={onAddCategory}
+              onUpdateCategory={onUpdateCategory}
+              onDeleteCategory={handleDeleteCategorySafely}
+              onAddDocument={onAddDocument}
+              onEditDocument={onEditDocument}
+              onDeleteDocument={onDeleteDocument}
+              onBulkPatchDocuments={handleBulkPatchDocuments}
+              isProcessing={isSaving}
+            />
+          )}
+
+          {activeTab === 'tags' && (
+            <TagsTab
+              allTags={allTags}
+              onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
+              onEditTag={setEditingTag}
+              onDeleteTag={handleDeleteTag}
+              isProcessing={isSaving}
+            />
+          )}
+
+          {activeTab === 'health' && (
+            <HealthTab
+              documents={documents}
+              categories={categories}
+              tags={allTags}
+              onBulkPatchDocuments={handleBulkPatchDocuments}
+              isProcessing={isSaving}
+            />
+          )}
+
+          {(activeTab === 'users' || activeTab === 'requests') && isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                  <StatePanel variant="loading" title={t('common.loading')} className="min-w-[280px]" />
+              </div>
+          ) : (
+              <>
+                  {activeTab === 'users' && (
+                      <UsersTab
+                          users={users || []}
+                          onEditUser={setEditingUser}
+                          isProcessing={isSaving}
+                      />
+                  )}
+
+                  {activeTab === 'requests' && (
+                      <RequestsTab
+                          requests={requests || []}
+                          onApprove={handleApproveRequest}
+                          onDeny={handleDenyRequest}
+                          isProcessing={isSaving}
+                      />
+                  )}
+              </>
+          )}
         </div>
-
-        {activeTab === 'content' && (
-          <ContentTab 
-            categories={categories}
-            documents={documents}
-            availableTags={allTags}
-            onAddCategory={onAddCategory}
-            onUpdateCategory={onUpdateCategory}
-            onDeleteCategory={handleDeleteCategorySafely}
-            onAddDocument={onAddDocument}
-            onEditDocument={onEditDocument}
-            onDeleteDocument={onDeleteDocument}
-            onBulkPatchDocuments={handleBulkPatchDocuments}
-            isProcessing={isSaving}
-          />
-        )}
-
-        {activeTab === 'tags' && (
-          <TagsTab 
-            allTags={allTags}
-            onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
-            onEditTag={setEditingTag}
-            onDeleteTag={handleDeleteTag}
-            isProcessing={isSaving}
-          />
-        )}
-
-        {activeTab === 'health' && (
-          <HealthTab
-            documents={documents}
-            categories={categories}
-            tags={allTags}
-            onBulkPatchDocuments={handleBulkPatchDocuments}
-            isProcessing={isSaving}
-          />
-        )}
-
-        {(activeTab === 'users' || activeTab === 'requests') && isLoading ? (
-            <div className="flex items-center justify-center py-20">
-                <StatePanel variant="loading" title={t('common.loading')} className="min-w-[280px]" />
-            </div>
-        ) : (
-            <>
-                {activeTab === 'users' && (
-                    <UsersTab 
-                        users={users || []}
-                        onEditUser={setEditingUser}
-                        isProcessing={isSaving}
-                    />
-                )}
-
-                {activeTab === 'requests' && (
-                    <RequestsTab 
-                        requests={requests || []}
-                        onApprove={handleApproveRequest}
-                        onDeny={handleDenyRequest}
-                        isProcessing={isSaving}
-                    />
-                )}
-            </>
-        )}
       </div>
 
       {editingTag && (

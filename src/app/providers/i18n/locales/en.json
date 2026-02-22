@@ -22,7 +22,8 @@
     "status": "Status",
     "error": "An error occurred",
     "all": "All",
-    "toHome": "To Home"
+    "toHome": "To Home",
+    "exampleCalculation": "Calculation Example"
   },
   "landing": {
     "hero": {

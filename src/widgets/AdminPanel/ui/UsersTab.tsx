@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { UserProfile, UserRole } from '@shared/types';
 import { Icon } from '@shared/ui/icons';
-import { Button, Card, Input } from '@shared/ui/primitives';
+import { AdminTable, AdminTableBody, AdminTableCell, AdminTableHead, AdminTableHeaderCell, AdminTableRow, Button, Card, Input } from '@shared/ui/primitives';
 import { StatePanel } from '@shared/ui/states';
 
 interface UsersTabProps {
@@ -35,11 +35,11 @@ export const UsersTab: React.FC<UsersTabProps> = ({ users, onEditUser, isProcess
     }, [users, search, roleFilter]);
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex items-center justify-between mb-8">
+        <div className="animate-fade-in min-w-0">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h3 className="text-xl font-black uppercase tracking-tight text-fg">Користувачі</h3>
-                    <p className="text-sm italic text-muted-fg">Керування правами та доступами</p>
+                    <h3 className="text-xl font-black tracking-tight text-fg">Користувачі</h3>
+                    <p className="text-sm text-muted-fg">Керування правами та доступами</p>
                 </div>
             </div>
 
@@ -68,41 +68,41 @@ export const UsersTab: React.FC<UsersTabProps> = ({ users, onEditUser, isProcess
                     className="py-16"
                 />
             ) : (
-            <Card className="overflow-x-auto rounded-2xl border-border bg-surface">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-muted/40">
+            <Card className="rounded-xl border-border bg-surface">
+                <AdminTable minWidthClassName="min-w-[820px]">
+                    <AdminTableHead>
                         <tr>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-fg">Користувач</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-fg">Email</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-fg">Роль</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-fg">Статус</th>
-                            <th className="p-4"></th>
+                            <AdminTableHeaderCell>Користувач</AdminTableHeaderCell>
+                            <AdminTableHeaderCell>Email</AdminTableHeaderCell>
+                            <AdminTableHeaderCell>Роль</AdminTableHeaderCell>
+                            <AdminTableHeaderCell>Статус</AdminTableHeaderCell>
+                            <AdminTableHeaderCell />
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
+                    </AdminTableHead>
+                    <AdminTableBody>
                         {filteredUsers.map((u) => (
-                            <tr key={u.uid} className="transition-colors hover:bg-muted/25">
-                                <td className="p-4">
+                            <AdminTableRow key={u.uid}>
+                                <AdminTableCell>
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-xs font-bold text-primary">
                                             {(u.displayName || u.name)?.charAt(0) || u.email?.charAt(0)}
                                         </div>
                                         <span className="font-bold text-fg">{u.displayName || u.name || '---'}</span>
                                     </div>
-                                </td>
-                                <td className="p-4 text-sm text-muted-fg">{u.email}</td>
-                                <td className="p-4">
+                                </AdminTableCell>
+                                <AdminTableCell className="text-sm text-muted-fg">{u.email}</AdminTableCell>
+                                <AdminTableCell>
                                     <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${
                                         u.role === 'admin' ? 'bg-accent/15 text-accent' :
                                         u.role === 'guest' ? 'bg-muted text-muted-fg' : 'bg-primary/15 text-primary'
                                     }`}>
                                         {u.role}
                                     </span>
-                                </td>
-                                <td className="p-4">
+                                </AdminTableCell>
+                                <AdminTableCell>
                                     <span className={`inline-block h-2 w-2 rounded-full ${u.role === 'guest' ? 'bg-warning' : 'bg-success'}`} />
-                                </td>
-                                <td className="p-4 text-right">
+                                </AdminTableCell>
+                                <AdminTableCell className="text-right">
                                     <Button
                                         onClick={() => onEditUser(u)}
                                         variant="ghost"
@@ -112,11 +112,11 @@ export const UsersTab: React.FC<UsersTabProps> = ({ users, onEditUser, isProcess
                                     >
                                         <Icon name="pencil" className="w-4 h-4" />
                                     </Button>
-                                </td>
-                            </tr>
+                                </AdminTableCell>
+                            </AdminTableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </AdminTableBody>
+                </AdminTable>
             </Card>
             )}
         </div>

@@ -96,7 +96,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
     description: string;
     children?: React.ReactNode;
   }) => (
-    <Card className="rounded-2xl border-border bg-surface p-4 shadow-none">
+    <Card className="rounded-xl border-border bg-surface p-4 shadow-none">
       <div className="mb-3 flex items-center justify-between">
         <h4 className="text-sm font-black uppercase tracking-widest text-fg">{title}</h4>
         <span className={`rounded px-2 py-1 text-[10px] font-black uppercase ${count > 0 ? 'bg-danger/15 text-danger' : 'bg-success/15 text-success'}`}>
@@ -110,11 +110,11 @@ export const HealthTab: React.FC<HealthTabProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+      <Card className="rounded-xl border-border bg-muted/20 p-4 shadow-none">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-fg">Data Health</p>
-            <h3 className="text-xl font-black uppercase tracking-tight text-fg">Контроль якості контенту</h3>
+            <h3 className="text-xl font-black tracking-tight text-fg">Контроль якості контенту</h3>
           </div>
           <div className="rounded-xl bg-surface px-3 py-2">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Загалом проблем</p>
@@ -174,4 +174,3 @@ export const HealthTab: React.FC<HealthTabProps> = ({
     </div>
   );
 };
-

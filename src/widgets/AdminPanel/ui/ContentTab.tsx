@@ -3,7 +3,7 @@ import { Category, Document, DocumentStatus, Tag, UserRole } from '@shared/types
 import { Icon } from '@shared/ui/icons';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { getCategoryName } from '@shared/lib/utils/format';
-import { Button, Card, Input } from '@shared/ui/primitives';
+import { AdminTable, AdminTableBody, AdminTableCell, AdminTableHead, AdminTableHeaderCell, AdminTableRow, Button, Card, Input } from '@shared/ui/primitives';
 import { StatePanel } from '@shared/ui/states';
 import { ALL_ROLES } from '@shared/config/constants';
 
@@ -337,10 +337,10 @@ export const ContentTab: React.FC<ContentTabProps> = ({
     };
 
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
             <section>
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Категорії ({filteredCategories.length}/{categories.length})</h3>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-base font-black tracking-tight text-fg">Категорії ({filteredCategories.length}/{categories.length})</h3>
                     <Button onClick={onAddCategory} disabled={isProcessing} size="icon" className="h-9 w-9 rounded-lg">
                         <Icon name="plus" className="h-4 w-4" />
                     </Button>
@@ -350,7 +350,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 </div>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
                     {filteredCategories.map((cat) => (
-                        <Card key={cat.id} className="group flex items-center justify-between rounded-2xl border border-transparent bg-muted/35 p-4 shadow-none transition-all hover:border-primary/40">
+                        <Card key={cat.id} className="group flex items-center justify-between rounded-xl border border-transparent bg-muted/35 p-4 shadow-none transition-all hover:border-primary/40">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-muted-fg shadow-sm">
                                     <Icon name={(cat.iconName as any) || 'folder'} className="w-5 h-5" />
@@ -370,8 +370,8 @@ export const ContentTab: React.FC<ContentTabProps> = ({
             </section>
 
             <section>
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Документи ({filteredDocuments.length}/{documents.length})</h3>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-base font-black tracking-tight text-fg">Документи ({filteredDocuments.length}/{documents.length})</h3>
                     <Button onClick={onAddDocument} disabled={isProcessing} size="icon" className="h-9 w-9 rounded-lg">
                         <Icon name="plus" className="h-4 w-4" />
                     </Button>
@@ -405,7 +405,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     </select>
                 </div>
 
-                <Card className="mb-4 rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+                <Card className="mb-4 rounded-xl border-border bg-muted/20 p-4 shadow-none">
                     <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_110px_110px] xl:min-w-[560px]">
                             <select value={selectedViewId} onChange={(e) => setSelectedViewId(e.target.value)} className="h-10 min-w-0 rounded-lg border border-border bg-surface px-3 text-xs font-bold text-fg">
@@ -423,7 +423,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                     </div>
                 </Card>
 
-                <Card className="mb-4 rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+                <Card className="mb-4 rounded-xl border-border bg-muted/20 p-4 shadow-none">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                         <Button onClick={toggleSelectAllFiltered} variant="outline" disabled={isProcessing || filteredDocuments.length === 0} className="h-9 rounded-xl px-4 text-xs font-black uppercase tracking-widest">
                             {allFilteredSelected ? 'Зняти вибір' : 'Вибрати всі у фільтрі'}
@@ -506,33 +506,33 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                 {filteredDocuments.length === 0 ? (
                     <StatePanel variant="empty" title="Документи не знайдено" description="Змініть фільтр або додайте документ." className="py-14" />
                 ) : (
-                    <Card className="overflow-x-auto rounded-2xl border-border bg-surface shadow-none">
-                        <table className="w-full border-collapse text-left">
-                            <thead className="bg-muted/30">
+                    <Card className="rounded-xl border-border bg-surface shadow-none">
+                        <AdminTable minWidthClassName="min-w-[1200px]">
+                            <AdminTableHead>
                                 <tr>
-                                    <th className="p-3"><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAllFiltered} /></th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Документ</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Категорія</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Теги</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">View access</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Download</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Status</th>
-                                    <th className="p-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">Оновлено</th>
-                                    <th className="p-3" />
+                                    <AdminTableHeaderCell><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAllFiltered} /></AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Документ</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Категорія</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Теги</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>View access</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Download</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Status</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell>Оновлено</AdminTableHeaderCell>
+                                    <AdminTableHeaderCell />
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
+                            </AdminTableHead>
+                            <AdminTableBody>
                                 {filteredDocuments.map(doc => (
-                                    <tr key={doc.id} className="hover:bg-muted/20">
-                                        <td className="p-3">
+                                    <AdminTableRow key={doc.id}>
+                                        <AdminTableCell>
                                             <input type="checkbox" checked={selectedDocIds.has(doc.id)} onChange={() => toggleDocSelection(doc.id)} />
-                                        </td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell>
                                             <p className="max-w-[300px] truncate text-sm font-bold text-fg">{doc.titleKey ? t(doc.titleKey) : doc.title || doc.id}</p>
                                             <p className="text-[10px] font-black uppercase tracking-wider text-muted-fg">{doc.internalId || doc.id}</p>
-                                        </td>
-                                        <td className="p-3 text-xs font-bold text-fg">{getCategoryName(doc.categoryKey, t)}</td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell className="text-xs font-bold text-fg">{getCategoryName(doc.categoryKey, t)}</AdminTableCell>
+                                        <AdminTableCell>
                                             <div className="flex flex-wrap gap-1">
                                                 {(doc.tagIds || []).slice(0, 3).map(tagId => (
                                                     <span key={tagId} className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-black uppercase text-primary">
@@ -545,14 +545,14 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                                                     </span>
                                                 )}
                                             </div>
-                                        </td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell>
                                             <p className="text-xs font-bold text-fg">{(doc.viewPermissions || []).slice(0, 3).join(', ') || 'public'}</p>
-                                        </td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell>
                                             <p className="text-xs font-bold text-fg">{(doc.downloadPermissions || []).slice(0, 3).join(', ') || 'inherit'}</p>
-                                        </td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell>
                                             <span className={`rounded px-2 py-1 text-[10px] font-black uppercase ${
                                                 (doc.status || 'published') === 'published'
                                                     ? 'bg-success/15 text-success'
@@ -562,18 +562,18 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                                             }`}>
                                                 {doc.status || 'published'}
                                             </span>
-                                        </td>
-                                        <td className="p-3 text-xs font-bold text-muted-fg">{formatUpdated(doc)}</td>
-                                        <td className="p-3">
+                                        </AdminTableCell>
+                                        <AdminTableCell className="text-xs font-bold text-muted-fg">{formatUpdated(doc)}</AdminTableCell>
+                                        <AdminTableCell>
                                             <div className="flex justify-end gap-1">
                                                 <Button onClick={() => onEditDocument(doc)} disabled={isProcessing} variant="ghost" size="icon" className="h-8 w-8 text-muted-fg hover:text-primary"><Icon name="pencil" className="h-4 w-4" /></Button>
                                                 <Button onClick={() => onDeleteDocument(doc.id)} disabled={isProcessing} variant="ghost" size="icon" className="h-8 w-8 text-muted-fg hover:text-danger"><Icon name="trash" className="h-4 w-4" /></Button>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </AdminTableCell>
+                                    </AdminTableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </AdminTableBody>
+                        </AdminTable>
                     </Card>
                 )}
             </section>

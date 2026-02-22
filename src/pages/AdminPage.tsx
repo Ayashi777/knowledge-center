@@ -66,21 +66,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     }
 
     return (
-      <div className="animate-fade-in flex flex-col justify-center items-center w-full min-h-[calc(100vh-14rem)] py-10">
-          <div className="w-full max-w-6xl">
-              <AdminPanel
-                categories={categories}
-                documents={documents}
-                allTags={allTags}
-                onUpdateCategory={onUpdateCategory}
-                onDeleteCategory={onDeleteCategory}
-                onAddCategory={onAddCategory}
-                onDeleteDocument={onDeleteDocument}
-                onEditDocument={onEditDocument}
-                onAddDocument={onAddDocument}
-                onClose={() => navigate('/')}
-              />
-          </div>
+      <div className="animate-fade-in w-full min-h-[calc(100vh-10rem)] px-0 md:px-6">
+        <AdminPanel
+          categories={categories}
+          documents={documents}
+          allTags={allTags}
+          onUpdateCategory={onUpdateCategory}
+          onDeleteCategory={onDeleteCategory}
+          onAddCategory={onAddCategory}
+          onDeleteDocument={onDeleteDocument}
+          onEditDocument={onEditDocument}
+          onAddDocument={onAddDocument}
+          onClose={() => navigate('/database')}
+        />
       </div>
     );
 };

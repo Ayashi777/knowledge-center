@@ -21,6 +21,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
     const { user, role } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const showAdminControls = role === 'admin';
+    const isAdminRoute = location.pathname.startsWith('/admin');
 
     const navItems = [
         { label: t('header.nav.home'), path: '/', icon: 'home' },
@@ -120,13 +121,18 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
                 </div>
             </header>
 
-            <main className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 relative min-h-screen pt-20 md:pt-24 pb-24 md:pb-8">
+            <main className={`relative min-h-screen ${
+                isAdminRoute
+                    ? 'w-full max-w-none px-0 pt-24 md:pt-28 pb-24 md:pb-8'
+                    : 'container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 pt-20 md:pt-24 pb-24 md:pb-8'
+            }`}>
                 {children}
             </main>
 
-            <SupportSidebar />
+            {!isAdminRoute && <SupportSidebar />}
 
             {/* Mobile Tab Bar */}
+            {!isAdminRoute && (
             <Card className="fixed bottom-0 left-0 right-0 z-40 rounded-none border-x-0 border-b-0 bg-bg/90 backdrop-blur-xl md:hidden">
                 <div className={`grid ${mobileTabs.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 px-4 py-3`}>
                     {mobileTabs.map((item) => (
@@ -146,10 +152,13 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
                     ))}
                 </div>
             </Card>
+            )}
 
+            {!isAdminRoute && (
             <footer className="mt-20 pb-12 text-center font-mono text-[9px] uppercase tracking-widest text-muted-fg">
                 <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
             </footer>
+            )}
         </div>
     );
 };

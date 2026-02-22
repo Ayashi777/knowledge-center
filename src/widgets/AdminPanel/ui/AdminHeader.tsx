@@ -8,15 +8,14 @@ interface AdminHeaderProps {
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onClose }) => {
     return (
-        <div className="flex items-center justify-between border-b border-border p-6">
+        <div className="flex flex-col gap-4 border-b border-border bg-surface px-6 py-5 md:flex-row md:items-center md:justify-between">
             <div>
-                <h2 className="text-2xl font-black uppercase tracking-tighter text-fg">
-                    Панель керування
-                </h2>
-                <p className="text-sm font-medium italic text-muted-fg">Адміністрування контенту та користувачів</p>
+                <h2 className="text-2xl font-black tracking-tight text-fg">Адмін-панель</h2>
+                <p className="text-sm font-medium text-muted-fg">Керування контентом, тегами, користувачами та заявками</p>
             </div>
-            <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
-                <Icon name="x-mark" className="w-6 h-6" />
+            <Button onClick={onClose} variant="outline" className="w-full md:w-auto">
+                <Icon name="home" className="w-4 h-4" />
+                До сайту
             </Button>
         </div>
     );

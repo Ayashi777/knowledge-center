@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { Button, Card } from '@shared/ui/primitives';
@@ -7,14 +7,16 @@ interface ServiceCardProps {
   title: string;
   description: string;
   result?: string;
+  example?: string;
+  onOpenExample?: () => void;
   benefit?: string;
   icon: string;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, result, benefit, icon }) => {
+const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, result, example, onOpenExample, benefit, icon }) => {
   const { t } = useI18n();
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden rounded-3xl border-border bg-surface p-8 transition-all hover:border-primary/40">
+    <Card className="group relative flex h-full flex-col overflow-hidden rounded-3xl border-border bg-surface p-6 transition-all hover:border-primary/40 sm:p-8">
       {benefit && (
         <div className="absolute right-0 top-0 rounded-bl-2xl bg-primary p-4 text-[10px] font-bold uppercase tracking-widest text-primary-fg opacity-0 transition-opacity group-hover:opacity-100">
             {benefit}
@@ -39,6 +41,23 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, result, b
             </p>
         </div>
       )}
+      {example && (
+        <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-fg">
+                  {t('common.exampleCalculation')}
+                </div>
+                <p className="mt-1 text-xs font-medium text-fg/80">
+                  PDF / фото / текст
+                </p>
+              </div>
+              <Button variant="outline" className="h-9 rounded-lg px-3 text-[10px] font-black uppercase tracking-widest" onClick={onOpenExample}>
+                Переглянути
+              </Button>
+            </div>
+        </div>
+      )}
       <Button className="mt-8 h-11 w-full rounded-xl text-sm font-bold">
         {t('common.order')}
       </Button>
@@ -48,6 +67,53 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, result, b
 
 export const ServicesPage: React.FC = () => {
   const { t } = useI18n();
+  const [exampleDrawer, setExampleDrawer] = useState<{ title: string; example: string } | null>(null);
+  const [sheetDragY, setSheetDragY] = useState(0);
+  const [isSheetDragging, setIsSheetDragging] = useState(false);
+  const touchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!exampleDrawer) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [exampleDrawer]);
+
+  useEffect(() => {
+    if (!exampleDrawer) {
+      setSheetDragY(0);
+      setIsSheetDragging(false);
+      touchStartYRef.current = null;
+    }
+  }, [exampleDrawer]);
+
+  const handleSheetTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchStartYRef.current = event.touches[0].clientY;
+    setIsSheetDragging(true);
+  };
+
+  const handleSheetTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartYRef.current === null) return;
+    const delta = event.touches[0].clientY - touchStartYRef.current;
+    if (delta <= 0) {
+      setSheetDragY(0);
+      return;
+    }
+    setSheetDragY(Math.min(delta, 320));
+  };
+
+  const handleSheetTouchEnd = () => {
+    if (!isSheetDragging) return;
+    if (sheetDragY > 120) {
+      setExampleDrawer(null);
+      return;
+    }
+    setIsSheetDragging(false);
+    setSheetDragY(0);
+    touchStartYRef.current = null;
+  };
 
   const renderSection = (key: string, icon: string) => {
     const sectionData = t(`services.${key}`, { returnObjects: true } as any) as any;
@@ -70,6 +136,12 @@ export const ServicesPage: React.FC = () => {
               title={item.title}
               description={item.desc}
               result={item.result}
+              example={item.example}
+              onOpenExample={
+                item.example
+                  ? () => setExampleDrawer({ title: item.title, example: item.example })
+                  : undefined
+              }
               benefit={item.benefit}
               icon={icon}
             />
@@ -176,6 +248,75 @@ export const ServicesPage: React.FC = () => {
             </Card>
         </Card>
       </section>
+
+      {exampleDrawer && (
+        <>
+          <button
+            type="button"
+            aria-label="Close example drawer overlay"
+            className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
+            onClick={() => setExampleDrawer(null)}
+          />
+          <aside
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-3xl border-t border-border bg-surface shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-full md:max-w-xl md:rounded-none md:border-t-0 md:border-l"
+            style={{
+              transform: `translateY(${sheetDragY}px)`,
+              transition: isSheetDragging ? 'none' : 'transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+            }}
+          >
+            <div className="flex h-full flex-col">
+              <div
+                className="flex justify-center py-2 md:hidden"
+                onTouchStart={handleSheetTouchStart}
+                onTouchMove={handleSheetTouchMove}
+                onTouchEnd={handleSheetTouchEnd}
+                onTouchCancel={handleSheetTouchEnd}
+              >
+                <span className="h-1.5 w-12 rounded-full bg-muted" />
+              </div>
+
+              <div className="sticky top-0 z-10 border-b border-border bg-surface/95 px-5 pb-4 pt-2 backdrop-blur md:px-8 md:pt-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">
+                      {t('common.exampleCalculation')}
+                    </p>
+                    <h3 className="mt-2 text-lg font-black leading-tight text-fg md:text-xl">
+                      {exampleDrawer.title}
+                    </h3>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setExampleDrawer(null)} aria-label="Close example drawer">
+                    <Icon name="x-mark" className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto space-y-5 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:pb-8">
+                <Card className="rounded-xl border-border bg-muted/25 p-4 shadow-none">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-fg">Опис прикладу</p>
+                  <p className="text-sm leading-relaxed text-fg">{exampleDrawer.example}</p>
+                </Card>
+
+                <Card className="rounded-xl border-dashed border-border bg-bg p-4 shadow-none">
+                  <div className="mb-2 flex items-center gap-2 text-muted-fg">
+                    <Icon name="document-text" className="h-4 w-4" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">PDF приклад</p>
+                  </div>
+                  <p className="text-xs text-muted-fg">Коли PDF буде додано, тут з'явиться кнопка відкриття/завантаження.</p>
+                </Card>
+
+                <Card className="rounded-xl border-dashed border-border bg-bg p-4 shadow-none">
+                  <div className="mb-2 flex items-center gap-2 text-muted-fg">
+                    <Icon name="view-grid" className="h-4 w-4" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">Фото прикладу</p>
+                  </div>
+                  <p className="text-xs text-muted-fg">Коли фото буде додано, тут з'явиться прев'ю і міні-галерея.</p>
+                </Card>
+              </div>
+            </div>
+          </aside>
+        </>
+      )}
     </div>
   );
 };
