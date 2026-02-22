@@ -13,7 +13,6 @@ import { DocumentList } from './ui/DocumentList';
 
 export const DashboardView: React.FC<{
     onSelectDoc: (doc: Document) => void;
-    onRequireLogin: () => void;
     searchTerm: string;
     onSearchChange: (term: string) => void;
     docs: Document[];
@@ -41,7 +40,6 @@ export const DashboardView: React.FC<{
     onEditCategory: (cat: Category) => void;
 }> = ({
     onSelectDoc,
-    onRequireLogin,
     searchTerm,
     onSearchChange,
     docs,
@@ -117,12 +115,10 @@ export const DashboardView: React.FC<{
                         docs={docs}
                         viewMode={viewMode}
                         onSelectDoc={onSelectDoc}
-                        onRequireLogin={onRequireLogin}
                         currentUserRole={currentUserRole}
                         showAdminControls={showAdminControls}
                         onEditDoc={onEditDoc}
                         onDeleteDoc={onDeleteDoc}
-                        allTags={allTags}
                         categories={visibleCategories}
                     />
 

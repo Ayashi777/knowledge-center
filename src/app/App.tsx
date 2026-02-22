@@ -147,7 +147,6 @@ const AppContent: React.FC = () => {
                   allTags={allTags}
                   selectedTags={selectedTags}
                   onTagSelect={handleTagSelect}
-                  onRequireLogin={handleRequireLogin}
                   viewMode={viewMode}
                   setViewMode={setViewMode}
                   sortBy={sortBy}

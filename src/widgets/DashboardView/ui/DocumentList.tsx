@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Document, ViewMode, Tag, UserRole, Category } from '@shared/types';
+import React from 'react';
+import { Document, ViewMode, UserRole, Category } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { DocumentGridItem, DocumentListItem, DocumentSkeleton } from '@shared/ui/DocumentComponents';
 import { Icon } from '@shared/ui/icons';
@@ -9,12 +9,10 @@ interface DocumentListProps {
     docs: Document[];
     viewMode: ViewMode;
     onSelectDoc: (doc: Document) => void;
-    onRequireLogin: () => void;
     currentUserRole: UserRole;
     showAdminControls: boolean;
     onEditDoc: (doc: Document) => void;
     onDeleteDoc: (id: string) => void;
-    allTags?: Tag[];
     categories?: Category[];
     isLoading?: boolean;
 }
@@ -23,22 +21,14 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     docs,
     viewMode,
     onSelectDoc,
-    onRequireLogin,
     currentUserRole,
     showAdminControls,
     onEditDoc,
     onDeleteDoc,
-    allTags = [],
     categories = [],
     isLoading = false
 }) => {
     const { t } = useI18n();
-
-    const tagById = useMemo(() => {
-        const m = new Map<string, Tag>();
-        allTags.forEach(tag => m.set(tag.id, tag));
-        return m;
-    }, [allTags]);
 
     if (isLoading) {
         return (
@@ -69,9 +59,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     key={doc.id} 
                     doc={doc} 
                     onClick={() => onSelectDoc(doc)} 
-                    onRequireLogin={onRequireLogin} 
                     currentUserRole={currentUserRole}
-                    tagById={tagById}
                     categories={categories}
                 />
             ))}

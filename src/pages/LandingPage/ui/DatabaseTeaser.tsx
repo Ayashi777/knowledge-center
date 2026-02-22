@@ -31,7 +31,7 @@ export const DatabaseTeaser: React.FC = () => {
                                 {t('landing.db_teaser.search_label')}
                             </p>
                             <div className="flex flex-wrap justify-center lg:justify-start gap-2">
-                                {(t('landing.db_teaser.tags', { returnObjects: true }) as string[]).map(tag => (
+                                {(t('landing.db_teaser.tags', { returnObjects: true } as any) as unknown as string[]).map(tag => (
                                     <span key={tag} className="px-4 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg text-sm font-bold border border-gray-100 dark:border-gray-700">
                                         #{tag}
                                     </span>

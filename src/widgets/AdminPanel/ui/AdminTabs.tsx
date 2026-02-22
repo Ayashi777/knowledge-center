@@ -14,7 +14,7 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, p
         { id: 'content', label: 'Контент', icon: 'document-text' },
         { id: 'tags', label: 'Теги', icon: 'tag' },
         { id: 'users', label: 'Користувачі', icon: 'users' },
-        { id: 'requests', label: 'Заявки', icon: 'info-circle', badge: pendingRequestsCount },
+        { id: 'requests', label: 'Заявки', icon: 'info-circle' },
     ] as const;
 
     return (
@@ -31,9 +31,9 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, p
                 >
                     <Icon name={tab.icon as any} className="w-4 h-4" />
                     {tab.label}
-                    {!!tab.badge && (
+                    {tab.id === 'requests' && pendingRequestsCount > 0 && (
                         <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-[10px] rounded-full animate-pulse">
-                            {tab.badge}
+                            {pendingRequestsCount}
                         </span>
                     )}
                     {activeTab === tab.id && (

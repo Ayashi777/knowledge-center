@@ -7,7 +7,7 @@ export const ServicesTeaser: React.FC = () => {
     const { t } = useI18n();
     const navigate = useNavigate();
 
-    const handleChipClick = (service: string) => {
+    const handleChipClick = (_service: string) => {
         // In a real app, this could set a state in a form or navigate with a query param
         navigate('/services');
     };
@@ -96,7 +96,7 @@ export const ServicesTeaser: React.FC = () => {
                         {t('landing.teaser.chips_label')}
                     </p>
                     <div className="flex flex-wrap justify-center gap-3 mb-12">
-                        {(t('services.form.options', { returnObjects: true }) as string[]).map(opt => (
+                        {(t('services.form.options', { returnObjects: true } as any) as unknown as string[]).map(opt => (
                             <button 
                                 key={opt} 
                                 onClick={() => handleChipClick(opt)}

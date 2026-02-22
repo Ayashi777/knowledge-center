@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
-import { uk, it, enUS } from 'date-fns/locale';
+import { uk, enUS } from 'date-fns/locale';
 import { Language } from '@shared/types';
 import { Timestamp } from 'firebase/firestore';
 
@@ -8,7 +8,6 @@ import { Timestamp } from 'firebase/firestore';
  */
 export const formatDistance = (date: Date | number, lang: Language) => {
   let locale = uk;
-  if (lang === 'it') locale = it;
   if (lang === 'en') locale = enUS;
 
   return formatDistanceToNow(date, {

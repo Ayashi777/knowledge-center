@@ -68,8 +68,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
                     doc={doc}
                     onClose={closeModal}
                     onRequireLogin={onRequireLogin}
-                    currentUserRole={currentUserRole}
-                    allTags={availableTags}
                     hasAccess={hasAccess}
                 />
             );

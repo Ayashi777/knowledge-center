@@ -1,8 +1,4 @@
-import { Category, Document, UserRole } from '@shared/types';
-
-export const CATEGORIES: Category[] = [];
-
-export const RECENT_DOCUMENTS: Document[] = [];
+import { UserRole } from '@shared/types';
 
 // 🔥 Added 'worker' as a business/external role
 export const BUSINESS_ROLES: UserRole[] = ['foreman', 'engineer', 'architect', 'worker'];

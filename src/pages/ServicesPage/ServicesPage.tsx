@@ -49,7 +49,7 @@ export const ServicesPage: React.FC = () => {
   const { t } = useI18n();
 
   const renderSection = (key: string, icon: string) => {
-    const sectionData = t(`services.${key}`, { returnObjects: true }) as any;
+    const sectionData = t(`services.${key}`, { returnObjects: true } as any) as any;
     if (!sectionData || !sectionData.items) return null;
     
     return (
@@ -151,7 +151,7 @@ export const ServicesPage: React.FC = () => {
                     {t('services.form.subtitle')}
                 </p>
                 <div className="flex flex-wrap gap-3">
-                    {(t('services.form.options', { returnObjects: true }) as string[]).map(opt => (
+                    {(t('services.form.options', { returnObjects: true } as any) as unknown as string[]).map(opt => (
                         <span key={opt} className="px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
                             {opt}
                         </span>

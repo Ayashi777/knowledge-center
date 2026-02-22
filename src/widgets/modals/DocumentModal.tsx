@@ -1,30 +1,35 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import DOMPurify from 'dompurify';
-import { Document, UserRole, Tag } from '@shared/types';
+import { Document } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { StorageApi } from '@shared/api/storage/storage.api';
-import { getCategoryName, formatRelativeTime } from '@shared/lib/utils/format';
 
-const QUILL_CONTENT_STYLES = `
-    .modal-quill-content {
-        color: #1a1a1a;
-        line-height: 1.6;
+const PREVIEW_STYLES = `
+    .doc-preview {
+        background: #f8fafc;
+        border-radius: 24px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        aspect-ratio: 3 / 4;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .dark .modal-quill-content {
-        color: #f1f5f9;
+    .dark .doc-preview {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(148, 163, 184, 0.15);
     }
-    .modal-quill-content h1 { font-size: 2.5rem; font-weight: 900; margin: 3rem 0 1.5rem; color: #111827; line-height: 1.1; letter-spacing: -0.03em; }
-    .modal-quill-content h2 { font-size: 1.75rem; font-weight: 800; margin: 2.5rem 0 1.25rem; color: #111827; letter-spacing: -0.02em; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; display: inline-block; }
-    .modal-quill-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #1f2937; }
-    .modal-quill-content p { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.5rem; color: #374151; }
-    .modal-quill-content ul, .modal-quill-content ol { padding-left: 1.5rem; margin-bottom: 1.5rem; }
-    .modal-quill-content li { margin-bottom: 0.5rem; color: #374151; }
-    .modal-quill-content img { border-radius: 1.5rem; margin: 2.5rem 0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); max-width: 100%; height: auto; }
-    .dark .modal-quill-content h1, .dark .modal-quill-content h2, .dark .modal-quill-content h3 { color: #f9fafb; }
-    .dark .modal-quill-content p, .dark .modal-quill-content li { color: #d1d5db; }
-    .modal-quill-content { overflow-x: hidden; overflow-wrap: anywhere; word-break: break-word; }
+    .doc-preview iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .doc-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 `;
 
 const AccessDenied: React.FC<{ doc: Document; onRequireLogin: () => void; onClose: () => void }> = ({ doc, onRequireLogin, onClose }) => {
@@ -60,11 +65,9 @@ export const DocumentModal: React.FC<{
     doc: Document | null;
     onClose: () => void;
     onRequireLogin: () => void;
-    currentUserRole: UserRole;
-    allTags?: Tag[];
     hasAccess: boolean;
-}> = ({ doc, onClose, onRequireLogin, currentUserRole, allTags = [], hasAccess }) => {
-    const { t, lang } = useI18n();
+}> = ({ doc, onClose, onRequireLogin, hasAccess }) => {
+    const { t } = useI18n();
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
 
@@ -92,23 +95,18 @@ export const DocumentModal: React.FC<{
         loadFiles();
     }, [loadFiles]);
 
-    const { viewHtml, title, categoryName, lastUpdated } = useMemo(() => {
-        if (!doc) return { viewHtml: '', title: '', categoryName: '', lastUpdated: '' };
-
-        const content = doc.content?.[lang]?.html || doc.content?.['uk']?.html || '';
-        const sanitizedHtml = DOMPurify.sanitize(content);
+    const { title, primaryFile } = useMemo(() => {
+        if (!doc) return { title: '', primaryFile: null as { name: string; url: string; extension?: string } | null };
         const docTitle = doc.titleKey ? t(doc.titleKey) : doc.title;
-        const catName = getCategoryName(doc.categoryKey, t);
-        const updated = formatRelativeTime(doc.updatedAt, lang);
-
-        return { viewHtml: sanitizedHtml, title: docTitle, categoryName: catName, lastUpdated: updated };
-    }, [doc, lang, t]);
+        const file = files[0] || null;
+        return { title: docTitle || '', primaryFile: file };
+    }, [doc, files, t]);
 
     if (!doc) return null;
 
     return (
         <div className="fixed inset-0 bg-black/80 z-[50] flex items-center justify-center p-4 sm:p-6 lg:p-10 backdrop-blur-md animate-fade-in" onClick={onClose}>
-            <style>{QUILL_CONTENT_STYLES}</style>
+            <style>{PREVIEW_STYLES}</style>
             <div 
                 className="bg-white dark:bg-gray-900 rounded-[3rem] shadow-2xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col overflow-hidden border border-white/10 relative"
                 onClick={e => e.stopPropagation()}
@@ -116,14 +114,6 @@ export const DocumentModal: React.FC<{
                 {/* Header with Title and Category */}
                  <header className="flex-shrink-0 px-10 py-8 flex justify-between items-start border-b border-gray-100 dark:border-gray-800">
                     <div className="flex-grow min-w-0 pr-12">
-                        <div className="flex items-center gap-3 mb-3">
-                            <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest rounded-full">
-                                {categoryName}
-                            </span>
-                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                {t('docView.lastUpdated')}: {lastUpdated}
-                            </span>
-                        </div>
                         <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter leading-tight">
                             {title}
                         </h2>
@@ -137,8 +127,19 @@ export const DocumentModal: React.FC<{
                     {!hasAccess ? (
                         <AccessDenied doc={doc} onRequireLogin={onRequireLogin} onClose={onClose} />
                     ) : (
-                        <div className="max-w-4xl mx-auto px-10 py-12">
-                            <article className="modal-quill-content animate-fade-in" dangerouslySetInnerHTML={{ __html: viewHtml }} />
+                        <div className="max-w-3xl mx-auto px-10 py-12">
+                            <div className="doc-preview shadow-2xl">
+                                {doc.thumbnailUrl ? (
+                                    <img src={doc.thumbnailUrl} alt={title || 'Document preview'} />
+                                ) : primaryFile?.extension === 'pdf' ? (
+                                    <iframe title={title || 'Document preview'} src={`${primaryFile.url}#view=FitH`} />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-3 text-gray-400">
+                                        <Icon name="document-text" className="w-12 h-12" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">No preview</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -148,23 +149,22 @@ export const DocumentModal: React.FC<{
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                             <div>
                                 <h4 className="font-black text-gray-900 dark:text-white text-xs uppercase tracking-widest mb-1">{t('docView.downloadFiles')}</h4>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Доступно для завантаження: {files.length} шт.</p>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                    {files.length > 0 ? `${files.length} файл(и)` : t('docView.filesEmpty')}
+                                </p>
                             </div>
                             
                             <div className="flex flex-wrap gap-3">
-                                {files.length > 0 ? (
-                                    files.map((file, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={file.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/25 active:scale-95"
-                                        >
-                                            <Icon name="download" className="w-4 h-4" />
-                                            <span>{file.name.split('.').pop() || 'File'}</span>
-                                        </a>
-                                    ))
+                                {primaryFile ? (
+                                    <a
+                                        href={primaryFile.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/25 active:scale-95"
+                                    >
+                                        <Icon name="download" className="w-4 h-4" />
+                                        <span>{t('common.download') || 'Download'}</span>
+                                    </a>
                                 ) : (
                                     <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest border-2 border-dashed border-gray-100 dark:border-gray-800 px-6 py-3 rounded-2xl">
                                         {isLoadingFiles ? 'Loading...' : t('docView.filesEmpty')}

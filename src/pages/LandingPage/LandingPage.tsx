@@ -19,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const { t } = useI18n();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const faqItems = t('landing.faq.items', { returnObjects: true }) as { q: string, a: string }[];
+  const faqItems = t('landing.faq.items', { returnObjects: true } as any) as unknown as { q: string; a: string }[];
 
   const sectors = [
     { key: 'industrial', icon: 'building-office' },

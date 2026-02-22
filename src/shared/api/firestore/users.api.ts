@@ -4,7 +4,6 @@ import {
     getDocs, 
     updateDoc, 
     deleteDoc, 
-    query,
     onSnapshot 
 } from "firebase/firestore";
 import { db } from "@shared/api/firebase/firebase";

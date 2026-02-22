@@ -5,6 +5,7 @@ import App from './src/app/App';
 import { I18nProvider } from './src/app/providers/i18n/i18n';
 import { AuthProvider } from './src/app/providers/AuthProvider';
 import { ModalProvider } from './src/app/providers/ModalProvider/ModalProvider';
+import './src/app/styles/tailwind.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

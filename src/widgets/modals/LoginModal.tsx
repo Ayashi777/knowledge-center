@@ -8,7 +8,7 @@ export const LoginModal: React.FC<{
     onClose: () => void, 
     context: 'view' | 'download' | 'login',
     initialView?: 'login' | 'request'
-}> = ({ onClose, context, initialView = 'login' }) => {
+}> = ({ onClose, context: _context, initialView = 'login' }) => {
     const { t } = useI18n();
     const [view, setView] = useState<'login' | 'request' | 'success'>(initialView);
     

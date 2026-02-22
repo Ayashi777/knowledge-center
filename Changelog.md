@@ -28,7 +28,7 @@ All notable changes to this project will be documented in this file.
 
 ## [3.2.0] - 2025-12-22
 ### Added
-- **Role-Based Document Filtering**: Implemented a new "For whom" filter in the sidebar, allowing users to instantly view documents intended for specific roles (Foreman, Architect, Designer).
+- **Role-Based Document Filtering**: Implemented a new "For whom" filter in the sidebar, allowing users to instantly view documents intended for specific roles (Foreman, Architect, Engineer).
 - **Personalized Content Preview**: The main dashboard now dynamically adjusts the document list based on the selected role filter, providing a more relevant and focused user experience.
 - **State-Aware UI**: The role filter buttons in the sidebar now have active and inactive states, and a click on an active filter will reset it. The total count of active filters is also updated accordingly.
 

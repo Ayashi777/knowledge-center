@@ -1,5 +1,4 @@
 import React from 'react';
-import { Icon } from '../icons';
 
 interface ThemeSwitcherProps {
   theme: 'light' | 'dark';

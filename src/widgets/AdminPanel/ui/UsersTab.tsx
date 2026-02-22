@@ -1,10 +1,10 @@
 import React from 'react';
-import { UserData } from '@shared/types';
+import { UserProfile } from '@shared/types';
 import { Icon } from '@shared/ui/icons';
 
 interface UsersTabProps {
-    users: UserData[];
-    onEditUser: (user: UserData) => void;
+    users: UserProfile[];
+    onEditUser: (user: UserProfile) => void;
 }
 
 export const UsersTab: React.FC<UsersTabProps> = ({ users, onEditUser }) => {

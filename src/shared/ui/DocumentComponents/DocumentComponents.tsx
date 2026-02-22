@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Document, Tag, Category, UserRole } from '@shared/types';
+import { Document, Category, UserRole } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '../icons';
 import { formatRelativeTime, getCategoryName } from '../../lib/utils/format';
@@ -17,18 +17,14 @@ const ROLE_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
 interface DocumentGridItemProps {
   doc: Document;
   onClick: () => void;
-  onRequireLogin: () => void;
   currentUserRole: UserRole;
-  tagById?: Map<string, Tag>;
   categories?: Category[];
 }
 
 export const DocumentGridItem: React.FC<DocumentGridItemProps> = memo(({ 
   doc, 
   onClick, 
-  onRequireLogin, 
   currentUserRole,
-  tagById,
   categories = []
 }) => {
   const { t, lang } = useI18n();

@@ -16,7 +16,8 @@ export const UserAccessControl: React.FC<{
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex flex-col text-right">
+      {/* Desktop/Tablet */}
+      <div className="hidden sm:flex flex-col text-right">
         <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">
           {user ? user.email : t('roles.guest')}
         </span>
@@ -35,10 +36,27 @@ export const UserAccessControl: React.FC<{
         </div>
       </div>
 
+      {/* Mobile */}
+      <div className="sm:hidden flex items-center gap-2">
+        {user ? (
+          <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+            {(user.email || 'U').charAt(0).toUpperCase()}
+          </div>
+        ) : (
+          <button
+            onClick={onLoginClick}
+            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+            aria-label={t('header.login')}
+          >
+            <Icon name="user" className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       {role === 'admin' && (
         <button
           onClick={() => navigate('/admin')}
-          className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30"
+          className="hidden sm:flex p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30"
           title={t('header.adminPanel')}
         >
           <Icon name="cog" className="w-5 h-5" />
@@ -48,7 +66,7 @@ export const UserAccessControl: React.FC<{
       {!user && (
         <button
           onClick={onLoginClick}
-          className="px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest"
+          className="hidden sm:flex px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest"
         >
           {t('header.login')}
         </button>
