@@ -1,6 +1,7 @@
 import React from 'react';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
+import { Button, Card } from '@shared/ui/primitives';
 
 interface ServiceCardProps {
   title: string;
@@ -13,35 +14,35 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, result, benefit, icon }) => {
   const { t } = useI18n();
   return (
-    <div className="group bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-xl shadow-gray-200/50 dark:shadow-black/20 hover:border-blue-500 transition-all flex flex-col h-full relative overflow-hidden">
+    <Card className="group relative flex h-full flex-col overflow-hidden rounded-3xl border-border bg-surface p-8 transition-all hover:border-primary/40">
       {benefit && (
-        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white rounded-bl-2xl text-[10px] font-bold uppercase tracking-widest">
+        <div className="absolute right-0 top-0 rounded-bl-2xl bg-primary p-4 text-[10px] font-bold uppercase tracking-widest text-primary-fg opacity-0 transition-opacity group-hover:opacity-100">
             {benefit}
         </div>
       )}
-      <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary transition-transform group-hover:scale-110">
         <Icon name={icon as any} className="w-6 h-6" />
       </div>
-      <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white leading-tight">
+      <h3 className="mb-4 text-xl font-bold leading-tight text-fg">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-6 flex-grow">
+      <p className="mb-6 flex-grow text-sm leading-relaxed text-muted-fg">
         {description}
       </p>
       {result && (
-        <div className="pt-6 border-t border-gray-50 dark:border-gray-700">
-            <div className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-2">
+        <div className="border-t border-border pt-6">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-fg">
                 {t('common.result')}
             </div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-medium text-fg">
             {result}
             </p>
         </div>
       )}
-      <button className="mt-8 w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+      <Button className="mt-8 h-11 w-full rounded-xl text-sm font-bold">
         {t('common.order')}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 };
 
@@ -55,10 +56,10 @@ export const ServicesPage: React.FC = () => {
     return (
       <section className="mb-24">
         <div className="flex items-center gap-4 mb-12">
-            <div className="w-10 h-10 bg-gray-900 dark:bg-white rounded-full flex items-center justify-center text-white dark:text-gray-900">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fg text-bg">
                 <Icon name={icon as any} className="w-5 h-5" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            <h2 className="text-3xl font-black uppercase tracking-tight text-fg">
                 {sectionData.title}
             </h2>
         </div>
@@ -81,10 +82,10 @@ export const ServicesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto py-12 px-4">
       <header className="mb-20 text-center">
-        <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter">
+        <h1 className="mb-6 text-4xl font-black uppercase tracking-tighter text-fg sm:text-6xl">
           {t('services.title')}
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
+        <p className="mx-auto max-w-3xl text-xl leading-relaxed text-muted-fg">
           {t('services.subtitle')}
         </p>
       </header>
@@ -97,83 +98,83 @@ export const ServicesPage: React.FC = () => {
       {/* Professional Academy Section */}
       <section className="mb-24">
         <div className="flex items-center gap-4 mb-12">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-fg">
                 <Icon name="academic-cap" className="w-5 h-5" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            <h2 className="text-3xl font-black uppercase tracking-tight text-fg">
                 {t('services.academy.title')}
             </h2>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="p-10 bg-gray-900 text-white rounded-[3rem] relative overflow-hidden group">
+            <Card className="group relative overflow-hidden rounded-[3rem] border-fg/20 bg-fg p-10 text-bg">
                 <div className="relative z-10">
-                    <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                    <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-soft transition-transform group-hover:scale-110">
                         <Icon name="users" className="w-6 h-6" />
                     </div>
                     <h3 className="text-2xl font-black mb-4 uppercase tracking-tight">{t('services.academy.seminars.title')}</h3>
-                    <p className="text-gray-400 leading-relaxed text-lg mb-10">
+                    <p className="mb-10 text-lg leading-relaxed text-bg/70">
                         {t('services.academy.seminars.desc')}
                     </p>
-                    <button className="px-8 py-4 bg-white text-gray-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-50 transition-all shadow-xl">
+                    <Button variant="outline" className="h-12 rounded-2xl border-bg/30 bg-surface px-8 text-xs font-black uppercase tracking-widest text-fg">
                         Замовити семінар
-                    </button>
+                    </Button>
                 </div>
                 <Icon name="academic-cap" className="absolute -bottom-10 -right-10 w-64 h-64 text-white opacity-[0.03] rotate-12" />
-            </div>
+            </Card>
 
-            <div className="p-10 bg-blue-600 text-white rounded-[3rem] relative overflow-hidden group">
+            <Card className="group relative overflow-hidden rounded-[3rem] border-primary/30 bg-primary p-10 text-primary-fg">
                 <div className="relative z-10">
                     <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-8 border border-white/20 group-hover:scale-110 transition-transform">
                         <Icon name="document-text" className="w-6 h-6" />
                     </div>
                     <h3 className="text-2xl font-black mb-4 uppercase tracking-tight">{t('services.academy.norms.title')}</h3>
-                    <p className="text-blue-50 leading-relaxed text-lg mb-10">
+                    <p className="mb-10 text-lg leading-relaxed text-primary-fg/85">
                         {t('services.academy.norms.desc')}
                     </p>
-                    <button className="px-8 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all shadow-xl">
+                    <Button className="h-12 rounded-2xl bg-fg px-8 text-xs font-black uppercase tracking-widest text-bg hover:brightness-110">
                         Консультація по нормам
-                    </button>
+                    </Button>
                 </div>
                 <Icon name="legal" className="absolute -bottom-10 -right-10 w-64 h-64 text-white opacity-[0.05] -rotate-12" />
-            </div>
+            </Card>
         </div>
       </section>
 
       {/* Form Section */}
       <section className="mb-24">
-        <div className="bg-slate-50 dark:bg-gray-800/50 p-12 rounded-[4rem] border border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row gap-16 items-center">
+        <Card className="flex flex-col items-center gap-16 rounded-[4rem] border-border bg-muted/35 p-12 lg:flex-row">
             <div className="flex-1">
-                <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter leading-none">
+                <h2 className="mb-6 text-4xl font-black uppercase leading-none tracking-tighter text-fg">
                     {t('services.form.title')}
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium leading-relaxed mb-10">
+                <p className="mb-10 text-lg font-medium leading-relaxed text-muted-fg">
                     {t('services.form.subtitle')}
                 </p>
                 <div className="flex flex-wrap gap-3">
                     {(t('services.form.options', { returnObjects: true } as any) as unknown as string[]).map(opt => (
-                        <span key={opt} className="px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        <span key={opt} className="rounded-full border border-border bg-surface px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-muted-fg">
                             {opt}
                         </span>
                     ))}
                 </div>
             </div>
             
-            <div className="w-full lg:w-[450px] bg-white dark:bg-gray-900 p-10 rounded-[3rem] shadow-2xl shadow-gray-200/50 dark:shadow-black/40 border border-gray-100 dark:border-gray-800">
+            <Card className="w-full rounded-[3rem] border-border bg-surface p-10 lg:w-[450px]">
                 <div className="space-y-6">
-                    <button className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/25">
+                    <Button className="h-12 w-full rounded-2xl text-xs font-black uppercase tracking-[0.2em]">
                         {t('services.form.send_request')}
-                    </button>
-                    <button className="w-full py-5 border-2 border-gray-100 dark:border-gray-800 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-gray-500">
+                    </Button>
+                    <Button variant="outline" className="h-12 w-full rounded-2xl border-2 text-xs font-black uppercase tracking-[0.2em] text-muted-fg">
                         <Icon name="plus" className="w-4 h-4" />
                         <span>{t('services.form.attach_project')}</span>
-                    </button>
+                    </Button>
                 </div>
-                <p className="mt-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest opacity-60 italic">
+                <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-fg/70 italic">
                     * {t('services.support_note')}
                 </p>
-            </div>
-        </div>
+            </Card>
+        </Card>
       </section>
     </div>
   );
