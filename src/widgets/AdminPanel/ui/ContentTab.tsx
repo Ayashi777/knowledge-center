@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Category, Document } from '@shared/types';
 import { Icon } from '@shared/ui/icons';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { getCategoryName } from '@shared/lib/utils/format';
-import { Button, Card } from '@shared/ui/primitives';
+import { Button, Card, Input } from '@shared/ui/primitives';
+import { StatePanel } from '@shared/ui/states';
 
 interface ContentTabProps {
     categories: Category[];
@@ -27,18 +28,55 @@ export const ContentTab: React.FC<ContentTabProps> = ({
     onDeleteDocument,
 }) => {
     const { t } = useI18n();
+    const [categorySearch, setCategorySearch] = useState('');
+    const [documentSearch, setDocumentSearch] = useState('');
+
+    const filteredCategories = useMemo(() => {
+        const q = categorySearch.trim().toLowerCase();
+        if (!q) return categories;
+        return categories.filter(cat =>
+            getCategoryName(cat.nameKey, t).toLowerCase().includes(q) ||
+            (cat.nameKey || '').toLowerCase().includes(q)
+        );
+    }, [categories, categorySearch, t]);
+
+    const filteredDocuments = useMemo(() => {
+        const q = documentSearch.trim().toLowerCase();
+        if (!q) return documents;
+        return documents.filter(doc =>
+            (doc.titleKey ? t(doc.titleKey) : doc.title || '').toLowerCase().includes(q) ||
+            (doc.internalId || '').toLowerCase().includes(q) ||
+            getCategoryName(doc.categoryKey, t).toLowerCase().includes(q)
+        );
+    }, [documents, documentSearch, t]);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <section>
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Категорії ({categories.length})</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Категорії ({filteredCategories.length}/{categories.length})</h3>
                     <Button onClick={onAddCategory} size="icon" className="h-9 w-9 rounded-lg">
                         <Icon name="plus" className="w-4 h-4" />
                     </Button>
                 </div>
+                <div className="mb-4">
+                    <Input
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        placeholder="Пошук категорій"
+                        className="h-10 rounded-xl px-4 text-sm font-semibold"
+                    />
+                </div>
+                {filteredCategories.length === 0 ? (
+                    <StatePanel
+                        variant="empty"
+                        title="Категорії не знайдено"
+                        description="Змініть запит або створіть нову категорію."
+                        className="py-14"
+                    />
+                ) : (
                 <div className="space-y-2">
-                    {categories.map((cat) => (
+                    {filteredCategories.map((cat) => (
                         <Card key={cat.id} className="group flex items-center justify-between rounded-2xl border border-transparent bg-muted/35 p-4 shadow-none transition-all hover:border-primary/40">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-muted-fg shadow-sm">
@@ -56,17 +94,34 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                         </Card>
                     ))}
                 </div>
+                )}
             </section>
 
             <section>
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Документи ({documents.length})</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-fg">Документи ({filteredDocuments.length}/{documents.length})</h3>
                     <Button onClick={onAddDocument} size="icon" className="h-9 w-9 rounded-lg">
                         <Icon name="plus" className="w-4 h-4" />
                     </Button>
                 </div>
+                <div className="mb-4">
+                    <Input
+                        value={documentSearch}
+                        onChange={(e) => setDocumentSearch(e.target.value)}
+                        placeholder="Пошук документів: назва, ID, категорія"
+                        className="h-10 rounded-xl px-4 text-sm font-semibold"
+                    />
+                </div>
+                {filteredDocuments.length === 0 ? (
+                    <StatePanel
+                        variant="empty"
+                        title="Документи не знайдено"
+                        description="Змініть запит або створіть новий документ."
+                        className="py-14"
+                    />
+                ) : (
                 <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                    {documents.map((doc) => (
+                    {filteredDocuments.map((doc) => (
                         <Card key={doc.id} className="group flex items-center justify-between rounded-2xl border border-transparent bg-muted/35 p-4 shadow-none transition-all hover:border-primary/40">
                             <div className="min-w-0 flex-grow">
                                 <p className="truncate pr-4 font-bold text-fg">{doc.titleKey ? t(doc.titleKey) : doc.title}</p>
@@ -79,6 +134,7 @@ export const ContentTab: React.FC<ContentTabProps> = ({
                         </Card>
                     ))}
                 </div>
+                )}
             </section>
         </div>
     );

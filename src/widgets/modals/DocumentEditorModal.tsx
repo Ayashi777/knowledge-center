@@ -26,6 +26,11 @@ export const DocumentEditorModal: React.FC<{
     const [viewPermissions, setViewPermissions] = useState<UserRole[]>(doc?.viewPermissions || []);
     const [thumbnailUrl, setThumbnailUrl] = useState(doc?.thumbnailUrl || '');
     const [isUploadingThumb, setIsUploadingThumb] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [titleError, setTitleError] = useState('');
+    const [permissionsError, setPermissionsError] = useState('');
+    const [thumbnailError, setThumbnailError] = useState('');
+    const [submitError, setSubmitError] = useState('');
     
     const thumbInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,19 +47,39 @@ export const DocumentEditorModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isFormValid) return;
+        if (isSubmitting) return;
 
-        onSave({
+        const nextTitle = title.trim();
+        const nextThumb = thumbnailUrl.trim();
+        const nextTitleError = nextTitle ? '' : 'Вкажіть назву документа.';
+        const nextPermissionsError = viewPermissions.length > 0 ? '' : 'Оберіть хоча б одну роль доступу.';
+        const nextThumbError = !nextThumb || /^https?:\/\//i.test(nextThumb) ? '' : 'URL обкладинки має починатися з http:// або https://';
+
+        setTitleError(nextTitleError);
+        setPermissionsError(nextPermissionsError);
+        setThumbnailError(nextThumbError);
+        setSubmitError('');
+
+        if (nextTitleError || nextPermissionsError || nextThumbError) return;
+
+        setIsSubmitting(true);
+        Promise.resolve(onSave({
             ...doc,
-            title: title.trim(),
+            title: nextTitle,
             internalId: internalId.trim(),
             description: description.trim(),
             extendedDescription: extendedDescription.trim(),
             categoryKey: category,
             tagIds: selectedTagIds,
             viewPermissions: viewPermissions,
-            thumbnailUrl: thumbnailUrl
-        });
+            thumbnailUrl: nextThumb
+        }))
+            .catch(() => {
+                setSubmitError('Не вдалося зберегти документ. Перевірте дані та повторіть спробу.');
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
     };
 
     const togglePermission = (role: UserRole) => {
@@ -68,11 +93,13 @@ export const DocumentEditorModal: React.FC<{
         if (!file || !doc?.id) return;
         
         setIsUploadingThumb(true);
+        setThumbnailError('');
         try {
             const url = await StorageApi.uploadThumbnail(file, doc.id);
             setThumbnailUrl(url);
         } catch (error) {
             console.error('Thumbnail upload failed', error);
+            setThumbnailError('Не вдалося завантажити обкладинку.');
         } finally {
             setIsUploadingThumb(false);
         }
@@ -87,7 +114,7 @@ export const DocumentEditorModal: React.FC<{
                     <h2 className="text-2xl font-black uppercase tracking-tight text-fg">
                         {doc?.id ? t('editorModal.editTitle') : t('editorModal.createTitle')}
                     </h2>
-                    <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
+                    <Button onClick={onClose} disabled={isSubmitting || isUploadingThumb} variant="ghost" size="icon" className="text-muted-fg">
                         <Icon name="x-mark" className="w-6 h-6" />
                     </Button>
                 </div>
@@ -115,6 +142,7 @@ export const DocumentEditorModal: React.FC<{
                                 className={inputClass}
                                 required
                             />
+                            {titleError && <p className="mt-2 text-[11px] font-bold text-danger">{titleError}</p>}
                         </div>
                         <div>
                             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelCategory')}</label>
@@ -174,6 +202,7 @@ export const DocumentEditorModal: React.FC<{
                                 </Button>
                             ))}
                         </div>
+                        {permissionsError && <p className="mt-3 text-[11px] font-bold text-danger">{permissionsError}</p>}
                     </div>
 
                     <div>
@@ -207,7 +236,7 @@ export const DocumentEditorModal: React.FC<{
                                 <Button
                                     type="button" 
                                     onClick={() => thumbInputRef.current?.click()} 
-                                    disabled={isUploadingThumb}
+                                    disabled={isUploadingThumb || isSubmitting}
                                     variant="outline"
                                     className="min-w-[64px] rounded-2xl px-6"
                                 >
@@ -218,16 +247,23 @@ export const DocumentEditorModal: React.FC<{
                                 </Button>
                             )}
                         </div>
+                        {thumbnailError && <p className="mt-2 text-[11px] font-bold text-danger">{thumbnailError}</p>}
                     </div>
 
+                    {submitError && (
+                        <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3">
+                            <p className="text-[11px] font-black uppercase tracking-wider text-danger">{submitError}</p>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('common.cancel')}</Button>
+                        <Button type="button" variant="ghost" disabled={isSubmitting || isUploadingThumb} onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('common.cancel')}</Button>
                         <Button
                             type="submit" 
-                            disabled={!isFormValid}
+                            disabled={!isFormValid || isSubmitting || isUploadingThumb}
                             className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                         >
-                            {t('common.save')}
+                            {isSubmitting ? (t('common.loading') || 'Saving...') : t('common.save')}
                         </Button>
                     </div>
                 </form>

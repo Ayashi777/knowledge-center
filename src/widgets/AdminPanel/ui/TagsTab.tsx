@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Tag } from '@shared/types';
 import { Icon } from '@shared/ui/icons';
-import { Button, Card } from '@shared/ui/primitives';
+import { Button, Card, Input } from '@shared/ui/primitives';
+import { StatePanel } from '@shared/ui/states';
 
 interface TagsTabProps {
     allTags: Tag[];
     onAddTag: () => void;
     onEditTag: (tag: Tag) => void;
     onDeleteTag: (id: string) => void;
+    isProcessing?: boolean;
 }
 
-export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, onDeleteTag }) => {
+export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, onDeleteTag, isProcessing }) => {
+    const [search, setSearch] = useState('');
+    const filteredTags = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return allTags;
+        return allTags.filter(tag => (tag.name || '').toLowerCase().includes(q) || tag.id.toLowerCase().includes(q));
+    }, [allTags, search]);
+
     return (
         <div className="animate-fade-in">
             <div className="flex items-center justify-between mb-8">
@@ -20,14 +29,33 @@ export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, 
                 </div>
                 <Button
                     onClick={onAddTag}
+                    disabled={isProcessing}
                     className="h-11 rounded-xl px-6 text-xs font-black uppercase tracking-widest"
                 >
                     <Icon name="plus" className="w-4 h-4" />
                     Додати тег
                 </Button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {allTags.map((tag) => (
+
+            <div className="mb-5 max-w-sm">
+                <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Пошук за назвою або ID"
+                    className="h-11 rounded-xl px-4 text-sm font-semibold"
+                />
+            </div>
+
+            {filteredTags.length === 0 ? (
+                <StatePanel
+                    variant="empty"
+                    title="Теги не знайдено"
+                    description="Спробуйте змінити пошуковий запит або створіть новий тег."
+                    className="py-16"
+                />
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {filteredTags.map((tag) => (
                     <Card
                         key={tag.id}
                         className="group relative rounded-2xl border border-transparent bg-muted/35 p-4 text-center shadow-none transition-all hover:border-primary/30"
@@ -54,6 +82,7 @@ export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, 
                                 onClick={(e) => { e.stopPropagation(); onDeleteTag(tag.id); }}
                                 variant="ghost"
                                 size="icon"
+                                disabled={isProcessing}
                                 className="h-7 w-7 hover:bg-danger/15"
                             >
                                 <Icon name="trash" className="w-3 h-3 text-danger" />
@@ -61,7 +90,8 @@ export const TagsTab: React.FC<TagsTabProps> = ({ allTags, onAddTag, onEditTag, 
                         </div>
                     </Card>
                 ))}
-            </div>
+              </div>
+            )}
         </div>
     );
 };

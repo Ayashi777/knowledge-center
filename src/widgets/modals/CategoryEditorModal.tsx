@@ -15,6 +15,9 @@ export const CategoryEditorModal: React.FC<{
     const [nameKey, setNameKey] = useState(category?.nameKey || '');
     const [iconName, setIconName] = useState<IconName>(category?.iconName || 'folder');
     const [viewPermissions, setViewPermissions] = useState<UserRole[]>(category?.viewPermissions || []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [nameError, setNameError] = useState('');
+    const [submitError, setSubmitError] = useState('');
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -26,14 +29,33 @@ export const CategoryEditorModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!nameKey.trim()) return;
+        if (isSubmitting) return;
 
-        onSave({
+        const normalizedNameKey = nameKey.trim();
+        let nextNameError = '';
+        if (!normalizedNameKey) {
+            nextNameError = 'Назва категорії обовʼязкова.';
+        } else if (!/^[a-zA-Z0-9._-]+$/.test(normalizedNameKey)) {
+            nextNameError = 'Використовуйте лише латиницю, цифри, ".", "_" або "-".';
+        }
+
+        setNameError(nextNameError);
+        setSubmitError('');
+        if (nextNameError) return;
+
+        setIsSubmitting(true);
+        Promise.resolve(onSave({
             ...category,
-            nameKey: nameKey.trim(),
+            nameKey: normalizedNameKey,
             iconName,
             viewPermissions
-        });
+        }))
+            .catch(() => {
+                setSubmitError('Не вдалося зберегти категорію. Спробуйте ще раз.');
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
     };
 
     const togglePermission = (role: UserRole) => {
@@ -54,7 +76,7 @@ export const CategoryEditorModal: React.FC<{
                     <h2 className="text-2xl font-black uppercase tracking-tight text-fg">
                         {category?.id?.toString().startsWith('cat') ? t('categoryEditorModal.createTitle') : t('categoryEditorModal.editTitle')}
                     </h2>
-                    <Button onClick={onClose} variant="ghost" size="icon" className="text-muted-fg">
+                    <Button onClick={onClose} disabled={isSubmitting} variant="ghost" size="icon" className="text-muted-fg">
                         <Icon name="x-mark" className="w-6 h-6" />
                     </Button>
                 </div>
@@ -67,11 +89,15 @@ export const CategoryEditorModal: React.FC<{
                         <Input
                             type="text"
                             value={nameKey}
-                            onChange={e => setNameKey(e.target.value)}
+                            onChange={e => {
+                                setNameKey(e.target.value);
+                                if (nameError) setNameError('');
+                            }}
                             className="h-12 rounded-2xl px-4 font-bold"
                             placeholder={t('categoryEditorModal.placeholderName')}
                             required
                         />
+                        {nameError && <p className="mt-2 text-[11px] font-bold text-danger">{nameError}</p>}
                     </div>
 
                     <div>
@@ -84,6 +110,7 @@ export const CategoryEditorModal: React.FC<{
                                     key={icon}
                                     type="button"
                                     onClick={() => setIconName(icon)}
+                                    disabled={isSubmitting}
                                     variant={iconName === icon ? 'primary' : 'outline'}
                                     className="h-11 w-11 rounded-xl border-2 p-0 text-muted-fg"
                                 >
@@ -103,6 +130,7 @@ export const CategoryEditorModal: React.FC<{
                                     key={role}
                                     type="button"
                                     onClick={() => togglePermission(role)}
+                                    disabled={isSubmitting}
                                     variant={viewPermissions.includes(role) ? 'primary' : 'outline'}
                                     className="h-auto rounded-xl border-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider"
                                 >
@@ -112,12 +140,18 @@ export const CategoryEditorModal: React.FC<{
                         </div>
                     </div>
 
+                    {submitError && (
+                        <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3">
+                            <p className="text-[11px] font-black uppercase tracking-wider text-danger">{submitError}</p>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">
+                        <Button type="button" disabled={isSubmitting} variant="ghost" onClick={onClose} className="h-12 flex-1 text-[10px] font-black uppercase tracking-widest text-muted-fg">
                             {t('common.cancel')}
                         </Button>
-                        <Button type="submit" className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest">
-                            {t('common.save')}
+                        <Button type="submit" disabled={isSubmitting} className="h-12 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                            {isSubmitting ? (t('common.loading') || 'Saving...') : t('common.save')}
                         </Button>
                     </div>
                 </form>

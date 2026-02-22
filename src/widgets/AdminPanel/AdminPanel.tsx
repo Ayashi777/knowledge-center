@@ -14,6 +14,7 @@ import { TagsTab } from './ui/TagsTab';
 import { UsersTab } from './ui/UsersTab';
 import { RequestsTab } from './ui/RequestsTab';
 import { StatePanel } from '@shared/ui/states';
+import { Card } from '@shared/ui/primitives';
 
 interface AdminPanelProps {
   categories: Category[];
@@ -51,12 +52,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     window.location.hash = activeTab;
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 3500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     if (activeTab === 'users') {
@@ -79,48 +88,69 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleApproveRequest = async (requestId: string, uid: string, role: UserRole) => {
       try {
+          setIsSaving(true);
           await UsersApi.updateRequestStatus(requestId, 'approved', role);
           if (uid) {
               await UsersApi.updateUser(uid, { role });
           }
+          setNotice({ type: 'success', text: 'Заявку схвалено та роль оновлено.' });
       } catch (error) {
           console.error('Failed to approve request:', error);
+          setNotice({ type: 'error', text: 'Не вдалося схвалити заявку.' });
+      } finally {
+          setIsSaving(false);
       }
   };
 
   const handleDenyRequest = async (requestId: string) => {
       try {
+          setIsSaving(true);
           await UsersApi.updateRequestStatus(requestId, 'denied');
+          setNotice({ type: 'success', text: 'Заявку відхилено.' });
       } catch (error) {
           console.error('Failed to deny request:', error);
+          setNotice({ type: 'error', text: 'Не вдалося відхилити заявку.' });
+      } finally {
+          setIsSaving(false);
       }
   };
 
   const handleSaveTag = async (tagData: Partial<Tag>) => {
     try {
+      setIsSaving(true);
       if (tagData.id) {
         await TagsApi.update(tagData.id, tagData);
       } else {
         await TagsApi.create(tagData as Omit<Tag, 'id'>);
       }
+      setNotice({ type: 'success', text: 'Тег збережено.' });
       setEditingTag(null);
     } catch (error) {
       console.error('Failed to save tag:', error);
+      setNotice({ type: 'error', text: 'Не вдалося зберегти тег.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteTag = async (id: string) => {
     if (window.confirm('Ви впевнені, що хочете видалити цей тег?')) {
       try {
+        setIsSaving(true);
         await TagsApi.delete(id);
+        setNotice({ type: 'success', text: 'Тег видалено.' });
       } catch (error) {
         console.error('Failed to delete tag:', error);
+        setNotice({ type: 'error', text: 'Не вдалося видалити тег.' });
+      } finally {
+        setIsSaving(false);
       }
     }
   };
 
   const handleSaveUser = async (userData: Partial<UserProfile>) => {
     try {
+      setIsSaving(true);
       if (userData.uid) {
         const existingUser = users.find(u => u.uid === userData.uid);
         const { uid, ...data } = userData;
@@ -132,9 +162,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         const { email, ...profileData } = data;
         await UsersApi.updateUser(uid, profileData);
       }
+      setNotice({ type: 'success', text: 'Профіль користувача оновлено.' });
       setEditingUser(null);
     } catch (error) {
       console.error('Failed to save user:', error);
+      setNotice({ type: 'error', text: 'Не вдалося зберегти користувача.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -151,6 +185,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       />
 
       <div className="p-8 min-h-[500px]">
+        {notice && (
+          <Card className={`mb-6 rounded-2xl border px-4 py-3 shadow-none ${
+            notice.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-danger/30 bg-danger/10 text-danger'
+          }`}>
+            <p className="text-xs font-black uppercase tracking-wider">{notice.text}</p>
+          </Card>
+        )}
+
+        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Документи</p>
+            <p className="mt-1 text-2xl font-black text-fg">{documents.length}</p>
+          </Card>
+          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Категорії</p>
+            <p className="mt-1 text-2xl font-black text-fg">{categories.length}</p>
+          </Card>
+          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Теги</p>
+            <p className="mt-1 text-2xl font-black text-fg">{allTags.length}</p>
+          </Card>
+          <Card className="rounded-2xl border-border bg-muted/20 p-4 shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-fg">Pending заявок</p>
+            <p className="mt-1 text-2xl font-black text-fg">{pendingRequestsCount}</p>
+          </Card>
+        </div>
+
         {activeTab === 'content' && (
           <ContentTab 
             categories={categories}
@@ -170,6 +233,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
             onEditTag={setEditingTag}
             onDeleteTag={handleDeleteTag}
+            isProcessing={isSaving}
           />
         )}
 
@@ -183,6 +247,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <UsersTab 
                         users={users || []}
                         onEditUser={setEditingUser}
+                        isProcessing={isSaving}
                     />
                 )}
 
@@ -191,6 +256,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         requests={requests || []}
                         onApprove={handleApproveRequest}
                         onDeny={handleDenyRequest}
+                        isProcessing={isSaving}
                     />
                 )}
             </>
