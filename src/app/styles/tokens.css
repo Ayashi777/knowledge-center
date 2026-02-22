@@ -27,6 +27,37 @@
 
   --shadow-soft: 0 16px 40px -24px hsl(214 40% 24% / 0.35);
   --shadow-focus: 0 0 0 3px hsl(204 88% 46% / 0.22);
+
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.65;
+
+  --z-base: 1;
+  --z-sticky: 30;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 80;
+
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --easing-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .dark {

@@ -23,6 +23,8 @@ export const ModalPanel: React.FC<ModalPanelProps> = ({
   ...props
 }) => (
   <div
+    role="dialog"
+    aria-modal="true"
     className={cn(
       'relative w-full overflow-hidden rounded-[2rem] border border-border bg-surface shadow-soft',
       className

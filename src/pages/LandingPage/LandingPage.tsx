@@ -152,6 +152,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <Button
                         onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                         variant="ghost"
+                        aria-expanded={openFaq === idx}
                         className="h-auto w-full justify-between gap-4 rounded-none p-6 text-left hover:bg-muted/40"
                     >
                         <span className="font-bold text-fg">{item.q}</span>

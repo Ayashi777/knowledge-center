@@ -140,10 +140,14 @@ export const SupportSidebar: React.FC = () => {
             )}
 
             {/* Permanent Sidebar Tab (Handle) */}
-            <div 
+            <button
+                type="button"
+                aria-label={t('support.panel_title')}
                 className={`group flex h-48 w-16 cursor-pointer flex-col items-center justify-center rounded-l-[2.5rem] bg-primary shadow-soft transition-all duration-500 hover:w-20 ${
                     isExpanded ? 'opacity-0 pointer-events-none translate-x-10' : 'opacity-100 translate-x-0'
                 }`}
+                onFocus={handleMouseEnter}
+                onBlur={handleMouseLeave}
             >
                 <div className="rotate-90 whitespace-nowrap flex items-center gap-4">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-fg transition-all group-hover:tracking-[0.5em]">
@@ -152,7 +156,7 @@ export const SupportSidebar: React.FC = () => {
                     <Icon name="chevron-left" className="h-4 w-4 animate-pulse text-primary-fg" />
                 </div>
                 <div className="absolute right-4 top-6 h-2 w-2 rounded-full border border-primary-fg bg-danger shadow-sm" />
-            </div>
+            </button>
 
             {/* Expanded Content Panel */}
             <div 

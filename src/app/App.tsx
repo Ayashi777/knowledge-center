@@ -14,6 +14,7 @@ import { DashboardView } from '@widgets/DashboardView';
 import { AdminPage } from '@pages/AdminPage';
 import { LandingPage } from '@pages/LandingPage/LandingPage';
 import { ServicesPage } from '@pages/ServicesPage/ServicesPage';
+import { UIPlaygroundPage } from '@pages/UIPlaygroundPage';
 import { MainLayout } from './layouts/MainLayout';
 
 import { useAuth } from './providers/AuthProvider';
@@ -162,6 +163,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route path="/services" element={<ServicesPage />} />
+          <Route path="/ui-playground" element={<UIPlaygroundPage />} />
           <Route 
             path="/admin" 
             element={

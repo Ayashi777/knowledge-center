@@ -1,0 +1,22 @@
+/* Optional warm/citrine design pack.
+   Usage: add `theme-citrine` class to html element. */
+
+.theme-citrine {
+  --primary: 31 93% 50%;
+  --primary-foreground: 24 100% 10%;
+  --accent: 167 79% 35%;
+  --accent-foreground: 0 0% 100%;
+  --surface: 40 100% 99%;
+  --muted: 40 45% 94%;
+  --border: 35 35% 84%;
+}
+
+.dark.theme-citrine {
+  --primary: 38 96% 57%;
+  --primary-foreground: 25 100% 8%;
+  --accent: 167 82% 44%;
+  --accent-foreground: 170 100% 6%;
+  --surface: 218 24% 13%;
+  --muted: 220 18% 21%;
+  --border: 220 14% 30%;
+}

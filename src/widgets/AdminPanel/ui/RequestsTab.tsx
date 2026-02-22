@@ -5,6 +5,7 @@ import { Icon } from '@shared/ui/icons';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { ALL_ROLES } from '@shared/config/constants';
 import { Button, Card } from '@shared/ui/primitives';
+import { StatePanel } from '@shared/ui/states';
 
 interface RequestsTabProps {
     requests: AccessRequest[];
@@ -42,10 +43,11 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ requests, onApprove, o
 
     if (requests.length === 0) {
         return (
-            <div className="text-center py-20 animate-fade-in">
-                <Icon name="info-circle" className="mx-auto mb-4 h-12 w-12 text-muted-fg/40" />
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-fg">{t('adminRequests.noRequests')}</p>
-            </div>
+            <StatePanel
+                variant="empty"
+                title={t('adminRequests.noRequests')}
+                className="animate-fade-in py-20"
+            />
         );
     }
 

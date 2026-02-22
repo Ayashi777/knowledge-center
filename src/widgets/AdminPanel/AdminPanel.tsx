@@ -13,6 +13,7 @@ import { ContentTab } from './ui/ContentTab';
 import { TagsTab } from './ui/TagsTab';
 import { UsersTab } from './ui/UsersTab';
 import { RequestsTab } from './ui/RequestsTab';
+import { StatePanel } from '@shared/ui/states';
 
 interface AdminPanelProps {
   categories: Category[];
@@ -167,8 +168,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {(activeTab === 'users' || activeTab === 'requests') && isLoading ? (
             <div className="flex items-center justify-center py-20">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-                <span className="ml-3 text-xs font-bold uppercase tracking-widest text-muted-fg">{t('common.loading')}</span>
+                <StatePanel variant="loading" title={t('common.loading')} className="min-w-[280px]" />
             </div>
         ) : (
             <>

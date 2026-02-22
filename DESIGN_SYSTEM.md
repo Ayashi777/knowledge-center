@@ -5,9 +5,12 @@ This project uses a token-first UI layer so visual redesigns do not require busi
 ## Source Of Truth
 
 - Tokens: `src/app/styles/tokens.css`
+- Theme packs: `src/app/styles/themes/`
 - Tailwind token mapping: `tailwind.config.cjs`
 - Base styles and font wiring: `src/app/styles/tailwind.css`
 - UI primitives: `src/shared/ui/primitives/`
+- UI states: `src/shared/ui/states/`
+- Playground route: `/ui-playground`
 
 ## Core Rules
 
@@ -42,7 +45,8 @@ Use token-driven states (`primary`, `danger`, `muted`) rather than ad-hoc colors
 ## Theming
 
 - Light/dark values live in `:root` and `.dark` blocks in `tokens.css`.
-- Theme switching should only toggle `.dark`; components should not branch by custom color constants.
+- Additional theme packs live in `src/app/styles/themes/` and can be applied via html class (`theme-default`, `theme-citrine`).
+- Components should not branch by custom color constants.
 
 ## Migration Checklist (Legacy -> Tokenized)
 
@@ -57,20 +61,20 @@ Use token-driven states (`primary`, `danger`, `muted`) rather than ad-hoc colors
 Tokenized and primitive-based:
 
 - Main app layout shell
-- Login, Document, Document Editor, Category Editor, User Editor modals
+- Login, Document, Document Editor, Category Editor, User Editor, Tag modals
 - Admin panel tabs, content/users/tags/requests sections
 - Dashboard filters/header/list empty state
 - Sidebar and Pagination
+- Landing and Services pages
+- Support sidebar, language switcher, user access controls
 
 Partially legacy:
 
-- Landing page sections
-- Services page
-- Support sidebar
-- Some shared widgets still using direct utility colors
+- Document card visual styles
+- Isolated helper widgets with branded accents
 
 ## Recommended Next Steps
 
-1. Finish token migration for `LandingPage` and `ServicesPage`.
-2. Standardize `SupportSidebar` to primitives and semantic colors.
-3. Add UI playground (or Storybook) to document primitive variants and states.
+1. Keep snapshot baselines current with `npm run test:visual:update`.
+2. Add Storybook (optional) if component docs need richer examples than `/ui-playground`.
+3. Continue migrating remaining isolated hardcoded accents to semantic tokens.

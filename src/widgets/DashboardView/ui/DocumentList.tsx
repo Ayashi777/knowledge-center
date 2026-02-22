@@ -2,7 +2,7 @@ import React from 'react';
 import { Document, ViewMode, UserRole, Category } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { DocumentGridItem, DocumentListItem, DocumentSkeleton } from '@shared/ui/DocumentComponents';
-import { Icon } from '@shared/ui/icons';
+import { StatePanel } from '@shared/ui/states';
 import { canViewDocument } from '@shared/lib/permissions/permissions';
 
 interface DocumentListProps {
@@ -42,13 +42,12 @@ export const DocumentList: React.FC<DocumentListProps> = ({
 
     if (docs.length === 0) {
         return (
-            <div className="animate-fade-in rounded-[2.5rem] border border-dashed border-border bg-muted/25 px-6 py-24 text-center">
-                <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-surface text-primary shadow-soft">
-                    <Icon name="search" className="w-10 h-10" />
-                </div>
-                <h3 className="mb-3 text-2xl font-black tracking-tight text-fg">{t('dashboard.noResults')}</h3>
-                <p className="mx-auto max-w-md leading-relaxed text-muted-fg">{t('dashboard.noResultsDescription')}</p>
-            </div>
+            <StatePanel
+                variant="empty"
+                title={t('dashboard.noResults')}
+                description={t('dashboard.noResultsDescription')}
+                className="animate-fade-in rounded-[2.5rem] border-dashed py-24"
+            />
         );
     }
 

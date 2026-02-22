@@ -1,0 +1,15 @@
+/* Default design pack (active by default via :root variables in tokens.css). */
+
+.theme-default {
+  --primary: 204 88% 46%;
+  --primary-foreground: 210 40% 98%;
+  --accent: 18 91% 55%;
+  --accent-foreground: 0 0% 100%;
+}
+
+.dark.theme-default {
+  --primary: 197 93% 58%;
+  --primary-foreground: 222 45% 12%;
+  --accent: 23 94% 57%;
+  --accent-foreground: 19 100% 12%;
+}

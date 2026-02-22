@@ -95,7 +95,7 @@ export const DocumentEditorModal: React.FC<{
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                                  {t('editorModal.internalIdLabel') || 'Внутрішній ID (напр. SPEC-054)'}
                              </label>
                              <Input
@@ -107,7 +107,7 @@ export const DocumentEditorModal: React.FC<{
                              />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTitle')}*</label>
+                            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelTitle')}*</label>
                             <Input
                                 type="text"
                                 value={title}
@@ -117,7 +117,7 @@ export const DocumentEditorModal: React.FC<{
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelCategory')}</label>
+                            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelCategory')}</label>
                             <select
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
@@ -130,7 +130,7 @@ export const DocumentEditorModal: React.FC<{
                         </div>
                         
                         <div>
-                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                                  {t('editorModal.labelDescription') || 'Короткий опис (для карток)'}
                              </label>
                              <textarea
@@ -141,7 +141,7 @@ export const DocumentEditorModal: React.FC<{
                              />
                         </div>
                         <div>
-                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">
                                  {t('editorModal.labelExtendedDescription') || 'Розширений опис (для сторінки)'}
                              </label>
                              <textarea
@@ -177,7 +177,7 @@ export const DocumentEditorModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('editorModal.labelTags')}</label>
+                        <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelTags')}</label>
                         <div className="flex flex-wrap gap-2">
                             {availableTags.map(tag => (
                                 <Button
@@ -194,7 +194,7 @@ export const DocumentEditorModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('adminDocs.cover')} (URL)</label>
+                        <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('adminDocs.cover')} (URL)</label>
                         <div className="flex gap-3">
                             <Input
                                 type="text"

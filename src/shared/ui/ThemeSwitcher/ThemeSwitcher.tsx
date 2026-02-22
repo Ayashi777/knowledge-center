@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@shared/ui/primitives';
 
 interface ThemeSwitcherProps {
   theme: 'light' | 'dark';
@@ -7,9 +8,11 @@ interface ThemeSwitcherProps {
 
 export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ theme, toggleTheme }) => {
   return (
-    <button
+    <Button
       onClick={toggleTheme}
-      className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-95 group"
+      variant="outline"
+      size="icon"
+      className="group h-10 w-10 rounded-xl text-muted-fg active:scale-95"
       aria-label="Toggle theme"
     >
       {theme === 'light' ? (
@@ -21,6 +24,6 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ theme, toggleTheme
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
         </svg>
       )}
-    </button>
+    </Button>
   );
 };
