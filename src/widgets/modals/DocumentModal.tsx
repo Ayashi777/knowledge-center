@@ -8,10 +8,12 @@ import { Button, ModalOverlay, ModalPanel } from '@shared/ui/primitives';
 
 const PREVIEW_STYLES = `
     .doc-preview {
-        background: #f8fafc;
-        border-radius: 24px;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        border-radius: 20px;
         border: 1px solid rgba(15, 23, 42, 0.08);
-        aspect-ratio: 3 / 4;
+        width: 100%;
+        min-height: 52vh;
+        max-height: 68vh;
         overflow: hidden;
         display: flex;
         align-items: center;
@@ -31,6 +33,13 @@ const PREVIEW_STYLES = `
         height: 100%;
         object-fit: cover;
     }
+    @media (max-width: 640px) {
+        .doc-preview {
+            border-radius: 14px;
+            min-height: 40vh;
+            max-height: 52vh;
+        }
+    }
 `;
 
 const AccessDenied: React.FC<{ doc: Document; onRequireLogin: () => void; onClose: () => void }> = ({ doc, onRequireLogin, onClose }) => {
@@ -38,12 +47,12 @@ const AccessDenied: React.FC<{ doc: Document; onRequireLogin: () => void; onClos
     const requiredRoles = doc.viewPermissions?.map(role => t(`roles.${role}`)).join(', ') || t('roles.guest');
 
     return (
-        <div className="text-center py-20 px-8">
-            <div className="w-24 h-24 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-500 dark:text-yellow-400 rounded-[2rem] mx-auto flex items-center justify-center mb-8 shadow-xl shadow-yellow-500/10">
+        <div className="px-4 py-12 text-center sm:px-8 sm:py-20">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-500 shadow-xl shadow-yellow-500/10 dark:bg-yellow-900/20 dark:text-yellow-400 sm:mb-8 sm:h-24 sm:w-24 sm:rounded-[2rem]">
                 <Icon name="lock-closed" className="w-12 h-12" />
             </div>
-            <h3 className="mb-4 text-3xl font-black uppercase tracking-tight text-fg">{t('docView.accessDenied')}</h3>
-            <p className="mx-auto mb-10 max-w-md font-bold leading-relaxed text-muted-fg">
+            <h3 className="mb-3 text-xl font-black uppercase tracking-tight text-fg sm:mb-4 sm:text-3xl">{t('docView.accessDenied')}</h3>
+            <p className="mx-auto mb-8 max-w-md text-sm font-bold leading-relaxed text-muted-fg sm:mb-10 sm:text-base">
                 {t('docView.accessRequiredForRoles', { roles: requiredRoles })}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -69,8 +78,9 @@ export const DocumentModal: React.FC<{
     doc: Document | null;
     onClose: () => void;
     onRequireLogin: () => void;
-    hasAccess: boolean;
-}> = ({ doc, onClose, onRequireLogin, hasAccess }) => {
+    hasViewAccess: boolean;
+    hasDownloadAccess: boolean;
+}> = ({ doc, onClose, onRequireLogin, hasViewAccess, hasDownloadAccess }) => {
     const { t } = useI18n();
     const [files, setFiles] = useState<{ name: string; url: string; extension?: string }[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(true);
@@ -84,7 +94,7 @@ export const DocumentModal: React.FC<{
     }, [onClose]);
 
     const loadFiles = useCallback(async () => {
-        if (!doc || !hasAccess) {
+        if (!doc || !hasDownloadAccess) {
             setIsLoadingFiles(false);
             return;
         }
@@ -93,7 +103,7 @@ export const DocumentModal: React.FC<{
             const docFiles = await StorageApi.listDocumentFiles(doc.id);
             setFiles(docFiles);
         } finally { setIsLoadingFiles(false); }
-    }, [doc, hasAccess]);
+    }, [doc, hasDownloadAccess]);
 
     useEffect(() => { 
         loadFiles();
@@ -109,48 +119,66 @@ export const DocumentModal: React.FC<{
     if (!doc) return null;
 
     return (
-        <ModalOverlay className="z-[50] bg-black/80 p-4 sm:p-6 lg:p-10 backdrop-blur-md" onClick={onClose}>
+        <ModalOverlay className="z-[50] bg-black/80 p-2 backdrop-blur-md sm:p-6 lg:p-10" onClick={onClose}>
             <style>{PREVIEW_STYLES}</style>
             <ModalPanel
-                className="relative flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[3rem] border-border bg-surface"
+                className="relative flex h-full max-h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border-border bg-surface sm:max-h-[90vh] sm:rounded-[3rem]"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Header with Title and Category */}
-                 <header className="flex flex-shrink-0 items-start justify-between border-b border-border px-10 py-8">
-                    <div className="flex-grow min-w-0 pr-12">
-                        <h2 className="text-3xl font-black tracking-tighter leading-tight text-fg">
+                <header className="flex flex-shrink-0 items-start justify-between border-b border-border px-4 py-4 sm:px-8 sm:py-6">
+                    <div className="min-w-0 flex-grow pr-4 sm:pr-12">
+                        <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-muted-fg">Knowledge base document</p>
+                        <h2 className="text-lg font-black leading-tight tracking-tight text-fg sm:text-2xl sm:tracking-tighter">
                             {title}
                         </h2>
                     </div>
-                    <Button onClick={onClose} variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-muted-fg hover:text-danger">
+                    <Button onClick={onClose} variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-fg hover:text-danger sm:h-12 sm:w-12 sm:rounded-2xl">
                         <Icon name="x-mark" className="w-6 h-6" />
                     </Button>
                 </header>
 
                 <div className="custom-scrollbar flex-grow overflow-y-auto bg-surface">
-                    {!hasAccess ? (
+                    {!hasViewAccess ? (
                         <AccessDenied doc={doc} onRequireLogin={onRequireLogin} onClose={onClose} />
                     ) : (
-                        <div className="max-w-3xl mx-auto px-10 py-12">
-                            <div className="doc-preview shadow-2xl">
-                                {doc.thumbnailUrl ? (
-                                    <img src={doc.thumbnailUrl} alt={title || 'Document preview'} />
-                                ) : primaryFile?.extension === 'pdf' ? (
-                                    <iframe title={title || 'Document preview'} src={`${primaryFile.url}#view=FitH`} />
-                                ) : (
-                                    <div className="flex flex-col items-center gap-3 text-muted-fg">
-                                        <Icon name="document-text" className="w-12 h-12" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">No preview</span>
-                                    </div>
-                                )}
+                        <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
+                            <div className="rounded-2xl border border-border bg-muted/20 p-3 shadow-none sm:p-4">
+                                <div className="doc-preview shadow-lg">
+                                    {doc.thumbnailUrl ? (
+                                        <img src={doc.thumbnailUrl} alt={title || 'Document preview'} />
+                                    ) : isLoadingFiles && hasDownloadAccess ? (
+                                        <div className="flex flex-col items-center gap-3 text-muted-fg">
+                                            <Icon name="loading" className="h-10 w-10 animate-spin text-primary" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Loading preview</span>
+                                        </div>
+                                    ) : primaryFile?.extension === 'pdf' ? (
+                                        <iframe title={title || 'Document preview'} src={`${primaryFile.url}#view=FitH`} />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-3 text-muted-fg">
+                                            <Icon name="document-text" className="w-12 h-12" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">No preview</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                <div className="rounded-xl border border-border bg-muted/20 px-3 py-2">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-fg">Internal ID</p>
+                                    <p className="mt-1 text-sm font-bold text-fg">{doc.internalId || '—'}</p>
+                                </div>
+                                <div className="rounded-xl border border-border bg-muted/20 px-3 py-2 sm:col-span-2">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-fg">Description</p>
+                                    <p className="mt-1 text-sm leading-relaxed text-fg">{doc.description || '—'}</p>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {hasAccess && (
-                     <footer className="flex-shrink-0 border-t border-border bg-muted/30 px-10 py-8">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                {hasViewAccess && (
+                     <footer className="flex-shrink-0 border-t border-border bg-muted/30 px-4 py-4 sm:px-8 sm:py-5">
+                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                             <div>
                                 <h4 className="mb-1 text-xs font-black uppercase tracking-widest text-fg">{t('docView.downloadFiles')}</h4>
                                 <p className="text-[10px] font-bold uppercase tracking-tight text-muted-fg">
@@ -158,20 +186,24 @@ export const DocumentModal: React.FC<{
                                 </p>
                             </div>
                             
-                            <div className="flex flex-wrap gap-3">
-                                {primaryFile ? (
+                            <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:gap-3">
+                                {hasDownloadAccess && primaryFile ? (
                                     <a
                                         href={primaryFile.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-3 rounded-2xl bg-primary px-6 py-3 text-[10px] font-black uppercase tracking-widest text-primary-fg shadow-soft transition-all hover:brightness-105 active:scale-95"
+                                        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary-fg shadow-soft transition-all hover:brightness-105 active:scale-95 sm:w-auto"
                                     >
                                         <Icon name="download" className="w-4 h-4" />
                                         <span>{t('common.download') || 'Download'}</span>
                                     </a>
-                                ) : (
-                                    <div className="rounded-2xl border-2 border-dashed border-border px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-fg">
+                                ) : hasDownloadAccess ? (
+                                    <div className="w-full rounded-2xl border-2 border-dashed border-border px-6 py-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-fg sm:w-auto">
                                         {isLoadingFiles ? 'Loading...' : t('docView.filesEmpty')}
+                                    </div>
+                                ) : (
+                                    <div className="w-full rounded-2xl border-2 border-dashed border-border px-6 py-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-fg sm:w-auto">
+                                        Немає прав на завантаження
                                     </div>
                                 )}
                             </div>

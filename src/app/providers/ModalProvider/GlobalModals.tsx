@@ -8,10 +8,31 @@ import { useAdminActions } from '@shared/hooks/useAdminActions';
 import { useAuth } from '@app/providers/AuthProvider';
 import { Category, Tag, Document, UserRole } from '@shared/types';
 
-const checkAccess = (allowedRoles: UserRole[] | undefined, userRole: UserRole): boolean => {
+const canViewFromFirestoreRules = (doc: Document, userRole: UserRole, isAuthenticated: boolean): boolean => {
     if (userRole === 'admin') return true;
-    if (!allowedRoles || allowedRoles.length === 0) return true;
-    return allowedRoles.includes(userRole);
+
+    if (doc.viewPermissions && doc.viewPermissions.length > 0) {
+        return isAuthenticated && doc.viewPermissions.includes(userRole);
+    }
+
+    return true;
+};
+
+const canDownloadFromStorageRules = (doc: Document, userRole: UserRole, isAuthenticated: boolean): boolean => {
+    if (userRole === 'admin') return true;
+
+    // downloadPermissions has priority if configured
+    if (doc.downloadPermissions && doc.downloadPermissions.length > 0) {
+        return isAuthenticated && doc.downloadPermissions.includes(userRole);
+    }
+
+    // Fallback to viewPermissions (mirrors storage.rules logic)
+    if (doc.viewPermissions && doc.viewPermissions.length > 0) {
+        return isAuthenticated && doc.viewPermissions.includes(userRole);
+    }
+
+    // Public documents without explicit permissions
+    return true;
 };
 
 interface GlobalModalsProps {
@@ -27,7 +48,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
 }) => {
     const { modal, closeModal } = useModal();
     const { handleSaveDocument, handleSaveCategory } = useAdminActions();
-    const { role: currentUserRole } = useAuth();
+    const { role: currentUserRole, user } = useAuth();
 
     if (!modal.type) return null;
 
@@ -61,14 +82,16 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
         case 'view-doc':
             if (!modal.data) return null;
             const doc = modal.data as Document;
-            const hasAccess = checkAccess(doc.viewPermissions, currentUserRole);
+            const hasViewAccess = canViewFromFirestoreRules(doc, currentUserRole, !!user);
+            const hasDownloadAccess = canDownloadFromStorageRules(doc, currentUserRole, !!user);
             
             return (
                 <DocumentModal 
                     doc={doc}
                     onClose={closeModal}
                     onRequireLogin={onRequireLogin}
-                    hasAccess={hasAccess}
+                    hasViewAccess={hasViewAccess}
+                    hasDownloadAccess={hasDownloadAccess}
                 />
             );
         default:

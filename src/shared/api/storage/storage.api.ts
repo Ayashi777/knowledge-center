@@ -17,16 +17,12 @@ export const StorageApi = {
 
     listDocumentFiles: async (docId: string) => {
         const newPathRef = ref(storage, `documents/${docId}/files`);
-        const legacyPathRef = ref(storage, `documents/${docId}`);
         
         try {
-            // Fetch both locations in parallel
-            const [newRes, legacyRes] = await Promise.all([
-                listAll(newPathRef).catch(() => ({ items: [] })),
-                listAll(legacyPathRef).catch(() => ({ items: [] }))
-            ]);
+            // Primary source of truth for files
+            const newRes = await listAll(newPathRef);
 
-            // Map and filter items from both locations
+            // Map and filter items from the modern location
             const fetchItemDetails = async (item: any) => {
                 const url = await getDownloadURL(item);
                 const extension = item.name.split('.').pop()?.toLowerCase();
@@ -39,25 +35,10 @@ export const StorageApi = {
                     .map(fetchItemDetails)
             );
 
-            const legacyItems = await Promise.all(
-                legacyRes.items
-                    .filter(item => !isSystemAsset(item.name))
-                    .map(fetchItemDetails)
-            );
-
-            // Merge and deduplicate: prefer modern files if names match
-            const fileMap = new Map<string, { name: string; url: string; extension: string }>();
-            
-            // Add legacy items first
-            legacyItems.forEach(item => fileMap.set(item.name, item));
-            
-            // Overwrite with modern items (they take priority)
-            modernItems.forEach(item => fileMap.set(item.name, item));
-
             // 🔥 Filter out empty/invalid items and check again for system assets
-            return Array.from(fileMap.values()).filter(f => !isSystemAsset(f.name));
+            return modernItems.filter(f => !isSystemAsset(f.name));
         } catch (e) {
-            console.error('Storage list failed', e);
+            // Permission-denied is expected for documents without download access.
             return [];
         }
     },

@@ -40,6 +40,8 @@ export interface Tag {
   color?: string;
 }
 
+export type DocumentStatus = 'draft' | 'published' | 'archived';
+
 export type IconName =
   | 'view-grid' | 'view-list' | 'document-text' | 'download' | 'external-link'
   | 'search' | 'plus' | 'pencil' | 'trash' | 'check' | 'x-mark'
@@ -72,6 +74,7 @@ export interface Document {
   };
   viewPermissions?: UserRole[];
   downloadPermissions?: UserRole[];
+  status?: DocumentStatus;
   internalId?: string;
 }
 

@@ -62,8 +62,18 @@ service firebase.storage {
     }
 
     // New structured paths for document assets
+    match /documents/{docId}/files {
+      allow read: if canDownloadDocument(docId);
+      allow write: if isAdmin();
+    }
+
     match /documents/{docId}/files/{allPaths=**} {
       allow read: if canDownloadDocument(docId);
+      allow write: if isAdmin();
+    }
+
+    match /documents/{docId}/images {
+      allow read: if canViewDocument(docId);
       allow write: if isAdmin();
     }
 

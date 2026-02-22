@@ -2,17 +2,19 @@ import React from 'react';
 import { Icon } from '@shared/ui/icons';
 import { Button } from '@shared/ui/primitives';
 
-type TabId = 'content' | 'users' | 'tags' | 'requests';
+type TabId = 'content' | 'users' | 'tags' | 'requests' | 'health';
 
 interface AdminTabsProps {
     activeTab: TabId;
     setActiveTab: (id: TabId) => void;
     pendingRequestsCount?: number;
+    healthIssuesCount?: number;
 }
 
-export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, pendingRequestsCount = 0 }) => {
+export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, pendingRequestsCount = 0, healthIssuesCount = 0 }) => {
     const tabs = [
         { id: 'content', label: 'Контент', icon: 'document-text' },
+        { id: 'health', label: 'Health', icon: 'warning' },
         { id: 'tags', label: 'Теги', icon: 'tag' },
         { id: 'users', label: 'Користувачі', icon: 'users' },
         { id: 'requests', label: 'Заявки', icon: 'info-circle' },
@@ -36,6 +38,11 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, setActiveTab, p
                     {tab.id === 'requests' && pendingRequestsCount > 0 && (
                         <span className="ml-2 rounded-full bg-danger px-2 py-0.5 text-[10px] text-white animate-pulse">
                             {pendingRequestsCount}
+                        </span>
+                    )}
+                    {tab.id === 'health' && healthIssuesCount > 0 && (
+                        <span className="ml-2 rounded-full bg-warning px-2 py-0.5 text-[10px] text-black">
+                            {healthIssuesCount}
                         </span>
                     )}
                     {activeTab === tab.id && (

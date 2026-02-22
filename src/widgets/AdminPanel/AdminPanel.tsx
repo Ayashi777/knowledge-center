@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Category, Document, Tag, UserProfile, UserRole } from '@shared/types';
 import { UsersApi, AccessRequest } from '@shared/api/firestore/users.api';
 import { TagsApi } from '@shared/api/firestore/tags.api';
+import { DocumentsApi } from '@shared/api/firestore/documents.api';
 import { TagEditorModal } from '@widgets/modals/TagEditorModal';
 import { UserEditorModal } from '@widgets/modals/UserEditorModal';
 import { useI18n } from '@app/providers/i18n/i18n';
@@ -13,6 +14,7 @@ import { ContentTab } from './ui/ContentTab';
 import { TagsTab } from './ui/TagsTab';
 import { UsersTab } from './ui/UsersTab';
 import { RequestsTab } from './ui/RequestsTab';
+import { HealthTab } from './ui/HealthTab';
 import { StatePanel } from '@shared/ui/states';
 import { Card } from '@shared/ui/primitives';
 
@@ -29,7 +31,7 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
-type TabId = 'content' | 'users' | 'tags' | 'requests';
+type TabId = 'content' | 'users' | 'tags' | 'requests' | 'health';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   categories = [],
@@ -46,7 +48,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabId>(() => {
     const hash = window.location.hash.replace('#', '') as TabId;
-    return ['content', 'users', 'tags', 'requests'].includes(hash) ? hash : 'content';
+    return ['content', 'users', 'tags', 'requests', 'health'].includes(hash) ? hash : 'content';
   });
   
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -137,6 +139,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (window.confirm('Ви впевнені, що хочете видалити цей тег?')) {
       try {
         setIsSaving(true);
+        const affected = documents.filter(doc => (doc.tagIds || []).includes(id));
+
+        if (affected.length > 0) {
+          const candidates = allTags.filter(tag => tag.id !== id);
+          const options = candidates.map(tag => `${tag.id} (${tag.name})`).join(', ');
+          const replacementId = window.prompt(
+            `Тег використовується у ${affected.length} документ(ах).\n` +
+            `Вкажіть ID тегу для міграції або залиште порожнім, щоб просто прибрати тег.\n` +
+            `Доступні теги: ${options}`
+          )?.trim();
+
+          if (replacementId && !candidates.some(tag => tag.id === replacementId)) {
+            setNotice({ type: 'error', text: 'Невірний ID тегу для міграції. Видалення скасовано.' });
+            setIsSaving(false);
+            return;
+          }
+
+          const updates = affected.map(doc => {
+            const nextTagIds = (doc.tagIds || []).filter(tagId => tagId !== id);
+            if (replacementId && !nextTagIds.includes(replacementId)) nextTagIds.push(replacementId);
+            return {
+              id: doc.id,
+              patch: { tagIds: nextTagIds },
+            };
+          });
+
+          await Promise.all(updates.map(({ id: docId, patch }) => DocumentsApi.saveMetadata(docId, patch)));
+        }
+
         await TagsApi.delete(id);
         setNotice({ type: 'success', text: 'Тег видалено.' });
       } catch (error) {
@@ -145,6 +176,52 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       } finally {
         setIsSaving(false);
       }
+    }
+  };
+
+  const handleDeleteCategorySafely = async (category: Category) => {
+    if (!window.confirm('Ви впевнені, що хочете видалити цю категорію?')) return;
+
+    try {
+      setIsSaving(true);
+      const affected = documents.filter(doc => doc.categoryKey === category.nameKey);
+
+      if (affected.length > 0) {
+        const candidates = categories.filter(cat => cat.id !== category.id);
+        if (candidates.length === 0) {
+          setNotice({ type: 'error', text: 'Немає категорії для міграції. Спочатку створіть іншу категорію.' });
+          setIsSaving(false);
+          return;
+        }
+
+        const options = candidates.map(cat => cat.nameKey).join(', ');
+        const replacementKey = window.prompt(
+          `Категорія використовується у ${affected.length} документ(ах).\n` +
+          `Вкажіть nameKey категорії для міграції.\n` +
+          `Доступні: ${options}`
+        )?.trim();
+
+        if (!replacementKey || !candidates.some(cat => cat.nameKey === replacementKey)) {
+          setNotice({ type: 'error', text: 'Невірна категорія для міграції. Видалення скасовано.' });
+          setIsSaving(false);
+          return;
+        }
+
+        const updates = affected.map(doc => ({
+          id: doc.id,
+          patch: { categoryKey: replacementKey },
+        }));
+
+        await Promise.all(updates.map(({ id: docId, patch }) => DocumentsApi.saveMetadata(docId, patch)));
+      }
+
+      await onDeleteCategory(category.id);
+      setNotice({ type: 'success', text: 'Категорію видалено без втрати зв’язків документів.' });
+    } catch (error) {
+      console.error('Failed to safely delete category:', error);
+      setNotice({ type: 'error', text: 'Не вдалося видалити категорію.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -172,7 +249,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  // 🔥 Fix: Safe access with optional chaining and fallback
+  const handleBulkPatchDocuments = async (updates: Array<{ id: string; patch: Partial<Document> }>) => {
+    if (updates.length === 0) return;
+    try {
+      setIsSaving(true);
+      await Promise.all(updates.map(({ id, patch }) => DocumentsApi.saveMetadata(id, patch)));
+      setNotice({ type: 'success', text: `Оновлено документів: ${updates.length}.` });
+    } catch (error) {
+      console.error('Failed to bulk update documents:', error);
+      setNotice({ type: 'error', text: 'Не вдалося виконати масове оновлення документів.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const healthIssuesCount = documents.filter(doc =>
+    !doc.categoryKey ||
+    !doc.tagIds || doc.tagIds.length === 0 ||
+    !doc.viewPermissions || doc.viewPermissions.length === 0 ||
+    !doc.status
+  ).length;
+
   const pendingRequestsCount = (requests || []).filter(r => r.status === 'pending').length;
 
   return (
@@ -182,6 +279,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         pendingRequestsCount={pendingRequestsCount}
+        healthIssuesCount={healthIssuesCount}
       />
 
       <div className="p-8 min-h-[500px]">
@@ -218,12 +316,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <ContentTab 
             categories={categories}
             documents={documents}
+            availableTags={allTags}
             onAddCategory={onAddCategory}
             onUpdateCategory={onUpdateCategory}
-            onDeleteCategory={onDeleteCategory}
+            onDeleteCategory={handleDeleteCategorySafely}
             onAddDocument={onAddDocument}
             onEditDocument={onEditDocument}
             onDeleteDocument={onDeleteDocument}
+            onBulkPatchDocuments={handleBulkPatchDocuments}
+            isProcessing={isSaving}
           />
         )}
 
@@ -233,6 +334,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             onAddTag={() => setEditingTag({ id: '', name: '', color: '#3b82f6' })}
             onEditTag={setEditingTag}
             onDeleteTag={handleDeleteTag}
+            isProcessing={isSaving}
+          />
+        )}
+
+        {activeTab === 'health' && (
+          <HealthTab
+            documents={documents}
+            categories={categories}
+            tags={allTags}
+            onBulkPatchDocuments={handleBulkPatchDocuments}
             isProcessing={isSaving}
           />
         )}
