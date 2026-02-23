@@ -55,6 +55,10 @@ const AppContent: React.FC = () => {
     sortedAndFilteredDocs,
     selectedRoles,
     handleRoleToggle,
+    selectedDocumentTypes,
+    handleDocumentTypeToggle,
+    selectedTrademarks,
+    handleTrademarkToggle,
     clearFilters,
   } = useDocumentManagement();
 
@@ -135,6 +139,7 @@ const AppContent: React.FC = () => {
             element={
                 <DashboardView
                   onSelectDoc={handleSelectDoc}
+                  allDocuments={allDocuments}
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   docs={paginatedDocs}
@@ -155,6 +160,10 @@ const AppContent: React.FC = () => {
                   setSortBy={setSortBy}
                   selectedRoles={selectedRoles}
                   handleRoleToggle={handleRoleToggle}
+                  selectedDocumentTypes={selectedDocumentTypes}
+                  handleDocumentTypeToggle={handleDocumentTypeToggle}
+                  selectedTrademarks={selectedTrademarks}
+                  handleTrademarkToggle={handleTrademarkToggle}
                   onClearFilters={clearFilters}
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -9,6 +9,8 @@ interface UseDocumentsProps {
     categories: Category[];
     searchTerm: string;
     selectedCategoryKeys: string[];
+    selectedDocumentTypes: string[];
+    selectedTrademarks: string[];
     selectedTagIds: string[];
     selectedRoles: UserRole[];
     sortBy: 'recent' | 'alpha';
@@ -18,6 +20,8 @@ export const useDocuments = ({
     categories,
     searchTerm,
     selectedCategoryKeys,
+    selectedDocumentTypes,
+    selectedTrademarks,
     selectedTagIds,
     selectedRoles,
     sortBy
@@ -76,7 +80,21 @@ export const useDocuments = ({
                 if (!isMatch) return false;
             }
 
-            // 3. Multi-Role Filter (OR logic)
+            // 3. Document Type Filter (OR logic)
+            if (selectedDocumentTypes.length > 0) {
+                const documentType = document.documentType?.trim().toLowerCase();
+                const isMatch = !!documentType && selectedDocumentTypes.some(type => type.trim().toLowerCase() === documentType);
+                if (!isMatch) return false;
+            }
+
+            // 4. TM Filter (OR logic)
+            if (selectedTrademarks.length > 0) {
+                const trademark = document.trademark?.trim().toLowerCase();
+                const isMatch = !!trademark && selectedTrademarks.some(item => item.trim().toLowerCase() === trademark);
+                if (!isMatch) return false;
+            }
+
+            // 5. Multi-Role Filter (OR logic)
             if (selectedRoles.length > 0) {
                 const category = categoryMap.get(documentCategoryKey);
                 const isMatch = selectedRoles.some(role => {
@@ -94,13 +112,13 @@ export const useDocuments = ({
                 if (!isMatch) return false;
             }
 
-            // 4. Tags Filter (AND logic)
+            // 6. Tags Filter (AND logic)
             if (selectedTagIds.length > 0) {
                 const matchesTags = selectedTagIds.every(tagId => document.tagIds?.includes(tagId));
                 if (!matchesTags) return false;
             }
 
-            // 5. Search Refinement
+            // 7. Search Refinement
             if (searchTerm) {
                 const displayTitle = document.titleKey ? t(document.titleKey) : document.title || '';
                 const matchesSearch = displayTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -111,7 +129,7 @@ export const useDocuments = ({
             return true;
         });
 
-        // 6. Final Client Sorting
+        // 8. Final Client Sorting
         return result.sort((a, b) => {
             if (sortBy === 'recent') {
                 return (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0);
@@ -121,7 +139,20 @@ export const useDocuments = ({
                 return titleA.localeCompare(titleB);
             }
         });
-    }, [rawDocuments, categories, searchTerm, selectedTagIds, selectedCategoryKeys, selectedRoles, sortBy, t, categoryMap, currentUserRole]);
+    }, [
+        rawDocuments,
+        categories,
+        searchTerm,
+        selectedTagIds,
+        selectedCategoryKeys,
+        selectedDocumentTypes,
+        selectedTrademarks,
+        selectedRoles,
+        sortBy,
+        t,
+        categoryMap,
+        currentUserRole
+    ]);
 
     return {
         documents: filteredAndSorted,

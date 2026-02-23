@@ -14,6 +14,7 @@ import { DocumentList } from './ui/DocumentList';
 
 export const DashboardView: React.FC<{
     onSelectDoc: (doc: Document) => void;
+    allDocuments: Document[];
     searchTerm: string;
     onSearchChange: (term: string) => void;
     docs: Document[];
@@ -34,6 +35,10 @@ export const DashboardView: React.FC<{
     setSortBy: (sort: SortBy) => void;
     selectedRoles: UserRole[]; // 🔥 Multi-select
     handleRoleToggle: (role: UserRole) => void;
+    selectedDocumentTypes: string[];
+    handleDocumentTypeToggle: (documentType: string) => void;
+    selectedTrademarks: string[];
+    handleTrademarkToggle: (trademark: string) => void;
     onClearFilters: () => void;
     currentPage: number;
     totalPages: number;
@@ -41,6 +46,7 @@ export const DashboardView: React.FC<{
     onEditCategory: (cat: Category) => void;
 }> = ({
     onSelectDoc,
+    allDocuments,
     searchTerm,
     onSearchChange,
     docs,
@@ -61,6 +67,10 @@ export const DashboardView: React.FC<{
     setSortBy,
     selectedRoles,
     handleRoleToggle,
+    selectedDocumentTypes,
+    handleDocumentTypeToggle,
+    selectedTrademarks,
+    handleTrademarkToggle,
     onClearFilters,
     currentPage,
     totalPages,
@@ -79,6 +89,11 @@ export const DashboardView: React.FC<{
                     visibleCategories={visibleCategories}
                     selectedCategories={selectedCategories}
                     onCategoryToggle={handleCategoryToggle}
+                    allDocuments={allDocuments}
+                    selectedDocumentTypes={selectedDocumentTypes}
+                    onDocumentTypeToggle={handleDocumentTypeToggle}
+                    selectedTrademarks={selectedTrademarks}
+                    onTrademarkToggle={handleTrademarkToggle}
                     allTags={allTags}
                     selectedTags={selectedTags}
                     onTagSelect={onTagSelect}

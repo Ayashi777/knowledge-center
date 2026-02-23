@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy": "echo '⚠️ Reminder: Ensure Changelog.md is updated before deploying! ⚠️' && vite build && firebase deploy --only hosting",
+    "deploy": "echo '⚠️ Reminder: Ensure Changelog.md is updated before deploying! ⚠️' && vite build && (firebase deploy --only hosting || npx firebase-tools deploy --only hosting)",
     "preview": "vite preview",
     "test:visual": "playwright test --config=playwright.visual.config.ts",
     "test:visual:update": "playwright test --config=playwright.visual.config.ts --update-snapshots"

@@ -12,6 +12,8 @@ export const useDocumentManagement = () => {
     // -- URL State Accessors --
     const searchTerm = searchParams.get('q') || '';
     const selectedCategoryKeys = useMemo(() => searchParams.getAll('category'), [searchParams]);
+    const selectedDocumentTypes = useMemo(() => searchParams.getAll('docType'), [searchParams]);
+    const selectedTrademarks = useMemo(() => searchParams.getAll('tm'), [searchParams]);
     const selectedRoles = useMemo(() => searchParams.getAll('role') as UserRole[], [searchParams]);
     const selectedTagIds = useMemo(() => searchParams.getAll('tag'), [searchParams]);
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
@@ -62,6 +64,36 @@ export const useDocumentManagement = () => {
         }, { replace: true });
     }, [setSearchParams]);
 
+    const handleDocumentTypeToggle = useCallback((documentType: string) => {
+        setSearchParams(prev => {
+            const current = prev.getAll('docType');
+            prev.delete('docType');
+
+            const next = current.includes(documentType)
+                ? current.filter(item => item !== documentType)
+                : [...current, documentType];
+
+            next.forEach(item => prev.append('docType', item));
+            prev.set('page', '1');
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const handleTrademarkToggle = useCallback((trademark: string) => {
+        setSearchParams(prev => {
+            const current = prev.getAll('tm');
+            prev.delete('tm');
+
+            const next = current.includes(trademark)
+                ? current.filter(item => item !== trademark)
+                : [...current, trademark];
+
+            next.forEach(item => prev.append('tm', item));
+            prev.set('page', '1');
+            return prev;
+        }, { replace: true });
+    }, [setSearchParams]);
+
     const handleTagToggle = useCallback((tagId: string) => {
         setSearchParams(prev => {
             const current = prev.getAll('tag');
@@ -97,6 +129,8 @@ export const useDocumentManagement = () => {
         categories,
         searchTerm,
         selectedCategoryKeys,
+        selectedDocumentTypes,
+        selectedTrademarks,
         selectedTagIds,
         selectedRoles,
         sortBy
@@ -136,6 +170,10 @@ export const useDocumentManagement = () => {
         handleTagSelect: handleTagToggle,
         selectedRoles,
         handleRoleToggle,
+        selectedDocumentTypes,
+        handleDocumentTypeToggle,
+        selectedTrademarks,
+        handleTrademarkToggle,
         clearFilters: resetFilters,
         
         sortBy,

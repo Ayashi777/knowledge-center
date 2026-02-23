@@ -19,6 +19,8 @@ export const DocumentEditorModal: React.FC<{
     const initialTitle = doc?.title || (doc?.titleKey ? t(doc.titleKey) : '');
     const [title, setTitle] = useState(initialTitle);
     const [internalId, setInternalId] = useState(doc?.internalId || '');
+    const [documentType, setDocumentType] = useState(doc?.documentType || '');
+    const [trademark, setTrademark] = useState(doc?.trademark || '');
     const [description, setDescription] = useState(doc?.description || '');
     const [extendedDescription, setExtendedDescription] = useState(doc?.extendedDescription || '');
     const [category, setCategory] = useState(doc?.categoryKey || availableCategories[0]?.nameKey || '');
@@ -67,6 +69,8 @@ export const DocumentEditorModal: React.FC<{
             ...doc,
             title: nextTitle,
             internalId: internalId.trim(),
+            documentType: documentType.trim(),
+            trademark: trademark.trim(),
             description: description.trim(),
             extendedDescription: extendedDescription.trim(),
             categoryKey: category,
@@ -143,6 +147,26 @@ export const DocumentEditorModal: React.FC<{
                                 required
                             />
                             {titleError && <p className="mt-2 text-[11px] font-bold text-danger">{titleError}</p>}
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelDocumentType')}</label>
+                            <Input
+                                type="text"
+                                value={documentType}
+                                onChange={e => setDocumentType(e.target.value)}
+                                className={inputClass}
+                                placeholder={t('editorModal.placeholderDocumentType')}
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelTrademark')}</label>
+                            <Input
+                                type="text"
+                                value={trademark}
+                                onChange={e => setTrademark(e.target.value)}
+                                className={inputClass}
+                                placeholder={t('editorModal.placeholderTrademark')}
+                            />
                         </div>
                         <div>
                             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-fg">{t('editorModal.labelCategory')}</label>

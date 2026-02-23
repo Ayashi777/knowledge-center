@@ -1,5 +1,5 @@
-import React from 'react';
-import { Category, UserRole, Tag } from '@shared/types';
+import React, { useMemo } from 'react';
+import { Category, UserRole, Tag, Document } from '@shared/types';
 import { useI18n } from '@app/providers/i18n/i18n';
 import { Icon } from '@shared/ui/icons';
 import { getCategoryName, normalizeCategoryKey } from '@shared/lib/utils/format';
@@ -9,6 +9,11 @@ interface SidebarProps {
   visibleCategories: Category[];
   selectedCategories: string[]; // 🔥 Changed to array
   onCategoryToggle: (key: string) => void; // 🔥 Changed to toggle
+  allDocuments: Document[];
+  selectedDocumentTypes: string[];
+  onDocumentTypeToggle: (documentType: string) => void;
+  selectedTrademarks: string[];
+  onTrademarkToggle: (trademark: string) => void;
   allTags: Tag[];
   selectedTags: string[];
   onTagSelect: (tagId: string) => void;
@@ -23,6 +28,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   visibleCategories,
   selectedCategories,
   onCategoryToggle,
+  allDocuments,
+  selectedDocumentTypes,
+  onDocumentTypeToggle,
+  selectedTrademarks,
+  onTrademarkToggle,
   allTags,
   selectedTags,
   onTagSelect,
@@ -35,9 +45,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useI18n();
 
   const selectableRoles: UserRole[] = ['foreman', 'engineer', 'architect'];
+  const uniqueDocumentTypes = useMemo(() => {
+    const map = new Map<string, string>();
+    allDocuments.forEach((doc) => {
+      const value = doc.documentType?.trim();
+      if (!value) return;
+      const key = value.toLowerCase();
+      if (!map.has(key)) map.set(key, value);
+    });
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, 'uk'));
+  }, [allDocuments]);
+
+  const uniqueTrademarks = useMemo(() => {
+    const map = new Map<string, string>();
+    allDocuments.forEach((doc) => {
+      const value = doc.trademark?.trim();
+      if (!value) return;
+      const key = value.toLowerCase();
+      if (!map.has(key)) map.set(key, value);
+    });
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, 'uk'));
+  }, [allDocuments]);
 
   const hasActiveFilters = 
     selectedCategories.length > 0 || 
+    selectedDocumentTypes.length > 0 ||
+    selectedTrademarks.length > 0 ||
     selectedTags.length > 0 || 
     selectedRoles.length > 0;
 
@@ -95,12 +128,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </section>
 
+      {/* Document Type */}
+      <section className="border-t border-border pt-4">
+        <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
+          {t('sidebar.documentType')}
+        </h3>
+        <div className="flex flex-wrap justify-start gap-2">
+          {uniqueDocumentTypes.length === 0 ? (
+            <p className="text-xs font-semibold text-muted-fg">{t('common.notFound')}</p>
+          ) : (
+            uniqueDocumentTypes.map((type) => (
+              <Button
+                key={type}
+                onClick={() => onDocumentTypeToggle(type)}
+                variant={selectedDocumentTypes.includes(type) ? 'primary' : 'outline'}
+                className={`h-auto justify-start rounded-lg px-3 py-1.5 text-left text-xs font-bold ${
+                  selectedDocumentTypes.includes(type) ? '' : 'text-muted-fg'
+                }`}
+              >
+                {type}
+              </Button>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* TM */}
+      <section className="border-t border-border pt-4">
+        <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
+          {t('sidebar.trademark')}
+        </h3>
+        <div className="flex flex-wrap justify-start gap-2">
+          {uniqueTrademarks.length === 0 ? (
+            <p className="text-xs font-semibold text-muted-fg">{t('common.notFound')}</p>
+          ) : (
+            uniqueTrademarks.map((trademark) => (
+              <Button
+                key={trademark}
+                onClick={() => onTrademarkToggle(trademark)}
+                variant={selectedTrademarks.includes(trademark) ? 'primary' : 'outline'}
+                className={`h-auto justify-start rounded-lg px-3 py-1.5 text-left text-xs font-bold ${
+                  selectedTrademarks.includes(trademark) ? '' : 'text-muted-fg'
+                }`}
+              >
+                {trademark}
+              </Button>
+            ))
+          )}
+        </div>
+      </section>
+
       {/* Roles Filter (Multi-select) */}
       <section className="border-t border-border pt-4">
         <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
           {t('sidebar.forWhom')}
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-start gap-2">
           {selectableRoles.map((role) => {
             const isSelected = selectedRoles.includes(role);
             return (
@@ -108,7 +191,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={role}
                 onClick={() => onRoleToggle(role)}
                 variant={isSelected ? 'primary' : 'outline'}
-                className={`h-auto rounded-lg px-3 py-1.5 text-xs font-bold ${
+                className={`h-auto justify-start rounded-lg px-3 py-1.5 text-left text-xs font-bold ${
                   isSelected
                     ? ''
                     : 'text-muted-fg'
@@ -124,15 +207,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Tags */}
       <section className="border-t border-border pt-4">
         <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-fg">
-          {t('sidebar.tags')}
+          {t('sidebar.additionalTags')}
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-start gap-2">
           {allTags.map((tag) => (
             <Button
               key={tag.id}
               onClick={() => onTagSelect(tag.id)}
               variant={selectedTags.includes(tag.id) ? 'primary' : 'outline'}
-              className={`h-auto rounded-lg border px-3 py-1.5 text-xs font-bold ${
+              className={`h-auto justify-start rounded-lg border px-3 py-1.5 text-left text-xs font-bold ${
                 selectedTags.includes(tag.id)
                   ? ''
                   : 'text-muted-fg'

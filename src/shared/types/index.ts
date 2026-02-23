@@ -62,6 +62,8 @@ export interface Document {
   id: string;
   titleKey?: string;
   title?: string;
+  documentType?: string;
+  trademark?: string;
   description?: string;
   extendedDescription?: string;
   thumbnailUrl?: string;
