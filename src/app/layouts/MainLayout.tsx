@@ -27,18 +27,21 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
         { label: t('header.nav.home'), path: '/', icon: 'home' },
         { label: t('header.nav.database'), path: '/database', icon: 'storage' },
         { label: t('header.nav.services'), path: '/services', icon: 'engineering' },
+        { label: t('header.nav.calculators'), path: '/calculators', icon: 'document-text' },
     ];
 
     const mobileTabs = [
         { label: t('header.nav.home'), path: '/', icon: 'home' },
         { label: t('header.nav.database'), path: '/database', icon: 'storage' },
         { label: t('header.nav.services'), path: '/services', icon: 'engineering' },
+        { label: t('header.nav.calculators'), path: '/calculators', icon: 'document-text' },
         ...(showAdminControls ? [{ label: t('header.nav.admin') || 'Admin', path: '/admin', icon: 'cog' }] : []),
     ];
 
     const getMobileTitle = () => {
         if (location.pathname.startsWith('/admin')) return t('header.nav.admin') || 'Admin';
         if (location.pathname.startsWith('/services')) return t('header.nav.services');
+        if (location.pathname.startsWith('/calculators')) return t('header.nav.calculators');
         if (location.pathname.startsWith('/database')) return t('header.nav.database');
         return t('header.nav.home');
     };
@@ -134,7 +137,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children, onLoginClick }) =>
             {/* Mobile Tab Bar */}
             {!isAdminRoute && (
             <Card className="fixed bottom-0 left-0 right-0 z-40 rounded-none border-x-0 border-b-0 bg-bg/90 backdrop-blur-xl md:hidden">
-                <div className={`grid ${mobileTabs.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 px-4 py-3`}>
+                <div className={`grid ${mobileTabs.length === 5 ? 'grid-cols-5' : mobileTabs.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 px-4 py-3`}>
                     {mobileTabs.map((item) => (
                         <Button
                             key={item.path}

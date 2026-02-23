@@ -161,6 +161,88 @@
     "approved": "Approved",
     "denied": "Denied"
   },
+  "calculators": {
+    "badge": "Engineering Calculators",
+    "title": "Calculators",
+    "subtitle": "Practical tools for architects and design engineers: quickly select systems, materials, and components for roofing, facades, and drainage.",
+    "download": "Download",
+    "open": "Open Calculator",
+    "note": "Calculator outputs include basic reserves/tolerances. For working documentation, validate results for the specific project conditions.",
+    "audience": {
+      "architect": "For Architects",
+      "designer": "For Design Engineers"
+    },
+    "flow": {
+      "step1": "Choose a calculator for your task",
+      "step2": "Enter your project parameters",
+      "step3": "Get a ready bill of materials"
+    },
+    "quickFilter": {
+      "title": "Quick task filter",
+      "all": "All Tasks",
+      "flat-roof": "Flat Roof",
+      "pitched-roof": "Pitched Roof",
+      "thermal": "Thermal",
+      "facade": "Facade",
+      "drainage": "Drainage",
+      "junctions": "Junctions"
+    },
+    "labels": {
+      "purpose": "Purpose",
+      "inputs": "Inputs",
+      "result": "Output"
+    },
+    "groups": {
+      "roofing": "Roofing",
+      "facade": "Facade",
+      "drainage": "Drainage",
+      "junctions": "Junctions & Fittings"
+    },
+    "items": {
+      "flat-roof-2023": {
+        "name": "Flat Roof 2023",
+        "purpose": "Calculates material demand for a flat PVC roof with membrane, insulation, fastening, flashings, and funnels.",
+        "inputs": "Membrane type, insulation setup, fastening method, substrate type, insulation thickness, roof area/perimeter/flashings, upstand height, drip edge and strip lengths.",
+        "result": "Consolidated quantity schedule for membranes, geotextiles, vapor barrier, primer, fixings, funnels, and related items."
+      },
+      "pitched-roof-2023-09": {
+        "name": "Pitched Roof 2023 09",
+        "purpose": "Material calculation for pitched roof systems (likely bitumen shingles with supporting layers).",
+        "inputs": "Roof slope geometry, pitch values, roof zones/sections, and selection of main covering and underlayment materials.",
+        "result": "Required quantities for main roofing and accessories (underlayments, junction elements, and additional materials)."
+      },
+      "ttr-sumishenogo-pokryttya": {
+        "name": "TTR Combined Roof Assembly",
+        "purpose": "Thermal calculation of a combined roof assembly per DBN/DSTU with heat-transfer resistance compliance checks.",
+        "inputs": "City/climate zone, building type, layer stack (lining, bearing part, slope-forming layer, vapor/hydro insulation, insulation, outer finish), selected materials, and thicknesses.",
+        "result": "Required insulation thickness, compliance check (Rsum >= Rqmin), and report-ready layer parameter tables."
+      },
+      "soffit-2025": {
+        "name": "Soffit 2025",
+        "purpose": "Calculates materials for roof overhang soffit lining (soffit panels, J/H profiles) with geometry and waste optimization.",
+        "inputs": "Panel/brand type, section length and actual overhang width, slope angle, count of identical sections, paired sections with shared area, manual extra J/H profile lengths, option for J-profile only on inner perimeter.",
+        "result": "Brand-specific quantities (Asko/Soffit/Aydaho): panels, J-profiles, and H-profiles with reserve."
+      },
+      "siding-2-5": {
+        "name": "Siding 2.5",
+        "purpose": "Calculates materials for facade cladding with siding/facade panels, including walls, gables, windows, and doors.",
+        "inputs": "Wall dimensions (width/height/count), gable geometry, window and door dimensions/count, options for start/finish strips, J-profile, trims, and curb strips.",
+        "result": "Final bill of materials for panels and accessories (strips, profiles, fasteners, insulation, membrane) with quantities."
+      },
+      "recyfix-standart-100": {
+        "name": "Recyfix Standart 100 Variants",
+        "purpose": "Selects a component set for HAURATON Recyfix Standard 100 linear drainage by channel and grate type.",
+        "inputs": "Sheet variant selection (type 60/80/01/010, galvanized or cast-iron grates) and line-item quantities.",
+        "result": "Itemized specification with article codes and quantities: channels, sand traps, grates, crossbars, bolts, end caps, and sealant."
+      },
+      "profil-kolina": {
+        "name": "PROFIL Double-Socket Elbows",
+        "purpose": "Selects quantities of drainage system components for PROFIL and related systems using prepared specification tables.",
+        "inputs": "System block/diameter selection (PROFIL 90/130 and Raiko/Fitt blocks) with quantity adjustments per line item.",
+        "result": "Table specification in pcs: gutters, holders, connectors, end caps, funnels, elbows, pipes, corners, and related components."
+      }
+    }
+  },
   "tagEditor": {
     "createTitle": "Create new tag",
     "editTitle": "Edit tag",
@@ -171,7 +253,14 @@
     "login": "Sign In",
     "logout": "Sign Out",
     "adminPanel": "Admin Panel",
-    "profile": "My Profile"
+    "profile": "My Profile",
+    "nav": {
+      "home": "Home",
+      "database": "Knowledge Base",
+      "services": "Technical Services",
+      "calculators": "Calculators",
+      "admin": "Admin"
+    }
   },
   "sidebar": {
     "filterBy": "Filter by",
@@ -334,10 +423,13 @@
   },
   "support": {
     "callback": "Callback Request",
+    "panel_title": "Technical Support",
+    "hint_title": "We are here",
     "context": {
       "home": "Need help navigating the Knowledge Center?",
       "database": "Looking for specific documentation? We can help find it.",
       "services": "Need a technical consultation for your project?",
+      "calculators": "Need help choosing the right calculator?",
       "default": "How can we assist you today?"
     }
   }

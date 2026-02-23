@@ -14,6 +14,7 @@ import { DashboardView } from '@widgets/DashboardView';
 import { AdminPage } from '@pages/AdminPage';
 import { LandingPage } from '@pages/LandingPage/LandingPage';
 import { ServicesPage } from '@pages/ServicesPage/ServicesPage';
+import { CalculatorsPage } from '@pages/CalculatorsPage/CalculatorsPage';
 import { UIPlaygroundPage } from '@pages/UIPlaygroundPage';
 import { MainLayout } from './layouts/MainLayout';
 
@@ -163,6 +164,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route path="/services" element={<ServicesPage />} />
+          <Route path="/calculators" element={<CalculatorsPage />} />
           <Route path="/ui-playground" element={<UIPlaygroundPage />} />
           <Route 
             path="/admin" 
